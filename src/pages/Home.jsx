@@ -21,6 +21,8 @@ import AILoadingModal from '@/components/chat/AILoadingModal';
 import AIResponseModal from '@/components/chat/AIResponseModal';
 import FeatureGate from '@/components/subscription/FeatureGate';
 import LeadGenerationModal from '@/components/lead/LeadGenerationModal';
+import UserMenu from '@/components/user/UserMenu';
+import NotificationBell from '@/components/user/NotificationBell';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 import { Link } from 'react-router-dom';
@@ -309,39 +311,13 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-3">
-              {userPlan === 'free' && (
-                <Badge 
-                  variant="outline" 
-                  className="hidden sm:flex cursor-pointer hover:bg-gray-100"
-                  onClick={() => setShowUpgradeModal(true)}
-                >
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  {3 - aiRequestsToday} {t.freeRequestsLeft}
-                </Badge>
-              )}
-              
-              {userPlan !== 'free' && (
-                <Badge className="hidden sm:flex bg-black text-white border-white/20">
-                  <Crown className="h-3 w-3 mr-1" />
-                  {userPlan === 'pro1' ? 'Pro 1' : userPlan === 'pro2' ? 'Pro 2' : 'Ultimate'}
-                </Badge>
-              )}
-              
-              <LanguageSelector 
-                currentLanguage={language} 
-                onLanguageChange={setLanguage} 
-              />
+              <NotificationBell language={language} />
 
-              <Link to={createPageUrl('Subscription')}>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 bg-black text-white border-white/20 hover:bg-gray-800 hover:shadow-lg transition-all duration-300"
-                >
-                  <Crown className="h-4 w-4" />
-                  <span className="hidden sm:inline">{userPlan === 'free' ? 'Upgrade' : 'Manage'}</span>
-                </Button>
-              </Link>
+              <UserMenu 
+                language={language}
+                onLanguageChange={setLanguage}
+                onUpgradeClick={() => setShowUpgradeModal(true)}
+              />
             </div>
           </div>
         </div>
