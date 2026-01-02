@@ -260,6 +260,16 @@ export default function Home() {
     }
   };
 
+  const handleHireAgent = (apartment) => {
+    if (!canUseWhatsApp) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setShowPropertyModal(false);
+    setLeadApartment(apartment);
+    setShowLeadModal(true);
+  };
+
   const handleSelectPlan = (planId) => {
     if (planId === 'free') {
       setShowUpgradeModal(false);
