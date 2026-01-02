@@ -17,6 +17,9 @@ import ApartmentFilters from '@/components/apartment/ApartmentFilters';
 import PropertyModal from '@/components/apartment/PropertyModal';
 import UpgradeModal from '@/components/subscription/UpgradeModal';
 import LanguageSelector from '@/components/common/LanguageSelector';
+import AILoadingModal from '@/components/chat/AILoadingModal';
+import AIResponseModal from '@/components/chat/AIResponseModal';
+import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 
 // Sample apartments are now loaded from database
 
@@ -40,6 +43,10 @@ export default function Home() {
   const [userPlan, setUserPlan] = useState('free');
   const [aiRequestsToday, setAiRequestsToday] = useState(0);
   const [mapCenter, setMapCenter] = useState([40.4168, -3.7038]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiLoadingMessage, setAiLoadingMessage] = useState('');
+  const [aiResponse, setAiResponse] = useState(null);
+  const [aiResponseTitle, setAiResponseTitle] = useState('');
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -155,29 +162,82 @@ export default function Home() {
     setShowPropertyModal(true);
   };
 
-  const handleAskAI = (apartment, action = 'ask') => {
+  const handleAskAI = async (apartment, action = 'ask') => {
     if (userPlan === 'free' && aiRequestsToday >= 3) {
       setShowUpgradeModal(true);
       return;
     }
-    
-    let prompt = '';
-    if (action === 'translate') {
-      prompt = `Translate the description and details of this apartment to ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}`;
-    } else {
-      prompt = `Tell me more about this apartment at ${apartment.address}`;
-    }
-    
+
+    const titles = {
+      en: { ask: 'AI Analysis', translate: 'AI Translation' },
+      es: { ask: 'Análisis IA', translate: 'Traducción IA' },
+      ru: { ask: 'Анализ ИИ', translate: 'Перевод ИИ' }
+    };
+
+    const loadingMessages = {
+      en: { ask: 'AI is analyzing property...', translate: 'Translating content...' },
+      es: { ask: 'IA está analizando la propiedad...', translate: 'Traduciendo contenido...' },
+      ru: { ask: 'ИИ анализирует недвижимость...', translate: 'Перевод контента...' }
+    };
+
+    const t = titles[language] || titles.en;
+    const loadingT = loadingMessages[language] || loadingMessages.en;
+
+    setAiLoading(true);
+    setAiLoadingMessage(action === 'translate' ? loadingT.translate : loadingT.ask);
     setShowPropertyModal(false);
-    handleSendMessage(prompt);
+
+    try {
+      let response;
+      if (action === 'translate') {
+        response = await mockTranslate(apartment, language);
+        setAiResponseTitle(t.translate);
+      } else {
+        response = await mockAskAI(apartment, language);
+        setAiResponseTitle(t.ask);
+      }
+      
+      setAiResponse(response);
+      setAiRequestsToday(prev => prev + 1);
+    } catch (error) {
+      console.error('AI Error:', error);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
-  const handleCompare = (apartment) => {
+  const handleCompare = async (apartment) => {
     if (userPlan === 'free') {
       setShowUpgradeModal(true);
       return;
     }
-    // Compare logic for Pro users
+
+    const titles = {
+      en: 'Market Comparison',
+      es: 'Comparación de Mercado',
+      ru: 'Рыночное Сравнение'
+    };
+
+    const loadingMessages = {
+      en: 'Comparing with market data...',
+      es: 'Comparando con datos del mercado...',
+      ru: 'Сравнение с рыночными данными...'
+    };
+
+    setAiLoading(true);
+    setAiLoadingMessage(loadingMessages[language] || loadingMessages.en);
+    setShowPropertyModal(false);
+
+    try {
+      const response = await mockCompare(apartment, language);
+      setAiResponseTitle(titles[language] || titles.en);
+      setAiResponse(response);
+      setAiRequestsToday(prev => prev + 1);
+    } catch (error) {
+      console.error('Compare Error:', error);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSelectPlan = (planId) => {
@@ -373,6 +433,22 @@ export default function Home() {
         onClose={() => setShowUpgradeModal(false)}
         currentPlan={userPlan}
         onSelectPlan={handleSelectPlan}
+        language={language}
+      />
+
+      {/* AI Loading Modal */}
+      <AILoadingModal
+        isOpen={aiLoading}
+        message={aiLoadingMessage}
+        language={language}
+      />
+
+      {/* AI Response Modal */}
+      <AIResponseModal
+        isOpen={!!aiResponse}
+        onClose={() => setAiResponse(null)}
+        title={aiResponseTitle}
+        response={aiResponse || ''}
         language={language}
       />
     </div>
