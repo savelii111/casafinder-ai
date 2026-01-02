@@ -1,9 +1,11 @@
 import React from 'react';
+import { ThemeProvider } from './components/theme/ThemeProvider';
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <style>{`
+    <ThemeProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors">
+        <style>{`
         :root {
           --background: 0 0% 100%;
           --foreground: 0 0% 3.9%;
@@ -94,9 +96,25 @@ export default function Layout({ children }) {
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-      `}</style>
-      {children}
-    </div>
-  );
-}
+          }
+
+          /* Dark mode styles */
+          .dark {
+          color-scheme: dark;
+          }
+
+          .dark .glass-card {
+          background: rgba(30, 30, 30, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+
+          .dark .glass-dark {
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          }
+          `}</style>
+          {children}
+          </div>
+          </ThemeProvider>
+          );
+          }

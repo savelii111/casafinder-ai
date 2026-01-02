@@ -25,6 +25,10 @@ import UserMenu from '@/components/user/UserMenu';
 import NotificationBell from '@/components/user/NotificationBell';
 import ResultsCounter from '@/components/common/ResultsCounter';
 import CompareModal from '@/components/apartment/CompareModal';
+import ThemeToggle from '@/components/theme/ThemeToggle';
+import SearchHistory from '@/components/search/SearchHistory';
+import SmartFilters from '@/components/filters/SmartFilters';
+import { trackPropertyView, trackSearch, trackFavorite, trackCompare, trackAIQuery, initActivityTracker } from '@/components/utils/activityTracker';
 import AIRequestTracker from '@/components/common/AIRequestTracker';
 import MapSkeleton from '@/components/map/MapSkeleton';
 import StatsBar from '@/components/common/StatsBar';
@@ -67,6 +71,11 @@ export default function Home() {
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
+
+  // Initialize activity tracker
+  React.useEffect(() => {
+    initActivityTracker();
+  }, []);
   
   // Use subscription hook for feature access
   const { 
@@ -187,6 +196,9 @@ export default function Home() {
     setMapLoading(true);
 
     try {
+      // Track search activity
+      trackSearch(content, filteredApartments.length);
+      
       // Update AI request count
       updateAIRequestsMutation.mutate();
       // Simulate AI response
@@ -226,8 +238,18 @@ export default function Home() {
         role: 'assistant', 
         content: `${countText[language] || countText.en}. ${response.response || "Check out the map and listings below!"}`
       };
-      
+
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Save search to history
+      if (user?.email) {
+        await base44.entities.SearchHistory.create({
+          user_email: user.email,
+          query: content,
+          filters: filters,
+          results_count: propertiesCount
+        });
+      }
 
       // Update filters based on AI suggestions
       if (response.suggested_price_range) {
@@ -257,6 +279,7 @@ export default function Home() {
   };
 
   const handleApartmentClick = (apartment) => {
+    trackPropertyView(apartment.id);
     setSelectedApartment(apartment);
     setShowPropertyModal(true);
   };
@@ -266,6 +289,9 @@ export default function Home() {
       setShowUpgradeModal(true);
       return;
     }
+
+    // Track AI query
+    trackAIQuery(apartment.id, action);
 
     const titles = {
       en: { ask: 'AI Analysis', translate: 'AI Translation' },
@@ -310,6 +336,9 @@ export default function Home() {
       setShowUpgradeModal(true);
       return;
     }
+
+    // Track comparison
+    trackCompare([apartment.id, ...compareList.map(a => a.id)]);
 
     const titles = {
       en: 'Market Comparison',
@@ -398,10 +427,12 @@ export default function Home() {
 
               <NotificationBell language={language} />
 
+              <ThemeToggle />
+
               <UserMenu 
                 language={language}
                 onLanguageChange={setLanguage}
-                onUpgradeClick={() => setShowUpgradeModal(true)}
+                onUpgradeClick={() => setShowUpgradeClick(true)}
               />
             </div>
           </div>
@@ -462,6 +493,16 @@ export default function Home() {
           />
         </div>
 
+        {/* Search History */}
+        {user && messages.length === 0 && (
+          <div className="mb-8">
+            <SearchHistory 
+              language={language}
+              onSearchSelect={(search) => handleSendMessage(search.query)}
+            />
+          </div>
+        )}
+
         {/* Stats Bar */}
         {messages.length > 0 && (
           <StatsBar
@@ -483,12 +524,12 @@ export default function Home() {
         )}
 
         {/* Map Toggle & Filters */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex gap-2">
             <Button 
               variant="outline"
               onClick={() => setShowMap(!showMap)}
-              className="gap-2 bg-white/70 backdrop-blur-sm border-white/20 hover:bg-white"
+              className="gap-2 bg-white/70 backdrop-blur-sm border-white/20 hover:bg-white dark:bg-gray-800/70 dark:border-gray-700"
             >
               <Map className="h-4 w-4" />
               {showMap ? t.hideMap : t.viewMap}
@@ -501,21 +542,29 @@ export default function Home() {
             />
           </div>
 
-          <FeatureGate
-            isLocked={!canUseAdvancedFilters && (filters.minSize > 0 || filters.maxRisk < 10)}
-            onUpgradeClick={() => setShowUpgradeModal(true)}
-            featureName="Advanced Filters"
-            language={language}
-            showOverlay={false}
-          >
-            <ApartmentFilters
+          <div className="flex gap-2">
+            <SmartFilters
               filters={filters}
               onFiltersChange={setFilters}
-              isPro={canUseAdvancedFilters}
               language={language}
-              onUpgradeClick={() => setShowUpgradeModal(true)}
             />
-          </FeatureGate>
+
+            <FeatureGate
+              isLocked={!canUseAdvancedFilters && (filters.minSize > 0 || filters.maxRisk < 10)}
+              onUpgradeClick={() => setShowUpgradeModal(true)}
+              featureName="Advanced Filters"
+              language={language}
+              showOverlay={false}
+            >
+              <ApartmentFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                isPro={canUseAdvancedFilters}
+                language={language}
+                onUpgradeClick={() => setShowUpgradeModal(true)}
+              />
+            </FeatureGate>
+          </div>
         </div>
 
         {/* Map */}
