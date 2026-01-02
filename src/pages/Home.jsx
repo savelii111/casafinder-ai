@@ -23,6 +23,7 @@ import FeatureGate from '@/components/subscription/FeatureGate';
 import LeadGenerationModal from '@/components/lead/LeadGenerationModal';
 import UserMenu from '@/components/user/UserMenu';
 import NotificationBell from '@/components/user/NotificationBell';
+import ResultsCounter from '@/components/common/ResultsCounter';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 import { Link } from 'react-router-dom';
@@ -136,46 +137,70 @@ export default function Home() {
     // Automatically show map when user searches
     setShowMap(true);
 
-    // Simulate AI response
-    const aiPrompt = `User is searching for apartments in Madrid. Their query: "${content}". 
-    Based on this, provide a helpful response about apartment hunting in Madrid.
-    Respond in ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}.
-    Be concise and helpful.`;
+    try {
+      // Simulate AI response
+      const aiPrompt = `User is searching for apartments in Madrid. Their query: "${content}". 
+      Based on this, provide a helpful response about apartment hunting in Madrid.
+      Count how many properties match their criteria from the available ${apartments.length} properties.
+      Respond in ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}.
+      Be concise and helpful.`;
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: aiPrompt,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          response: { type: "string" },
-          suggested_price_range: { 
-            type: "object",
-            properties: {
-              min: { type: "number" },
-              max: { type: "number" }
-            }
-          },
-          suggested_rooms: { type: "number" }
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: aiPrompt,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            response: { type: "string" },
+            properties_found: { type: "number" },
+            suggested_price_range: { 
+              type: "object",
+              properties: {
+                min: { type: "number" },
+                max: { type: "number" }
+              }
+            },
+            suggested_rooms: { type: "number" }
+          }
         }
+      });
+
+      const propertiesCount = response.properties_found || filteredApartments.length;
+      const countText = {
+        en: `We found ${propertiesCount} properties matching your request`,
+        es: `Encontramos ${propertiesCount} propiedades que coinciden con tu búsqueda`,
+        ru: `Мы нашли ${propertiesCount} объектов по вашему запросу`
+      };
+
+      const assistantMessage = { 
+        role: 'assistant', 
+        content: `${countText[language] || countText.en}. ${response.response || "Check out the map and listings below!"}`
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Update filters based on AI suggestions
+      if (response.suggested_price_range) {
+        setFilters(prev => ({
+          ...prev,
+          priceMin: response.suggested_price_range.min || prev.priceMin,
+          priceMax: response.suggested_price_range.max || prev.priceMax
+        }));
       }
-    });
-
-    const assistantMessage = { 
-      role: 'assistant', 
-      content: response.response || "I found some great apartments for you. Check out the map and listings below!"
-    };
-    
-    setMessages(prev => [...prev, assistantMessage]);
-    setIsLoading(false);
-    setAiRequestsToday(prev => prev + 1);
-
-    // Update filters based on AI suggestions
-    if (response.suggested_price_range) {
-      setFilters(prev => ({
-        ...prev,
-        priceMin: response.suggested_price_range.min || prev.priceMin,
-        priceMax: response.suggested_price_range.max || prev.priceMax
-      }));
+      if (response.suggested_rooms) {
+        setFilters(prev => ({
+          ...prev,
+          rooms: response.suggested_rooms.toString()
+        }));
+      }
+    } catch (error) {
+      console.error('AI Error:', error);
+      const errorMessage = { 
+        role: 'assistant', 
+        content: "Sorry, I had trouble processing your request. Please try again."
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -376,6 +401,15 @@ export default function Home() {
             language={language}
           />
         </div>
+
+        {/* Results Counter - Show after search */}
+        {messages.length > 0 && (
+          <ResultsCounter 
+            count={filteredApartments.length}
+            language={language}
+            showBadges={true}
+          />
+        )}
 
         {/* Map Toggle & Filters */}
         <div className="flex items-center justify-between mb-6">

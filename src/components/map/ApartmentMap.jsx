@@ -65,14 +65,18 @@ export default function ApartmentMap({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="absolute top-4 left-4 z-[1000] backdrop-blur-xl bg-white/80 rounded-xl px-4 py-2 shadow-lg border border-white/20">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute top-4 left-4 z-[1000] backdrop-blur-xl bg-black/80 rounded-xl px-4 py-2 shadow-lg border border-white/20"
+      >
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-gray-600" />
-          <span className="text-sm font-medium text-gray-800">
-            {apartments.length} properties found
+          <MapPin className="h-4 w-4 text-white" />
+          <span className="text-sm font-bold text-white">
+            {apartments.length} {apartments.length === 1 ? 'property' : 'properties'} found
           </span>
         </div>
-      </div>
+      </motion.div>
 
       <MapContainer
         center={center}

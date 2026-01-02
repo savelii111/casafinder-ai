@@ -1,15 +1,15 @@
-import Home from './pages/Home';
-import Subscription from './pages/Subscription';
-import Settings from './pages/Settings';
 import Activity from './pages/Activity';
+import Home from './pages/Home';
+import Settings from './pages/Settings';
+import Subscription from './pages/Subscription';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "Subscription": Subscription,
-    "Settings": Settings,
     "Activity": Activity,
+    "Home": Home,
+    "Settings": Settings,
+    "Subscription": Subscription,
 }
 
 export const pagesConfig = {
