@@ -71,7 +71,10 @@ export default function ApartmentFilters({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="gap-2 bg-white/70 backdrop-blur-sm border-white/20 hover:bg-white">
+        <Button 
+          variant="outline" 
+          className="gap-2 bg-white/70 backdrop-blur-sm border-white/20 hover:bg-white hover:border-gray-300 hover:shadow-lg transition-all duration-300"
+        >
           <SlidersHorizontal className="h-4 w-4" />
           <span className="hidden sm:inline">{t.filters}</span>
         </Button>

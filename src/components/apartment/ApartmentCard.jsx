@@ -25,23 +25,25 @@ export default function ApartmentCard({ apartment, onClick, isSelected }) {
       animate={{ opacity: 1, y: 0 }}
     >
       <Card 
-        className={`cursor-pointer overflow-hidden backdrop-blur-xl bg-white/70 border transition-all duration-300 ${
-          isSelected ? 'border-black shadow-xl' : 'border-white/20 hover:border-gray-300 hover:shadow-lg'
+        className={`cursor-pointer overflow-hidden backdrop-blur-xl bg-white/70 border transition-all duration-300 group ${
+          isSelected ? 'border-black shadow-xl' : 'border-white/20 hover:border-gray-300 hover:shadow-xl hover:-translate-y-1'
         }`}
         onClick={() => onClick?.(apartment)}
       >
-        <div className="relative">
+        <div className="relative overflow-hidden">
           {apartment.photos?.[0] ? (
             <img 
               src={apartment.photos[0]} 
               alt={apartment.title}
-              className="w-full h-36 object-cover"
+              className="w-full h-36 object-cover transition-transform duration-500 group-hover:scale-110"
             />
           ) : (
             <div className="w-full h-36 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
               <MapPin className="h-8 w-8 text-gray-400" />
             </div>
           )}
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           {apartment.riskScore && (
             <Badge className={`absolute top-2 right-2 ${getRiskColor(apartment.riskScore)} text-white border-0`}>
