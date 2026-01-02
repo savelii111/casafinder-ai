@@ -156,9 +156,10 @@ export default function ApartmentFilters({
             </>
           ) : (
             <motion.div 
-              className="bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl p-4 border border-gray-200"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              className="glass-card rounded-xl p-4 shadow-lg"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
             >
               <p className="text-sm text-gray-600 mb-3">{t.proFeature}</p>
               <Button 

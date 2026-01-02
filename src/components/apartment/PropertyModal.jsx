@@ -139,7 +139,7 @@ export default function PropertyModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-white/95 backdrop-blur-xl border-white/20">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 glass-card border-white/30 shadow-2xl">
         {/* Photo Gallery */}
         <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
           {photos.length > 0 ? (
@@ -210,7 +210,7 @@ export default function PropertyModal({
 
           {/* Property Details */}
           <motion.div 
-            className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
+            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -261,7 +261,7 @@ export default function PropertyModal({
 
           {/* Risk Detector */}
           <motion.div 
-            className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
+            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
@@ -294,7 +294,7 @@ export default function PropertyModal({
           {/* Market Price Analysis */}
           {apartment.marketPriceDiff !== undefined && (
             <motion.div 
-              className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
+              className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -344,7 +344,7 @@ export default function PropertyModal({
 
           {/* True Cost Calculator */}
           <motion.div 
-            className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
+            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
@@ -393,7 +393,7 @@ export default function PropertyModal({
 
           {/* AI Actions */}
           <motion.div 
-            className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
+            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -406,7 +406,7 @@ export default function PropertyModal({
             <div className="grid grid-cols-3 gap-3">
               <Button 
                 variant="outline" 
-                className="flex flex-col items-center gap-2 h-auto py-4 bg-white/50 hover:bg-white border-gray-200"
+                className="flex flex-col items-center gap-2 h-auto py-4 glass-card hover:scale-105 hover:shadow-xl transition-all duration-300 border-gray-200"
                 onClick={() => onAskAI?.(apartment)}
               >
                 <MessageSquare className="h-5 w-5" />
@@ -414,7 +414,7 @@ export default function PropertyModal({
               </Button>
               <Button 
                 variant="outline" 
-                className="flex flex-col items-center gap-2 h-auto py-4 bg-white/50 hover:bg-white border-gray-200"
+                className="flex flex-col items-center gap-2 h-auto py-4 glass-card hover:scale-105 hover:shadow-xl transition-all duration-300 border-gray-200 disabled:opacity-50 disabled:hover:scale-100"
                 onClick={() => onCompare?.(apartment)}
                 disabled={userPlan === 'free'}
               >
@@ -423,7 +423,7 @@ export default function PropertyModal({
               </Button>
               <Button 
                 variant="outline" 
-                className="flex flex-col items-center gap-2 h-auto py-4 bg-white/50 hover:bg-white border-gray-200"
+                className="flex flex-col items-center gap-2 h-auto py-4 glass-card hover:scale-105 hover:shadow-xl transition-all duration-300 border-gray-200"
                 onClick={() => onAskAI?.(apartment, 'translate')}
               >
                 <Languages className="h-5 w-5" />

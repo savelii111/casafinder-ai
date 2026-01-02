@@ -173,7 +173,7 @@ export default function UpgradeModal({ isOpen, onClose, currentPlan = 'free', on
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl p-0 bg-white/95 backdrop-blur-xl border-white/20 overflow-hidden">
+      <DialogContent className="max-w-4xl p-0 glass-card border-white/30 shadow-2xl overflow-hidden">
         <div className="bg-gradient-to-br from-gray-900 to-black p-8 text-white">
           <DialogTitle className="text-3xl font-bold mb-2">{t.title}</DialogTitle>
           <p className="text-gray-300">{t.subtitle}</p>
@@ -191,14 +191,14 @@ export default function UpgradeModal({ isOpen, onClose, currentPlan = 'free', on
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`relative rounded-2xl p-6 ${
+                  className={`relative rounded-2xl p-6 transition-all duration-300 ${
                     plan.popular 
-                      ? 'bg-black text-white shadow-xl scale-105' 
-                      : 'bg-white/50 backdrop-blur-sm border border-gray-200'
+                      ? 'glass-dark text-white shadow-2xl scale-105 hover:scale-110' 
+                      : 'glass-card border-gray-200 hover:shadow-xl hover:scale-105'
                   }`}
                 >
                   {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-black font-semibold">
+                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white font-semibold border border-white/20 shadow-lg">
                       Most Popular
                     </Badge>
                   )}

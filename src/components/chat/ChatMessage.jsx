@@ -16,10 +16,10 @@ export default function ChatMessage({ message, isUser }) {
       </div>
       
       <div className={`max-w-[80%] ${isUser ? 'text-right' : ''}`}>
-        <div className={`inline-block px-4 py-3 rounded-2xl ${
+        <div className={`inline-block px-4 py-3 rounded-2xl transition-all duration-300 ${
           isUser 
-            ? 'bg-black text-white rounded-tr-sm' 
-            : 'backdrop-blur-xl bg-white/70 border border-white/20 shadow-sm rounded-tl-sm text-gray-800'
+            ? 'glass-dark text-white rounded-tr-sm shadow-lg' 
+            : 'glass-card rounded-tl-sm text-gray-800 shadow-lg hover:shadow-xl'
         }`}>
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
         </div>

@@ -239,7 +239,7 @@ export default function Home() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowUpgradeModal(true)}
-                className="gap-2 bg-gradient-to-r from-amber-400 to-orange-500 text-black border-0 hover:from-amber-500 hover:to-orange-600"
+                className="gap-2 bg-black text-white border-white/20 hover:bg-gray-800 hover:shadow-lg transition-all duration-300"
               >
                 <Crown className="h-4 w-4" />
                 <span className="hidden sm:inline">Upgrade</span>
@@ -352,6 +352,7 @@ export default function Home() {
           sortBy={sortBy}
           onSortChange={setSortBy}
           language={language}
+          isLoading={!apartments.length}
         />
       </main>
 

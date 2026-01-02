@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUpDown, Home } from "lucide-react";
 import ApartmentCard from "./ApartmentCard";
+import SkeletonLoader from "../common/SkeletonLoader";
 
 export default function ApartmentList({ 
   apartments, 
@@ -10,7 +11,8 @@ export default function ApartmentList({
   selectedId,
   sortBy,
   onSortChange,
-  language = 'en'
+  language = 'en',
+  isLoading = false
 }) {
   const labels = {
     en: {
@@ -88,7 +90,9 @@ export default function ApartmentList({
         </div>
       </div>
 
-      {sortedApartments.length === 0 ? (
+      {isLoading ? (
+        <SkeletonLoader count={8} />
+      ) : sortedApartments.length === 0 ? (
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

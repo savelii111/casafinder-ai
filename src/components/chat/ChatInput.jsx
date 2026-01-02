@@ -35,7 +35,7 @@ export default function ChatInput({ onSend, isLoading, placeholder, language }) 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="relative backdrop-blur-xl bg-white/70 rounded-2xl border border-white/20 shadow-lg p-2">
+      <div className="relative glass-card rounded-2xl shadow-xl p-2 hover:shadow-2xl transition-shadow duration-300">
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
