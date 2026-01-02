@@ -27,7 +27,18 @@ export default function Layout({ children }) {
         }
         
         .leaflet-container {
+          height: 100%;
+          width: 100%;
           z-index: 1;
+        }
+        
+        .leaflet-pane {
+          z-index: 400;
+        }
+        
+        .leaflet-top,
+        .leaflet-bottom {
+          z-index: 1000;
         }
         
         .custom-price-marker {
