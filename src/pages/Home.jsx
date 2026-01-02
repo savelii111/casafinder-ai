@@ -18,78 +18,7 @@ import PropertyModal from '@/components/apartment/PropertyModal';
 import UpgradeModal from '@/components/subscription/UpgradeModal';
 import LanguageSelector from '@/components/common/LanguageSelector';
 
-const SAMPLE_APARTMENTS = [
-  {
-    id: '1',
-    title: 'Modern Studio in Sol',
-    price: 950,
-    address: 'Calle del Sol 15, Madrid Centro',
-    rooms: 1,
-    size: 45,
-    lat: 40.4168,
-    lng: -3.7038,
-    photos: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800'],
-    riskScore: 3,
-    trueCost: { rent: 950, utilities: 70, internet: 35, food: 180 },
-    aiInsight: 'Excellent location in the heart of Madrid. Walking distance to major attractions. Safe neighborhood with great nightlife options.'
-  },
-  {
-    id: '2',
-    title: 'Bright 2BR in Malasaña',
-    price: 1400,
-    address: 'Calle Fuencarral 88, Malasaña',
-    rooms: 2,
-    size: 75,
-    lat: 40.4252,
-    lng: -3.7037,
-    photos: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'],
-    riskScore: 2,
-    trueCost: { rent: 1400, utilities: 90, internet: 35, food: 200 },
-    aiInsight: 'Trendy neighborhood popular with young professionals. Excellent restaurants and cafes. Very safe area with good metro connections.'
-  },
-  {
-    id: '3',
-    title: 'Cozy Loft in Lavapiés',
-    price: 850,
-    address: 'Calle Lavapiés 42, Lavapiés',
-    rooms: 1,
-    size: 55,
-    lat: 40.4085,
-    lng: -3.6995,
-    photos: ['https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=800'],
-    riskScore: 5,
-    trueCost: { rent: 850, utilities: 65, internet: 30, food: 150 },
-    aiInsight: 'Multicultural neighborhood with affordable prices. Some areas can be noisy at night. Good local markets and diverse food options.'
-  },
-  {
-    id: '4',
-    title: 'Elegant 3BR in Salamanca',
-    price: 2800,
-    address: 'Calle Serrano 45, Salamanca',
-    rooms: 3,
-    size: 120,
-    lat: 40.4296,
-    lng: -3.6850,
-    photos: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800'],
-    riskScore: 1,
-    trueCost: { rent: 2800, utilities: 150, internet: 45, food: 300 },
-    aiInsight: 'Premium neighborhood with luxury shopping and dining. Extremely safe area. Higher prices but excellent quality of life.'
-  },
-  {
-    id: '5',
-    title: 'Student Flat in Moncloa',
-    price: 650,
-    address: 'Calle Princesa 80, Moncloa',
-    rooms: 1,
-    size: 35,
-    lat: 40.4350,
-    lng: -3.7195,
-    photos: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800'],
-    riskScore: 4,
-    trueCost: { rent: 650, utilities: 55, internet: 25, food: 140 },
-    aiInsight: 'University area with many students. Affordable prices and good nightlife. Well connected by metro and bus.'
-  }
-];
+// Sample apartments are now loaded from database
 
 export default function Home() {
   const [language, setLanguage] = useState('en');
