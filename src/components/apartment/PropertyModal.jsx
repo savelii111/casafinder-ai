@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import PropertyTabs from './PropertyTabs';
+import PhotoGallery from './PhotoGallery';
 import { Progress } from "@/components/ui/progress";
 import { 
   MessageSquare, Bed, Maximize, MapPin, ChevronLeft, ChevronRight,
-  Home, TrendingUp, TrendingDown, Minus, Calendar, PawPrint
+  Home, TrendingUp, TrendingDown, Minus, Calendar, PawPrint, Share2,
+  CalendarCheck, Images, DollarSign
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function PropertyModal({ 
   apartment, 
@@ -42,7 +46,21 @@ export default function PropertyModal({
       availableFrom: 'Available From',
       yes: 'Yes',
       no: 'No',
-      hireAgent: 'Hire AI Agent'
+      hireAgent: 'Hire AI Agent',
+      trueCost: 'True Cost Calculator',
+      rent: 'Rent',
+      utilities: 'Utilities',
+      internet: 'Internet',
+      food: 'Food',
+      total: 'Total Monthly Cost',
+      includeFood: 'Include food estimate',
+      perMonth: '/month',
+      quickActions: 'Quick Actions',
+      shareLink: 'Share Link',
+      scheduleVisit: 'Schedule Visit',
+      viewGallery: 'View Gallery',
+      linkCopied: 'Link copied!',
+      visitScheduled: 'Visit scheduled!'
     },
     es: {
       rooms: 'habitaciones',
@@ -87,45 +105,61 @@ export default function PropertyModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 glass-card border-white/30 shadow-2xl">
         {/* Photo Gallery */}
-        <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200">
-          {photos.length > 0 ? (
-            <>
-              <img 
-                src={photos[currentPhotoIndex]} 
-                alt={apartment.title}
-                className="w-full h-full object-cover"
-              />
-              {photos.length > 1 && (
-                <>
-                  <button 
-                    onClick={prevPhoto}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button 
-                    onClick={nextPhoto}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                    {photos.map((_, idx) => (
-                      <div 
-                        key={idx}
-                        className={`w-2 h-2 rounded-full ${idx === currentPhotoIndex ? 'bg-white' : 'bg-white/50'}`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Home className="h-16 w-16 text-gray-300" />
-            </div>
-          )}
+        <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer group" onClick={() => setShowGallery(true)}>
+        {photos.length > 0 ? (
+        <>
+        <img 
+        src={photos[currentPhotoIndex]} 
+        alt={apartment.title}
+        className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+        <Button
+          variant="ghost"
+          className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70 text-white"
+        >
+          <Images className="h-5 w-5 mr-2" />
+          {t.viewGallery}
+        </Button>
         </div>
+        {photos.length > 1 && (
+        <>
+          <button 
+            onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {photos.map((_, idx) => (
+              <div 
+                key={idx}
+                className={`w-2 h-2 rounded-full ${idx === currentPhotoIndex ? 'bg-white' : 'bg-white/50'}`}
+              />
+            ))}
+          </div>
+        </>
+        )}
+        </>
+        ) : (
+        <div className="w-full h-full flex items-center justify-center">
+        <Home className="h-16 w-16 text-gray-300" />
+        </div>
+        )}
+        </div>
+
+        <PhotoGallery 
+        photos={photos}
+        initialIndex={currentPhotoIndex}
+        isOpen={showGallery}
+        onClose={() => setShowGallery(false)}
+        />
 
         <div className="p-6 space-y-6">
           {/* Header */}
@@ -271,23 +305,87 @@ export default function PropertyModal({
             </motion.div>
           )}
 
-          {/* Hire AI Agent - Pro 2 / Ultimate only */}
-          {canUseWhatsApp && (
+          {/* True Cost Calculator */}
+          {apartment.trueCost && (
             <motion.div 
               className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
             >
-              <Button 
-                className="w-full bg-black hover:bg-gray-800 text-white"
-                onClick={() => onHireAgent?.(apartment)}
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                {t.hireAgent}
-              </Button>
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <h3 className="font-semibold text-gray-900">{t.trueCost}</h3>
+              </div>
+
+              <div className="space-y-2 text-sm mb-4">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600">{t.rent}</span>
+                  <span className="font-medium">€{apartment.trueCost.rent}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600">{t.utilities}</span>
+                  <span className="font-medium">€{apartment.trueCost.utilities}</span>
+                </div>
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600">{t.internet}</span>
+                  <span className="font-medium">€{apartment.trueCost.internet}</span>
+                </div>
+                {includeFood && (
+                  <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                    <span className="text-gray-600">{t.food}</span>
+                    <span className="font-medium">€{apartment.trueCost.food || 300}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-2">
+                  <span className="font-semibold text-gray-900">{t.total}</span>
+                  <span className="font-bold text-lg text-purple-600">€{calculateTotalCost()}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                <span className="text-sm text-gray-700">{t.includeFood}</span>
+                <Switch checked={includeFood} onCheckedChange={setIncludeFood} />
+              </div>
             </motion.div>
           )}
+
+          {/* Quick Actions */}
+          <motion.div 
+            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h3 className="font-semibold text-gray-900 mb-3">{t.quickActions}</h3>
+            <div className="grid grid-cols-1 gap-2">
+              {canUseWhatsApp && (
+                <Button 
+                  className="w-full bg-black hover:bg-gray-800 text-white"
+                  onClick={() => onHireAgent?.(apartment)}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  {t.hireAgent}
+                </Button>
+              )}
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={handleScheduleVisit}
+              >
+                <CalendarCheck className="h-4 w-4 mr-2" />
+                {t.scheduleVisit}
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={handleShareLink}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                {t.shareLink}
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </DialogContent>
     </Dialog>

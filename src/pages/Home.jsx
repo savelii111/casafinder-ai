@@ -24,6 +24,7 @@ import LeadGenerationModal from '@/components/lead/LeadGenerationModal';
 import UserMenu from '@/components/user/UserMenu';
 import NotificationBell from '@/components/user/NotificationBell';
 import ResultsCounter from '@/components/common/ResultsCounter';
+import CompareModal from '@/components/apartment/CompareModal';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 import { Link } from 'react-router-dom';
@@ -55,6 +56,8 @@ export default function Home() {
   const [aiResponseTitle, setAiResponseTitle] = useState('');
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [leadApartment, setLeadApartment] = useState(null);
+  const [compareList, setCompareList] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -479,7 +482,14 @@ export default function Home() {
         isOpen={showPropertyModal}
         onClose={() => setShowPropertyModal(false)}
         onAskAI={handleAskAI}
-        onCompare={handleCompare}
+        onCompare={(apt) => {
+          if (compareList.length < 3 && !compareList.find(a => a.id === apt.id)) {
+            setCompareList([...compareList, apt]);
+          }
+          if (compareList.length >= 1) {
+            setShowCompareModal(true);
+          }
+        }}
         onHireAgent={handleHireAgent}
         language={language}
         userPlan={userPlan}
@@ -516,6 +526,14 @@ export default function Home() {
         onClose={() => setAiResponse(null)}
         title={aiResponseTitle}
         response={aiResponse || ''}
+        language={language}
+      />
+
+      <CompareModal
+        apartments={compareList}
+        isOpen={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        onRemove={(id) => setCompareList(compareList.filter(a => a.id !== id))}
         language={language}
       />
     </div>
