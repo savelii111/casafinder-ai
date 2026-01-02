@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Bed, Maximize, Shield, MapPin } from "lucide-react";
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -28,50 +29,58 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
   };
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <Card 
-        className={`cursor-pointer overflow-hidden backdrop-blur-xl bg-white/70 border transition-all duration-300 group ${
-          isSelected ? 'border-black shadow-xl' : 'border-white/20 hover:border-gray-300 hover:shadow-xl hover:-translate-y-1'
-        }`}
-        onClick={() => onClick?.(apartment)}
+    <TooltipProvider>
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <div className="relative overflow-hidden">
-          {apartment.photos?.[0] ? (
-            <img 
-              src={apartment.photos[0]} 
-              alt={apartment.title}
-              className="w-full h-36 object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-          ) : (
-            <div className="w-full h-36 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-              <MapPin className="h-8 w-8 text-gray-400" />
+        <Card 
+          className={`cursor-pointer overflow-hidden backdrop-blur-xl bg-white/70 border transition-all duration-300 group ${
+            isSelected ? 'border-black shadow-xl' : 'border-white/20 hover:border-gray-300 hover:shadow-xl hover:-translate-y-1'
+          }`}
+          onClick={() => onClick?.(apartment)}
+        >
+          <div className="relative overflow-hidden">
+            {apartment.photos?.[0] ? (
+              <img 
+                src={apartment.photos[0]} 
+                alt={apartment.title}
+                className="w-full h-36 object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            ) : (
+              <div className="w-full h-36 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                <MapPin className="h-8 w-8 text-gray-400" />
+              </div>
+            )}
+            
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            <div className="absolute top-2 right-2">
+              <FavoriteButton
+                apartment={apartment}
+                userEmail={user?.email}
+                onUpgradeClick={onUpgradeClick}
+                canSave={canSaveFavorites}
+                language={language}
+              />
             </div>
-          )}
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
-          <div className="absolute top-2 right-2">
-            <FavoriteButton
-              apartment={apartment}
-              userEmail={user?.email}
-              onUpgradeClick={onUpgradeClick}
-              canSave={canSaveFavorites}
-              language={language}
-            />
+            
+            {apartment.riskScore && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge className={`absolute top-2 left-2 ${getRiskColor(apartment.riskScore)} text-white border-0`}>
+                    <Shield className="h-3 w-3 mr-1" />
+                    {getRiskLabel(apartment.riskScore)}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Risk Score: {apartment.riskScore}/10</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
-          
-          {apartment.riskScore && (
-            <Badge className={`absolute top-2 left-2 ${getRiskColor(apartment.riskScore)} text-white border-0`}>
-              <Shield className="h-3 w-3 mr-1" />
-              {getRiskLabel(apartment.riskScore)}
-            </Badge>
-          )}
-        </div>
 
         <div className="p-4">
           <div className="flex justify-between items-start mb-2">
@@ -112,5 +121,6 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
         </div>
       </Card>
     </motion.div>
+    </TooltipProvider>
   );
 }

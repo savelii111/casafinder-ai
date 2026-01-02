@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUpDown, Home } from "lucide-react";
 import ApartmentCard from "./ApartmentCard";
-import SkeletonLoader from "../common/SkeletonLoader";
+import { ApartmentCardSkeleton } from "../common/SkeletonCard";
 
 export default function ApartmentList({ 
   apartments, 
@@ -92,7 +92,11 @@ export default function ApartmentList({
       </div>
 
       {isLoading ? (
-        <SkeletonLoader count={8} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <ApartmentCardSkeleton key={i} />
+          ))}
+        </div>
       ) : sortedApartments.length === 0 ? (
         <motion.div 
           initial={{ opacity: 0 }}

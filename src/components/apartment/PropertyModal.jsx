@@ -369,12 +369,22 @@ export default function PropertyModal({
             </motion.div>
           )}
 
-          {/* Quick Actions */}
+          {/* POI Nearby */}
           <motion.div 
             className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+          >
+            <POINearby apartment={apartment} language={language} />
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div 
+            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
           >
             <h3 className="font-semibold text-gray-900 mb-3">{t.quickActions}</h3>
             <div className="grid grid-cols-1 gap-2">
@@ -407,6 +417,13 @@ export default function PropertyModal({
           </motion.div>
         </div>
       </DialogContent>
+
+      <ShareModal
+        apartment={apartment}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        language={language}
+      />
     </Dialog>
   );
 }
