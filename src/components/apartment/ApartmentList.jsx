@@ -12,7 +12,8 @@ export default function ApartmentList({
   sortBy,
   onSortChange,
   language = 'en',
-  isLoading = false
+  isLoading = false,
+  onUpgradeClick
 }) {
   const labels = {
     en: {
@@ -114,6 +115,8 @@ export default function ApartmentList({
                 apartment={apt}
                 onClick={onApartmentClick}
                 isSelected={selectedId === apt.id}
+                language={language}
+                onUpgradeClick={onUpgradeClick}
               />
             </motion.div>
           ))}
