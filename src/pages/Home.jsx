@@ -145,13 +145,13 @@ export default function Home() {
 
   const labels = {
     en: {
-      welcome: "Find Your Perfect Home in Madrid",
-      subtitle: "AI-powered apartment search with risk analysis and true cost calculator",
-      startChat: "Start searching with AI",
-      viewMap: "View Map",
-      hideMap: "Hide Map",
-      freeRequestsLeft: "AI requests left today",
-      upgradeForMore: "Upgrade for unlimited"
+      welcome: "Найдите Идеальный Дом или Квартиру в Испании",
+      subtitle: "Умный поиск жилья с помощью нейросети, анализ рисков и калькулятор реальной стоимости",
+      startChat: "Начать поиск с AI",
+      viewMap: "Показать Карту",
+      hideMap: "Скрыть Карту",
+      freeRequestsLeft: "AI запросов осталось сегодня",
+      upgradeForMore: "Улучшите для безлимита"
     },
     es: {
       welcome: "Encuentra Tu Hogar Perfecto en Madrid",
