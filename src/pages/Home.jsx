@@ -20,6 +20,7 @@ import LanguageSelector from '@/components/common/LanguageSelector';
 import AILoadingModal from '@/components/chat/AILoadingModal';
 import AIResponseModal from '@/components/chat/AIResponseModal';
 import FeatureGate from '@/components/subscription/FeatureGate';
+import LeadGenerationModal from '@/components/lead/LeadGenerationModal';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 import { Link } from 'react-router-dom';
@@ -49,6 +50,8 @@ export default function Home() {
   const [aiLoadingMessage, setAiLoadingMessage] = useState('');
   const [aiResponse, setAiResponse] = useState(null);
   const [aiResponseTitle, setAiResponseTitle] = useState('');
+  const [showLeadModal, setShowLeadModal] = useState(false);
+  const [leadApartment, setLeadApartment] = useState(null);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -456,9 +459,18 @@ export default function Home() {
         onClose={() => setShowPropertyModal(false)}
         onAskAI={handleAskAI}
         onCompare={handleCompare}
+        onHireAgent={handleHireAgent}
         language={language}
         userPlan={userPlan}
         canCompare={canCompareProperties}
+        canUseWhatsApp={canUseWhatsApp}
+      />
+
+      <LeadGenerationModal
+        isOpen={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        apartment={leadApartment}
+        language={language}
       />
 
       {/* Upgrade Modal */}

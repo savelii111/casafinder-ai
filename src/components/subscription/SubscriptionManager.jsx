@@ -103,19 +103,28 @@ export default function SubscriptionManager({ language = 'en' }) {
     
     setLoading(true);
     try {
-      // Create Stripe checkout session
-      // In production, this would call a backend function to create the session
-      toast.info('Stripe integration required. This would redirect to checkout.');
+      const { createStripeCheckout } = await import('@/components/services/integrations');
+      const session = await createStripeCheckout(planId, user.email);
       
-      // Mock implementation:
-      // const response = await fetch('/api/create-checkout-session', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ planId, userEmail: user.email })
-      // });
-      // const session = await response.json();
+      // In production with real Stripe, redirect to checkout
       // const stripe = await stripePromise;
-      // await stripe.redirectToCheckout({ sessionId: session.id });
+      // await stripe.redirectToCheckout({ sessionId: session.sessionId });
+      
+      // For now, simulate success and trigger confetti
+      const { celebrateUpgrade } = await import('@/components/utils/confetti');
+      celebrateUpgrade();
+      toast.success('Upgrade Successful! 🎉');
+      
+      // Update subscription in database
+      if (user?.email) {
+        const subs = await base44.entities.UserSubscription.filter({ user_email: user.email });
+        if (subs.length > 0) {
+          await base44.entities.UserSubscription.update(subs[0].id, { plan: planId });
+        } else {
+          await base44.entities.UserSubscription.create({ user_email: user.email, plan: planId });
+        }
+        queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      }
       
     } catch (error) {
       toast.error('Failed to start checkout');

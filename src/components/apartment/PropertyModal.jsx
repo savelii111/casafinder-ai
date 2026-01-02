@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import PropertyTabs from './PropertyTabs';
 import { 
   Shield, Calculator, MessageSquare, ArrowLeftRight, Languages,
   X, Bed, Maximize, MapPin, ChevronLeft, ChevronRight, Sparkles,
@@ -18,48 +16,21 @@ export default function PropertyModal({
   onClose, 
   onAskAI, 
   onCompare,
+  onHireAgent,
   language = 'en',
   userPlan = 'free',
-  canCompare = false
+  canCompare = false,
+  canUseWhatsApp = false
 }) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [includeFood, setIncludeFood] = useState(false);
 
   if (!apartment) return null;
 
   const photos = apartment.photos || [];
-  const trueCost = apartment.trueCost || { rent: apartment.price, utilities: 80, internet: 30, food: 200 };
-  const totalCost = trueCost.rent + trueCost.utilities + trueCost.internet + (includeFood ? trueCost.food : 0);
-
-  const getRiskColor = (score) => {
-    if (score <= 3) return 'text-green-500';
-    if (score <= 6) return 'text-amber-500';
-    return 'text-red-500';
-  };
-
-  const getRiskBgColor = (score) => {
-    if (score <= 3) return 'bg-green-500';
-    if (score <= 6) return 'bg-amber-500';
-    return 'bg-red-500';
-  };
 
   const labels = {
     en: {
-      riskDetector: 'Risk Detector',
-      trueCost: 'True Cost Calculator',
-      aiActions: 'AI Actions',
-      askAI: 'Ask AI',
-      compare: 'Compare',
-      translate: 'Translate',
-      rent: 'Rent',
-      utilities: 'Utilities',
-      internet: 'Internet',
-      food: 'Food (optional)',
-      total: 'Total Monthly Cost',
       rooms: 'rooms',
-      lowRisk: 'Low Risk',
-      mediumRisk: 'Medium Risk',
-      highRisk: 'High Risk',
       marketPrice: 'Market Price Analysis',
       overpriced: 'Above market',
       bargain: 'Below market',
@@ -71,24 +42,11 @@ export default function PropertyModal({
       petsAllowed: 'Pets Allowed',
       availableFrom: 'Available From',
       yes: 'Yes',
-      no: 'No'
+      no: 'No',
+      hireAgent: 'Hire AI Agent'
     },
     es: {
-      riskDetector: 'Detector de Riesgo',
-      trueCost: 'Calculadora de Coste Real',
-      aiActions: 'Acciones IA',
-      askAI: 'Preguntar IA',
-      compare: 'Comparar',
-      translate: 'Traducir',
-      rent: 'Alquiler',
-      utilities: 'Servicios',
-      internet: 'Internet',
-      food: 'Comida (opcional)',
-      total: 'Coste Mensual Total',
       rooms: 'habitaciones',
-      lowRisk: 'Bajo Riesgo',
-      mediumRisk: 'Riesgo Medio',
-      highRisk: 'Alto Riesgo',
       marketPrice: 'Análisis de Precio de Mercado',
       overpriced: 'Sobre el mercado',
       bargain: 'Bajo el mercado',
@@ -100,24 +58,11 @@ export default function PropertyModal({
       petsAllowed: 'Mascotas Permitidas',
       availableFrom: 'Disponible Desde',
       yes: 'Sí',
-      no: 'No'
+      no: 'No',
+      hireAgent: 'Contratar Agente IA'
     },
     ru: {
-      riskDetector: 'Детектор Рисков',
-      trueCost: 'Калькулятор Реальной Стоимости',
-      aiActions: 'AI Действия',
-      askAI: 'Спросить AI',
-      compare: 'Сравнить',
-      translate: 'Перевести',
-      rent: 'Аренда',
-      utilities: 'Коммунальные',
-      internet: 'Интернет',
-      food: 'Еда (опционально)',
-      total: 'Итого в Месяц',
       rooms: 'комнат',
-      lowRisk: 'Низкий Риск',
-      mediumRisk: 'Средний Риск',
-      highRisk: 'Высокий Риск',
       marketPrice: 'Анализ Рыночной Цены',
       overpriced: 'Выше рынка',
       bargain: 'Ниже рынка',
@@ -129,7 +74,8 @@ export default function PropertyModal({
       petsAllowed: 'Животные Разрешены',
       availableFrom: 'Доступно С',
       yes: 'Да',
-      no: 'Нет'
+      no: 'Нет',
+      hireAgent: 'Нанять AI Агента'
     }
   };
 
@@ -260,36 +206,19 @@ export default function PropertyModal({
             </div>
           </motion.div>
 
-          {/* Risk Detector */}
+          {/* Property Tabs */}
           <motion.div 
             className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className={`h-5 w-5 ${getRiskColor(apartment.riskScore)}`} />
-              <h3 className="font-semibold text-gray-900">{t.riskDetector}</h3>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Risk Score</span>
-                <span className={`font-bold ${getRiskColor(apartment.riskScore)}`}>
-                  {apartment.riskScore || '?'}/10
-                </span>
-              </div>
-              <Progress 
-                value={(apartment.riskScore || 5) * 10} 
-                className={`h-2 ${getRiskBgColor(apartment.riskScore)}`}
-              />
-              {apartment.aiInsight && (
-                <p className="text-sm text-gray-600 mt-3 italic bg-gray-50 rounded-lg p-3">
-                  <Sparkles className="h-4 w-4 inline mr-1 text-gray-400" />
-                  {apartment.aiInsight}
-                </p>
-              )}
-            </div>
+            <PropertyTabs 
+              apartment={apartment}
+              language={language}
+              onTranslate={(apt) => onAskAI?.(apt, 'translate')}
+              userPlan={userPlan}
+            />
           </motion.div>
 
           {/* Market Price Analysis */}
@@ -343,95 +272,23 @@ export default function PropertyModal({
             </motion.div>
           )}
 
-          {/* True Cost Calculator */}
-          <motion.div 
-            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Calculator className="h-5 w-5 text-gray-700" />
-              <h3 className="font-semibold text-gray-900">{t.trueCost}</h3>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="flex items-center gap-2 text-sm text-gray-600">
-                  <Home className="h-4 w-4" /> {t.rent}
-                </span>
-                <span className="font-medium">€{trueCost.rent}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="flex items-center gap-2 text-sm text-gray-600">
-                  <Zap className="h-4 w-4" /> {t.utilities}
-                </span>
-                <span className="font-medium">€{trueCost.utilities}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="flex items-center gap-2 text-sm text-gray-600">
-                  <Wifi className="h-4 w-4" /> {t.internet}
-                </span>
-                <span className="font-medium">€{trueCost.internet}</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="h-4 w-4 text-gray-600" />
-                  <Label htmlFor="food-toggle" className="text-sm text-gray-600">{t.food}</Label>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-medium text-gray-400">€{trueCost.food}</span>
-                  <Switch id="food-toggle" checked={includeFood} onCheckedChange={setIncludeFood} />
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-                <span className="font-semibold text-gray-900">{t.total}</span>
-                <span className="text-2xl font-bold text-black">€{totalCost}</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* AI Actions */}
-          <motion.div 
-            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-gray-700" />
-              <h3 className="font-semibold text-gray-900">{t.aiActions}</h3>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-3">
+          {/* Hire AI Agent - Pro 2 / Ultimate only */}
+          {canUseWhatsApp && (
+            <motion.div 
+              className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
               <Button 
-                variant="outline" 
-                className="flex flex-col items-center gap-2 h-auto py-4 glass-card hover:scale-105 hover:shadow-xl transition-all duration-300 border-gray-200"
-                onClick={() => onAskAI?.(apartment)}
+                className="w-full bg-black hover:bg-gray-800 text-white"
+                onClick={() => onHireAgent?.(apartment)}
               >
-                <MessageSquare className="h-5 w-5" />
-                <span className="text-xs">{t.askAI}</span>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                {t.hireAgent}
               </Button>
-              <Button 
-                variant="outline" 
-                className="flex flex-col items-center gap-2 h-auto py-4 glass-card hover:scale-105 hover:shadow-xl transition-all duration-300 border-gray-200 disabled:opacity-50 disabled:hover:scale-100"
-                onClick={() => onCompare?.(apartment)}
-                disabled={!canCompare}
-              >
-                <ArrowLeftRight className="h-5 w-5" />
-                <span className="text-xs">{t.compare}</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex flex-col items-center gap-2 h-auto py-4 glass-card hover:scale-105 hover:shadow-xl transition-all duration-300 border-gray-200"
-                onClick={() => onAskAI?.(apartment, 'translate')}
-              >
-                <Languages className="h-5 w-5" />
-                <span className="text-xs">{t.translate}</span>
-              </Button>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
