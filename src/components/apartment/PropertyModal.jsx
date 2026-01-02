@@ -3,11 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import PropertyTabs from './PropertyTabs';
+import { Progress } from "@/components/ui/progress";
 import { 
-  Shield, Calculator, MessageSquare, ArrowLeftRight, Languages,
-  X, Bed, Maximize, MapPin, ChevronLeft, ChevronRight, Sparkles,
-  Zap, Wifi, UtensilsCrossed, Home, TrendingUp, TrendingDown, 
-  Minus, Calendar, PawPrint, Package
+  MessageSquare, Bed, Maximize, MapPin, ChevronLeft, ChevronRight,
+  Home, TrendingUp, TrendingDown, Minus, Calendar, PawPrint
 } from "lucide-react";
 
 export default function PropertyModal({ 
