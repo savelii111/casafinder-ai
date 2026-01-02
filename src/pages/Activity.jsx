@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Activity, ArrowLeft, Sparkles, Eye, Heart, MessageSquare,
+  Activity as ActivityIcon, ArrowLeft, Sparkles, Eye, Heart, MessageSquare,
   Home, Clock, TrendingUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -164,7 +164,7 @@ export default function Activity() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Activity className="h-8 w-8" />
+                <ActivityIcon className="h-8 w-8" />
                 {t.title}
               </h1>
             </div>
