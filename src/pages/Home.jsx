@@ -25,8 +25,12 @@ import UserMenu from '@/components/user/UserMenu';
 import NotificationBell from '@/components/user/NotificationBell';
 import ResultsCounter from '@/components/common/ResultsCounter';
 import CompareModal from '@/components/apartment/CompareModal';
+import AIRequestTracker from '@/components/common/AIRequestTracker';
+import MapSkeleton from '@/components/map/MapSkeleton';
+import StatsBar from '@/components/common/StatsBar';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
+import { notifyAILimitReached } from '@/components/utils/notifications';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -58,6 +62,7 @@ export default function Home() {
   const [leadApartment, setLeadApartment] = useState(null);
   const [compareList, setCompareList] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [mapLoading, setMapLoading] = useState(false);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -83,11 +88,49 @@ export default function Home() {
     queryFn: () => base44.entities.Apartment.list(),
   });
 
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favorites', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.Favorite.filter({ user_email: user.email });
+    },
+    enabled: !!user?.email
+  });
+
   useEffect(() => {
     if (dbApartments.length > 0) {
       setApartments(dbApartments);
     }
   }, [dbApartments]);
+
+  // Update AI requests tracking
+  const updateAIRequestsMutation = useMutation({
+    mutationFn: async () => {
+      if (!subscription) return;
+      const today = new Date().toISOString().split('T')[0];
+      const lastRequestDate = subscription.last_request_date?.split('T')[0];
+      
+      const newCount = lastRequestDate === today ? (subscription.ai_requests_today || 0) + 1 : 1;
+      
+      await base44.entities.UserSubscription.update(subscription.id, {
+        ai_requests_today: newCount,
+        last_request_date: new Date().toISOString()
+      });
+
+      // Notify if limit reached
+      if (newCount >= 3 && userPlan === 'free') {
+        await notifyAILimitReached(user.email, language);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+    }
+  });
 
   const labels = {
     en: {
@@ -139,8 +182,11 @@ export default function Home() {
 
     // Automatically show map when user searches
     setShowMap(true);
+    setMapLoading(true);
 
     try {
+      // Update AI request count
+      updateAIRequestsMutation.mutate();
       // Simulate AI response
       const aiPrompt = `User is searching for apartments in Madrid. Their query: "${content}". 
       Based on this, provide a helpful response about apartment hunting in Madrid.
@@ -204,6 +250,7 @@ export default function Home() {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setTimeout(() => setMapLoading(false), 1000);
     }
   };
 
@@ -248,7 +295,7 @@ export default function Home() {
       }
       
       setAiResponse(response);
-      setAiRequestsToday(prev => prev + 1);
+      updateAIRequestsMutation.mutate();
     } catch (error) {
       console.error('AI Error:', error);
     } finally {
@@ -282,7 +329,7 @@ export default function Home() {
       const response = await mockCompare(apartment, language);
       setAiResponseTitle(titles[language] || titles.en);
       setAiResponse(response);
-      setAiRequestsToday(prev => prev + 1);
+      updateAIRequestsMutation.mutate();
     } catch (error) {
       console.error('Compare Error:', error);
     } finally {
@@ -339,6 +386,14 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-3">
+              <AIRequestTracker
+                requestsUsed={subscription?.ai_requests_today || 0}
+                requestsLimit={3}
+                plan={userPlan}
+                onUpgradeClick={() => setShowUpgradeModal(true)}
+                language={language}
+              />
+
               <NotificationBell language={language} />
 
               <UserMenu 
@@ -405,6 +460,17 @@ export default function Home() {
           />
         </div>
 
+        {/* Stats Bar */}
+        {messages.length > 0 && (
+          <StatsBar
+            totalProperties={apartments.length}
+            favorites={favorites.length}
+            searches={messages.filter(m => m.role === 'user').length}
+            avgPrice={Math.round(apartments.reduce((acc, apt) => acc + (apt.price || 0), 0) / apartments.length)}
+            language={language}
+          />
+        )}
+
         {/* Results Counter - Show after search */}
         {messages.length > 0 && (
           <ResultsCounter 
@@ -452,13 +518,18 @@ export default function Home() {
               transition={{ duration: 0.3 }}
               className="mb-8 rounded-2xl overflow-hidden"
             >
-              <ApartmentMap
-                apartments={filteredApartments}
-                center={mapCenter}
-                zoom={13}
-                onApartmentClick={handleApartmentClick}
-                selectedId={selectedApartment?.id}
-              />
+              {mapLoading ? (
+                <MapSkeleton />
+              ) : (
+                <ApartmentMap
+                  apartments={filteredApartments}
+                  center={mapCenter}
+                  zoom={13}
+                  onApartmentClick={handleApartmentClick}
+                  selectedId={selectedApartment?.id}
+                  language={language}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -56,8 +56,31 @@ export default function ApartmentMap({
   center = [40.4168, -3.7038], 
   zoom = 12,
   onApartmentClick,
-  selectedId 
+  selectedId,
+  language = 'en'
 }) {
+  const labels = {
+    en: {
+      properties: 'properties',
+      property: 'property',
+      found: 'found',
+      viewDetails: 'View Details'
+    },
+    es: {
+      properties: 'propiedades',
+      property: 'propiedad',
+      found: 'encontradas',
+      viewDetails: 'Ver Detalles'
+    },
+    ru: {
+      properties: 'объектов',
+      property: 'объект',
+      found: 'найдено',
+      viewDetails: 'Подробнее'
+    }
+  };
+
+  const t = labels[language] || labels.en;
   return (
     <motion.div 
       className="relative w-full h-full rounded-2xl overflow-hidden shadow-xl"
@@ -73,7 +96,7 @@ export default function ApartmentMap({
         <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4 text-white" />
           <span className="text-sm font-bold text-white">
-            {apartments.length} {apartments.length === 1 ? 'property' : 'properties'} found
+            {apartments.length} {apartments.length === 1 ? t.property : t.properties} {t.found}
           </span>
         </div>
       </motion.div>
@@ -146,7 +169,7 @@ export default function ApartmentMap({
                       onClick={() => onApartmentClick?.(apt)}
                       className="w-full mt-2 bg-black text-white text-xs py-2 rounded-lg hover:bg-gray-800 transition-colors"
                     >
-                      View Details
+                      {t.viewDetails}
                     </button>
                   </div>
                 </Popup>
