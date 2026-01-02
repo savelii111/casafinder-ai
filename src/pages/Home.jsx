@@ -28,7 +28,7 @@ export default function Home() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [apartments, setApartments] = useState(SAMPLE_APARTMENTS);
+  const [apartments, setApartments] = useState([]);
   const [sortBy, setSortBy] = useState('price-asc');
   const [filters, setFilters] = useState({
     priceMin: 0,
@@ -43,6 +43,18 @@ export default function Home() {
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
+
+  // Load apartments from database
+  const { data: dbApartments = [] } = useQuery({
+    queryKey: ['apartments'],
+    queryFn: () => base44.entities.Apartment.list(),
+  });
+
+  useEffect(() => {
+    if (dbApartments.length > 0) {
+      setApartments(dbApartments);
+    }
+  }, [dbApartments]);
 
   const labels = {
     en: {
