@@ -19,7 +19,8 @@ export default function PropertyModal({
   onAskAI, 
   onCompare,
   language = 'en',
-  userPlan = 'free'
+  userPlan = 'free',
+  canCompare = false
 }) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [includeFood, setIncludeFood] = useState(false);
@@ -416,7 +417,7 @@ export default function PropertyModal({
                 variant="outline" 
                 className="flex flex-col items-center gap-2 h-auto py-4 glass-card hover:scale-105 hover:shadow-xl transition-all duration-300 border-gray-200 disabled:opacity-50 disabled:hover:scale-100"
                 onClick={() => onCompare?.(apartment)}
-                disabled={userPlan === 'free'}
+                disabled={!canCompare}
               >
                 <ArrowLeftRight className="h-5 w-5" />
                 <span className="text-xs">{t.compare}</span>

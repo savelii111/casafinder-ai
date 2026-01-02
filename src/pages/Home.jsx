@@ -19,7 +19,11 @@ import UpgradeModal from '@/components/subscription/UpgradeModal';
 import LanguageSelector from '@/components/common/LanguageSelector';
 import AILoadingModal from '@/components/chat/AILoadingModal';
 import AIResponseModal from '@/components/chat/AIResponseModal';
+import FeatureGate from '@/components/subscription/FeatureGate';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
+import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 // Sample apartments are now loaded from database
 
@@ -40,8 +44,6 @@ export default function Home() {
     minSize: 0,
     maxRisk: 10
   });
-  const [userPlan, setUserPlan] = useState('free');
-  const [aiRequestsToday, setAiRequestsToday] = useState(0);
   const [mapCenter, setMapCenter] = useState([40.4168, -3.7038]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiLoadingMessage, setAiLoadingMessage] = useState('');
@@ -50,6 +52,17 @@ export default function Home() {
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
+  
+  // Use subscription hook for feature access
+  const { 
+    plan: userPlan, 
+    aiRequestsToday,
+    canUseAI,
+    canSaveFavorites,
+    canUseAdvancedFilters,
+    canCompareProperties,
+    subscription
+  } = useFeatureAccess();
 
   // Load apartments from database
   const { data: dbApartments = [] } = useQuery({
@@ -102,7 +115,7 @@ export default function Home() {
   }, [messages]);
 
   const handleSendMessage = async (content) => {
-    if (userPlan === 'free' && aiRequestsToday >= 3) {
+    if (!canUseAI) {
       setShowUpgradeModal(true);
       return;
     }
@@ -163,7 +176,7 @@ export default function Home() {
   };
 
   const handleAskAI = async (apartment, action = 'ask') => {
-    if (userPlan === 'free' && aiRequestsToday >= 3) {
+    if (!canUseAI) {
       setShowUpgradeModal(true);
       return;
     }
@@ -207,7 +220,7 @@ export default function Home() {
   };
 
   const handleCompare = async (apartment) => {
-    if (userPlan === 'free') {
+    if (!canCompareProperties) {
       setShowUpgradeModal(true);
       return;
     }
@@ -290,20 +303,28 @@ export default function Home() {
                 </Badge>
               )}
               
+              {userPlan !== 'free' && (
+                <Badge className="hidden sm:flex bg-black text-white border-white/20">
+                  <Crown className="h-3 w-3 mr-1" />
+                  {userPlan === 'builder' ? 'Builder' : 'Pro'}
+                </Badge>
+              )}
+              
               <LanguageSelector 
                 currentLanguage={language} 
                 onLanguageChange={setLanguage} 
               />
 
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => setShowUpgradeModal(true)}
-                className="gap-2 bg-black text-white border-white/20 hover:bg-gray-800 hover:shadow-lg transition-all duration-300"
-              >
-                <Crown className="h-4 w-4" />
-                <span className="hidden sm:inline">Upgrade</span>
-              </Button>
+              <Link to={createPageUrl('Subscription')}>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 bg-black text-white border-white/20 hover:bg-gray-800 hover:shadow-lg transition-all duration-300"
+                >
+                  <Crown className="h-4 w-4" />
+                  <span className="hidden sm:inline">{userPlan === 'free' ? 'Upgrade' : 'Manage'}</span>
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -374,13 +395,21 @@ export default function Home() {
             {showMap ? t.hideMap : t.viewMap}
           </Button>
 
-          <ApartmentFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            isPro={userPlan === 'pro'}
-            language={language}
+          <FeatureGate
+            isLocked={!canUseAdvancedFilters && (filters.minSize > 0 || filters.maxRisk < 10)}
             onUpgradeClick={() => setShowUpgradeModal(true)}
-          />
+            featureName="Advanced Filters"
+            language={language}
+            showOverlay={false}
+          >
+            <ApartmentFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              isPro={canUseAdvancedFilters}
+              language={language}
+              onUpgradeClick={() => setShowUpgradeModal(true)}
+            />
+          </FeatureGate>
         </div>
 
         {/* Map */}
@@ -425,6 +454,7 @@ export default function Home() {
         onCompare={handleCompare}
         language={language}
         userPlan={userPlan}
+        canCompare={canCompareProperties}
       />
 
       {/* Upgrade Modal */}
