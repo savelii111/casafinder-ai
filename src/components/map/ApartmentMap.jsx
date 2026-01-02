@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import { motion } from "framer-motion";
 import { Home, MapPin } from "lucide-react";
 import 'leaflet/dist/leaflet.css';
@@ -13,28 +14,28 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function createPriceMarker(price, riskScore) {
-  const color = riskScore <= 3 ? '#22c55e' : riskScore <= 6 ? '#f59e0b' : '#ef4444';
-  
+function createPriceMarker(price, isSelected = false) {
   return L.divIcon({
     className: 'custom-price-marker',
     html: `
       <div style="
-        background: ${color};
+        background: ${isSelected ? '#000000' : '#3b82f6'};
         color: white;
-        padding: 4px 8px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         white-space: nowrap;
-        border: 2px solid white;
+        border: 3px solid white;
+        transition: all 0.3s ease;
+        transform: ${isSelected ? 'scale(1.15)' : 'scale(1)'};
       ">
         €${price?.toLocaleString() || '?'}
       </div>
     `,
-    iconSize: [80, 30],
-    iconAnchor: [40, 15],
+    iconSize: [90, 34],
+    iconAnchor: [45, 17],
   });
 }
 
@@ -85,42 +86,70 @@ export default function ApartmentMap({
         />
         <MapUpdater center={center} zoom={zoom} />
         
-        {apartments.map((apt) => (
-          apt.lat && apt.lng && (
-            <Marker
-              key={apt.id}
-              position={[apt.lat, apt.lng]}
-              icon={createPriceMarker(apt.price, apt.riskScore)}
-              eventHandlers={{
-                click: () => onApartmentClick?.(apt)
-              }}
-            >
-              <Popup>
-                <div className="p-2 min-w-[200px]">
-                  {apt.photos?.[0] && (
-                    <img 
-                      src={apt.photos[0]} 
-                      alt={apt.title}
-                      className="w-full h-24 object-cover rounded-lg mb-2"
-                    />
-                  )}
-                  <h3 className="font-semibold text-gray-900 text-sm">{apt.title}</h3>
-                  <p className="text-lg font-bold text-black">€{apt.price?.toLocaleString()}/mo</p>
-                  <p className="text-xs text-gray-500 mt-1">{apt.address}</p>
-                  {apt.aiInsight && (
-                    <p className="text-xs text-gray-600 mt-2 line-clamp-2">{apt.aiInsight}</p>
-                  )}
-                  <button
-                    onClick={() => onApartmentClick?.(apt)}
-                    className="w-full mt-2 bg-black text-white text-xs py-2 rounded-lg hover:bg-gray-800 transition-colors"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          )
-        ))}
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          iconCreateFunction={(cluster) => {
+            const count = cluster.getChildCount();
+            return L.divIcon({
+              html: `<div style="
+                background: #3b82f6;
+                color: white;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 14px;
+                border: 3px solid white;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+              ">${count}</div>`,
+              className: 'custom-cluster-icon',
+              iconSize: L.point(40, 40)
+            });
+          }}
+        >
+          {apartments.map((apt) => (
+            apt.lat && apt.lng && (
+              <Marker
+                key={apt.id}
+                position={[apt.lat, apt.lng]}
+                icon={createPriceMarker(apt.price, selectedId === apt.id)}
+                eventHandlers={{
+                  click: () => onApartmentClick?.(apt)
+                }}
+              >
+                <Popup>
+                  <div className="p-2 min-w-[200px]">
+                    {apt.photos?.[0] && (
+                      <img 
+                        src={apt.photos[0]} 
+                        alt={apt.title}
+                        className="w-full h-24 object-cover rounded-lg mb-2"
+                      />
+                    )}
+                    <h3 className="font-semibold text-gray-900 text-sm">{apt.title}</h3>
+                    <p className="text-lg font-bold text-black">€{apt.price?.toLocaleString()}/mo</p>
+                    <p className="text-xs text-gray-500 mt-1">{apt.address}</p>
+                    {apt.aiInsight && (
+                      <p className="text-xs text-gray-600 mt-2 line-clamp-2">{apt.aiInsight}</p>
+                    )}
+                    <button
+                      onClick={() => onApartmentClick?.(apt)}
+                      className="w-full mt-2 bg-black text-white text-xs py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            )
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </motion.div>
   );
