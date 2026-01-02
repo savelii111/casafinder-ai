@@ -6,14 +6,17 @@ import {
   User, Settings, Bell, Activity, Crown, LogOut, 
   ChevronDown, Sparkles, Mail, Globe, Heart
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Badge } from '@/components/ui/badge';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
+import { useLanguage } from '@/components/context/LanguageContext';
 
-export default function UserMenu({ language, onLanguageChange, onUpgradeClick }) {
+export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
+  const navigate = useNavigate();
+  const { language, setLanguage } = useLanguage();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -181,8 +184,7 @@ export default function UserMenu({ language, onLanguageChange, onUpgradeClick })
                     <button
                       key={code}
                       onClick={() => {
-                        onLanguageChange(code);
-                        setIsOpen(false);
+                        setLanguage(code);
                       }}
                       className={`flex-1 px-2 py-1.5 text-xs rounded-lg transition-all ${
                         language === code
@@ -232,17 +234,26 @@ export default function UserMenu({ language, onLanguageChange, onUpgradeClick })
 
               <div className="h-px bg-gray-200 my-2" />
 
-              {/* Upgrade Plan */}
-              <button
-                onClick={() => {
-                  onUpgradeClick?.();
-                  setIsOpen(false);
-                }}
-                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gradient-to-r hover:from-black hover:to-gray-800 transition-all text-left group"
-              >
-                <Crown className="h-4 w-4 text-yellow-500 group-hover:text-yellow-300" />
-                <span className="text-sm text-gray-700 group-hover:text-white font-medium">{t.upgrade}</span>
-              </button>
+              {/* Upgrade Plan or Unlimited Badge */}
+              {plan === 'ultimate' ? (
+                <div className="px-4 py-2.5 bg-gradient-to-r from-yellow-50 to-amber-50 mx-2 rounded-lg">
+                  <div className="flex items-center gap-2 justify-center">
+                    <Crown className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm font-semibold text-yellow-900">{t.unlimited} AI</span>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    navigate(createPageUrl('Subscription'));
+                    setIsOpen(false);
+                  }}
+                  className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gradient-to-r hover:from-black hover:to-gray-800 transition-all text-left group"
+                >
+                  <Crown className="h-4 w-4 text-yellow-500 group-hover:text-yellow-300" />
+                  <span className="text-sm text-gray-700 group-hover:text-white font-medium">{t.upgrade}</span>
+                </button>
+              )}
 
               <div className="h-px bg-gray-200 my-2" />
 

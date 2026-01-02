@@ -36,13 +36,14 @@ import ExportManager from '@/components/export/ExportManager';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 import { notifyAILimitReached } from '@/components/utils/notifications';
+import { useLanguage } from '@/components/context/LanguageContext';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 // Sample apartments are now loaded from database
 
 export default function Home() {
-  const [language, setLanguage] = useState('en');
+  const { language, setLanguage } = useLanguage();
   const [showMap, setShowMap] = useState(false);
   const [selectedApartment, setSelectedApartment] = useState(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
@@ -145,17 +146,17 @@ export default function Home() {
 
   const labels = {
     en: {
-      welcome: "Найдите Идеальный Дом или Квартиру в Испании",
-      subtitle: "Умный поиск жилья с помощью нейросети, анализ рисков и калькулятор реальной стоимости",
-      startChat: "Начать поиск с AI",
-      viewMap: "Показать Карту",
-      hideMap: "Скрыть Карту",
-      freeRequestsLeft: "AI запросов осталось сегодня",
-      upgradeForMore: "Улучшите для безлимита"
+      welcome: "Find Your Perfect Home or Apartment in Spain",
+      subtitle: "AI-powered property search with risk analysis and true cost calculator",
+      startChat: "Start AI Search",
+      viewMap: "View Map",
+      hideMap: "Hide Map",
+      freeRequestsLeft: "AI requests left today",
+      upgradeForMore: "Upgrade for unlimited"
     },
     es: {
-      welcome: "Encuentra Tu Hogar Perfecto en Madrid",
-      subtitle: "Búsqueda de apartamentos con IA, análisis de riesgo y calculadora de coste real",
+      welcome: "Encuentra Tu Hogar o Apartamento Perfecto en España",
+      subtitle: "Búsqueda inteligente con IA, análisis de riesgo y calculadora de coste real",
       startChat: "Buscar con IA",
       viewMap: "Ver Mapa",
       hideMap: "Ocultar Mapa",
@@ -163,8 +164,8 @@ export default function Home() {
       upgradeForMore: "Mejora para ilimitado"
     },
     ru: {
-      welcome: "Найдите Идеальный Дом в Мадриде",
-      subtitle: "Поиск квартир с ИИ, анализ рисков и калькулятор реальной стоимости",
+      welcome: "Найдите Идеальный Дом или Квартиру в Испании",
+      subtitle: "Умный поиск недвижимости с ИИ, анализ рисков и калькулятор реальной стоимости",
       startChat: "Начать поиск с AI",
       viewMap: "Показать Карту",
       hideMap: "Скрыть Карту",
@@ -210,6 +211,7 @@ export default function Home() {
 
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: aiPrompt,
+        add_context_from_internet: false,
         response_json_schema: {
           type: "object",
           properties: {
@@ -429,11 +431,7 @@ export default function Home() {
 
               <ThemeToggle />
 
-              <UserMenu 
-                language={language}
-                onLanguageChange={setLanguage}
-                onUpgradeClick={() => setShowUpgradeClick(true)}
-              />
+              <UserMenu />
             </div>
           </div>
         </div>
