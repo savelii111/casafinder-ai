@@ -3,8 +3,18 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bed, Maximize, Shield, MapPin } from "lucide-react";
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import FavoriteButton from './FavoriteButton';
+import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 
-export default function ApartmentCard({ apartment, onClick, isSelected }) {
+export default function ApartmentCard({ apartment, onClick, isSelected, language = 'en', onUpgradeClick }) {
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { canSaveFavorites } = useFeatureAccess();
   const getRiskColor = (score) => {
     if (score <= 3) return 'bg-green-500';
     if (score <= 6) return 'bg-amber-500';
@@ -45,8 +55,18 @@ export default function ApartmentCard({ apartment, onClick, isSelected }) {
           
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
+          <div className="absolute top-2 right-2">
+            <FavoriteButton
+              apartment={apartment}
+              userEmail={user?.email}
+              onUpgradeClick={onUpgradeClick}
+              canSave={canSaveFavorites}
+              language={language}
+            />
+          </div>
+          
           {apartment.riskScore && (
-            <Badge className={`absolute top-2 right-2 ${getRiskColor(apartment.riskScore)} text-white border-0`}>
+            <Badge className={`absolute top-2 left-2 ${getRiskColor(apartment.riskScore)} text-white border-0`}>
               <Shield className="h-3 w-3 mr-1" />
               {getRiskLabel(apartment.riskScore)}
             </Badge>
