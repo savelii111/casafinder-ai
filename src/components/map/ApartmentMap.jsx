@@ -1,8 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { motion } from "framer-motion";
-import { Home, MapPin } from "lucide-react";
+import { Home, MapPin, Layers } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import HeatmapLayer from '../heatmap/HeatmapLayer';
+import RadiusSearch from './RadiusSearch';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -14,12 +18,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function createPriceMarker(price, isSelected = false) {
+function createPriceMarker(price, isSelected = false, riskScore = 5) {
+  // Color code by risk score
+  let bgColor = '#3b82f6'; // default blue
+  if (riskScore <= 3) bgColor = '#10b981'; // green - low risk
+  else if (riskScore <= 6) bgColor = '#f59e0b'; // amber - medium risk
+  else if (riskScore >= 7) bgColor = '#ef4444'; // red - high risk
+
+  if (isSelected) bgColor = '#000000';
+
   return L.divIcon({
     className: 'custom-price-marker',
     html: `
       <div style="
-        background: ${isSelected ? '#000000' : '#3b82f6'};
+        background: ${bgColor};
         color: white;
         padding: 6px 12px;
         border-radius: 50px;
@@ -57,14 +69,21 @@ export default function ApartmentMap({
   zoom = 12,
   onApartmentClick,
   selectedId,
-  language = 'en'
+  language = 'en',
+  showHeatmap = false
 }) {
+  const [heatmapType, setHeatmapType] = useState('price');
+  const [showHeatmapLayer, setShowHeatmapLayer] = useState(false);
+
   const labels = {
     en: {
       properties: 'properties',
       property: 'property',
       found: 'found',
-      viewDetails: 'View Details'
+      viewDetails: 'View Details',
+      heatmap: 'Heatmap',
+      price: 'Price',
+      risk: 'Risk'
     },
     es: {
       properties: 'propiedades',
@@ -76,11 +95,19 @@ export default function ApartmentMap({
       properties: 'объектов',
       property: 'объект',
       found: 'найдено',
-      viewDetails: 'Подробнее'
+      viewDetails: 'Подробнее',
+      heatmap: 'Тепловая Карта',
+      price: 'Цена',
+      risk: 'Риск'
     }
   };
 
   const t = labels[language] || labels.en;
+
+  const handleRadiusSearch = ({ location, radius }) => {
+    // In production: geocode location and filter apartments by radius
+    console.log('Radius search:', { location, radius });
+  };
   return (
     <motion.div 
       className="relative w-full h-full rounded-2xl overflow-hidden shadow-xl"
@@ -101,6 +128,45 @@ export default function ApartmentMap({
         </div>
       </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute top-4 right-4 z-[1000] flex flex-col gap-2"
+      >
+        <RadiusSearch onSearch={handleRadiusSearch} language={language} />
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowHeatmapLayer(!showHeatmapLayer)}
+          className="gap-2 bg-white/90 backdrop-blur-sm"
+        >
+          <Layers className="h-4 w-4" />
+          {t.heatmap}
+        </Button>
+
+        {showHeatmapLayer && (
+          <div className="flex gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1">
+            <Button
+              size="sm"
+              variant={heatmapType === 'price' ? 'default' : 'ghost'}
+              onClick={() => setHeatmapType('price')}
+              className="text-xs h-7"
+            >
+              {t.price}
+            </Button>
+            <Button
+              size="sm"
+              variant={heatmapType === 'risk' ? 'default' : 'ghost'}
+              onClick={() => setHeatmapType('risk')}
+              className="text-xs h-7"
+            >
+              {t.risk}
+            </Button>
+          </div>
+        )}
+      </motion.div>
+
       <MapContainer
         center={center}
         zoom={zoom}
@@ -112,7 +178,11 @@ export default function ApartmentMap({
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <MapUpdater center={center} zoom={zoom} />
-        
+
+        {showHeatmapLayer && (
+          <HeatmapLayer apartments={apartments} type={heatmapType} />
+        )}
+
         <MarkerClusterGroup
           chunkedLoading
           maxClusterRadius={60}
@@ -145,7 +215,7 @@ export default function ApartmentMap({
               <Marker
                 key={apt.id}
                 position={[apt.lat, apt.lng]}
-                icon={createPriceMarker(apt.price, selectedId === apt.id)}
+                icon={createPriceMarker(apt.price, selectedId === apt.id, apt.riskScore)}
                 eventHandlers={{
                   click: () => onApartmentClick?.(apt)
                 }}

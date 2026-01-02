@@ -3,31 +3,44 @@ import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet.heat';
 
-export default function HeatmapLayer({ points = [], intensity = 0.5 }) {
+export default function HeatmapLayer({ apartments, type = 'price' }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!points || points.length === 0) return;
+    if (!apartments || apartments.length === 0) return;
 
-    // Convert points to [lat, lng, intensity] format
-    const heatPoints = points.map(p => [p.lat, p.lng, p.intensity || 1]);
+    // Prepare data points based on type
+    const points = apartments
+      .filter(apt => apt.lat && apt.lng)
+      .map(apt => {
+        const intensity = type === 'price' 
+          ? Math.min(apt.price / 2000, 1) // Normalize price 0-1
+          : type === 'risk'
+          ? (apt.riskScore || 5) / 10 // Normalize risk 0-1
+          : 0.5;
 
-    const heatLayer = L.heatLayer(heatPoints, {
+        return [apt.lat, apt.lng, intensity];
+      });
+
+    if (points.length === 0) return;
+
+    // Create heatmap layer
+    const heatLayer = L.heatLayer(points, {
       radius: 25,
       blur: 35,
       maxZoom: 17,
-      max: intensity,
-      gradient: {
-        0.0: 'blue',
-        0.5: 'yellow',
-        1.0: 'red'
-      }
+      max: 1.0,
+      gradient: type === 'price' 
+        ? { 0.0: 'green', 0.5: 'yellow', 0.8: 'orange', 1.0: 'red' }
+        : type === 'risk'
+        ? { 0.0: 'blue', 0.3: 'green', 0.6: 'yellow', 0.8: 'orange', 1.0: 'red' }
+        : { 0.0: 'blue', 0.5: 'cyan', 1.0: 'lime' }
     }).addTo(map);
 
     return () => {
       map.removeLayer(heatLayer);
     };
-  }, [map, points, intensity]);
+  }, [apartments, type, map]);
 
   return null;
 }

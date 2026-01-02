@@ -12,6 +12,8 @@ import {
   CalendarCheck, Images, DollarSign
 } from "lucide-react";
 import { toast } from "sonner";
+import POINearby from '../map/POINearby';
+import ShareModal from '../share/ShareModal';
 
 export default function PropertyModal({ 
   apartment, 
@@ -28,6 +30,7 @@ export default function PropertyModal({
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [showGallery, setShowGallery] = useState(false);
   const [includeFood, setIncludeFood] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   if (!apartment) return null;
 
@@ -104,8 +107,7 @@ export default function PropertyModal({
   const prevPhoto = () => setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
 
   const handleShareLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success(t.linkCopied);
+    setShowShareModal(true);
   };
 
   const handleScheduleVisit = () => {
