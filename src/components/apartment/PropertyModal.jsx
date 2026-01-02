@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { 
   Shield, Calculator, MessageSquare, ArrowLeftRight, Languages,
   X, Bed, Maximize, MapPin, ChevronLeft, ChevronRight, Sparkles,
-  Zap, Wifi, UtensilsCrossed, Home
+  Zap, Wifi, UtensilsCrossed, Home, TrendingUp, TrendingDown, 
+  Minus, Calendar, PawPrint, Package
 } from "lucide-react";
 
 export default function PropertyModal({ 
@@ -57,7 +58,19 @@ export default function PropertyModal({
       rooms: 'rooms',
       lowRisk: 'Low Risk',
       mediumRisk: 'Medium Risk',
-      highRisk: 'High Risk'
+      highRisk: 'High Risk',
+      marketPrice: 'Market Price Analysis',
+      overpriced: 'Above market',
+      bargain: 'Below market',
+      fairPrice: 'Fair price',
+      details: 'Property Details',
+      floor: 'Floor',
+      elevator: 'Elevator',
+      furnished: 'Furnished',
+      petsAllowed: 'Pets Allowed',
+      availableFrom: 'Available From',
+      yes: 'Yes',
+      no: 'No'
     },
     es: {
       riskDetector: 'Detector de Riesgo',
@@ -74,7 +87,19 @@ export default function PropertyModal({
       rooms: 'habitaciones',
       lowRisk: 'Bajo Riesgo',
       mediumRisk: 'Riesgo Medio',
-      highRisk: 'Alto Riesgo'
+      highRisk: 'Alto Riesgo',
+      marketPrice: 'Análisis de Precio de Mercado',
+      overpriced: 'Sobre el mercado',
+      bargain: 'Bajo el mercado',
+      fairPrice: 'Precio justo',
+      details: 'Detalles de la Propiedad',
+      floor: 'Piso',
+      elevator: 'Ascensor',
+      furnished: 'Amueblado',
+      petsAllowed: 'Mascotas Permitidas',
+      availableFrom: 'Disponible Desde',
+      yes: 'Sí',
+      no: 'No'
     },
     ru: {
       riskDetector: 'Детектор Рисков',
@@ -91,7 +116,19 @@ export default function PropertyModal({
       rooms: 'комнат',
       lowRisk: 'Низкий Риск',
       mediumRisk: 'Средний Риск',
-      highRisk: 'Высокий Риск'
+      highRisk: 'Высокий Риск',
+      marketPrice: 'Анализ Рыночной Цены',
+      overpriced: 'Выше рынка',
+      bargain: 'Ниже рынка',
+      fairPrice: 'Справедливая цена',
+      details: 'Детали Квартиры',
+      floor: 'Этаж',
+      elevator: 'Лифт',
+      furnished: 'С мебелью',
+      petsAllowed: 'Животные Разрешены',
+      availableFrom: 'Доступно С',
+      yes: 'Да',
+      no: 'Нет'
     }
   };
 
@@ -171,11 +208,63 @@ export default function PropertyModal({
             </div>
           </div>
 
+          {/* Property Details */}
+          <motion.div 
+            className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Home className="h-5 w-5 text-gray-700" />
+              <h3 className="font-semibold text-gray-900">{t.details}</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {apartment.floor !== undefined && (
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600">{t.floor}</span>
+                  <span className="font-medium">{apartment.floor}</span>
+                </div>
+              )}
+              {apartment.hasElevator !== undefined && (
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600">{t.elevator}</span>
+                  <span className="font-medium">{apartment.hasElevator ? t.yes : t.no}</span>
+                </div>
+              )}
+              {apartment.furnished !== undefined && (
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600">{t.furnished}</span>
+                  <span className="font-medium">{apartment.furnished ? t.yes : t.no}</span>
+                </div>
+              )}
+              {apartment.pets_allowed !== undefined && (
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600 flex items-center gap-1">
+                    <PawPrint className="h-3 w-3" />
+                    {t.petsAllowed}
+                  </span>
+                  <span className="font-medium">{apartment.pets_allowed ? t.yes : t.no}</span>
+                </div>
+              )}
+              {apartment.available_from && (
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                  <span className="text-gray-600 flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {t.availableFrom}
+                  </span>
+                  <span className="font-medium">{new Date(apartment.available_from).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
           {/* Risk Detector */}
           <motion.div 
             className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
           >
             <div className="flex items-center gap-2 mb-4">
               <Shield className={`h-5 w-5 ${getRiskColor(apartment.riskScore)}`} />
@@ -202,12 +291,63 @@ export default function PropertyModal({
             </div>
           </motion.div>
 
+          {/* Market Price Analysis */}
+          {apartment.marketPriceDiff !== undefined && (
+            <motion.div 
+              className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                {apartment.marketPriceDiff > 5 ? (
+                  <TrendingUp className="h-5 w-5 text-red-500" />
+                ) : apartment.marketPriceDiff < -5 ? (
+                  <TrendingDown className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Minus className="h-5 w-5 text-gray-500" />
+                )}
+                <h3 className="font-semibold text-gray-900">{t.marketPrice}</h3>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Market Difference</span>
+                  <span className={`font-bold ${
+                    apartment.marketPriceDiff > 5 ? 'text-red-500' : 
+                    apartment.marketPriceDiff < -5 ? 'text-green-500' : 
+                    'text-gray-500'
+                  }`}>
+                    {apartment.marketPriceDiff > 0 ? '+' : ''}{apartment.marketPriceDiff}%
+                  </span>
+                </div>
+                <Progress 
+                  value={Math.abs(apartment.marketPriceDiff) * 5} 
+                  className={`h-2 ${
+                    apartment.marketPriceDiff > 5 ? 'bg-red-500' : 
+                    apartment.marketPriceDiff < -5 ? 'bg-green-500' : 
+                    'bg-gray-500'
+                  }`}
+                />
+                <p className="text-sm text-gray-600 mt-3 italic bg-gray-50 rounded-lg p-3">
+                  {apartment.marketPriceDiff > 5 ? (
+                    <>🔴 {t.overpriced}: This property is priced above the market average for the area.</>
+                  ) : apartment.marketPriceDiff < -5 ? (
+                    <>🟢 {t.bargain}: Great deal! This property is priced below market average.</>
+                  ) : (
+                    <>⚪ {t.fairPrice}: This property is fairly priced for the market.</>
+                  )}
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* True Cost Calculator */}
           <motion.div 
             className="backdrop-blur-xl bg-white/50 rounded-2xl p-5 border border-white/30"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.15 }}
           >
             <div className="flex items-center gap-2 mb-4">
               <Calculator className="h-5 w-5 text-gray-700" />
