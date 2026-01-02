@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   Heart, ArrowLeft, Trash2, MapPin, Home as HomeIcon,
-  SortAsc, Calendar
+  SortAsc, Calendar, GripVertical, FolderPlus
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -14,12 +15,15 @@ import ApartmentCard from '@/components/apartment/ApartmentCard';
 import PropertyModal from '@/components/apartment/PropertyModal';
 import SkeletonLoader from '@/components/common/SkeletonLoader';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
+import { toast } from 'sonner';
 
 export default function Favorites() {
   const [language, setLanguage] = useState('en');
   const [sortBy, setSortBy] = useState('date');
   const [selectedApartment, setSelectedApartment] = useState(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [draggedItems, setDraggedItems] = useState([]);
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -107,6 +111,30 @@ export default function Favorites() {
   };
 
   const t = labels[language] || labels.en;
+
+  const deleteMutation = useMutation({
+    mutationFn: (favoriteId) => base44.entities.Favorite.delete(favoriteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      toast.success('Removed from favorites');
+    }
+  });
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(sortedApartments);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setDraggedItems(items);
+  };
+
+  const handleRemoveFavorite = (apartmentId) => {
+    const favorite = favorites.find(f => f.apartment_id === apartmentId);
+    if (favorite) {
+      deleteMutation.mutate(favorite.id);
+    }
+  };
 
   if (!canSaveFavorites) {
     return (
@@ -198,25 +226,58 @@ export default function Favorites() {
             </Link>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedApartments.map((apartment) => (
-              <motion.div
-                key={apartment.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ y: -5 }}
-              >
-                <ApartmentCard
-                  apartment={apartment}
-                  onClick={() => {
-                    setSelectedApartment(apartment);
-                    setShowPropertyModal(true);
-                  }}
-                  language={language}
-                />
-              </motion.div>
-            ))}
-          </div>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="favorites">
+              {(provided) => (
+                <div 
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
+                  {(draggedItems.length > 0 ? draggedItems : sortedApartments).map((apartment, index) => (
+                    <Draggable key={apartment.id} draggableId={apartment.id} index={index}>
+                      {(provided, snapshot) => (
+                        <motion.div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          whileHover={{ y: -5 }}
+                          className={snapshot.isDragging ? 'opacity-50' : ''}
+                        >
+                          <div className="relative group">
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-lg p-2 shadow-lg z-10 cursor-grab active:cursor-grabbing"
+                            >
+                              <GripVertical className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute -right-3 -top-3 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow-lg z-10 hover:bg-red-50"
+                              onClick={() => handleRemoveFavorite(apartment.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                            <ApartmentCard
+                              apartment={apartment}
+                              onClick={() => {
+                                setSelectedApartment(apartment);
+                                setShowPropertyModal(true);
+                              }}
+                              language={language}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
       </div>
 

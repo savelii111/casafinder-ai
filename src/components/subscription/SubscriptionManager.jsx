@@ -269,6 +269,9 @@ export function useFeatureAccess() {
     canUsePortfolio: ['pro2', 'ultimate'].includes(plan),
     canUsePredictions: ['pro2', 'ultimate'].includes(plan),
     canUseClustering: ['pro2', 'ultimate'].includes(plan),
+    canDragDropFavorites: ['pro1', 'pro2', 'ultimate'].includes(plan),
+    canScheduleVisits: ['pro1', 'pro2', 'ultimate'].includes(plan),
+    canAccessAgents: ['pro2', 'ultimate'].includes(plan),
     subscription
   };
 }

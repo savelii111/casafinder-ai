@@ -28,6 +28,7 @@ import CompareModal from '@/components/apartment/CompareModal';
 import AIRequestTracker from '@/components/common/AIRequestTracker';
 import MapSkeleton from '@/components/map/MapSkeleton';
 import StatsBar from '@/components/common/StatsBar';
+import ExportManager from '@/components/export/ExportManager';
 import { mockAskAI, mockCompare, mockTranslate } from '@/components/utils/mockAI';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 import { notifyAILimitReached } from '@/components/utils/notifications';
@@ -79,6 +80,7 @@ export default function Home() {
     canUseWhatsApp,
     canUseClustering,
     canUsePortfolio,
+    canExportData,
     subscription
   } = useFeatureAccess();
 
@@ -482,14 +484,22 @@ export default function Home() {
 
         {/* Map Toggle & Filters */}
         <div className="flex items-center justify-between mb-6">
-          <Button 
-            variant="outline"
-            onClick={() => setShowMap(!showMap)}
-            className="gap-2 bg-white/70 backdrop-blur-sm border-white/20 hover:bg-white"
-          >
-            <Map className="h-4 w-4" />
-            {showMap ? t.hideMap : t.viewMap}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setShowMap(!showMap)}
+              className="gap-2 bg-white/70 backdrop-blur-sm border-white/20 hover:bg-white"
+            >
+              <Map className="h-4 w-4" />
+              {showMap ? t.hideMap : t.viewMap}
+            </Button>
+
+            <ExportManager 
+              apartments={filteredApartments}
+              language={language}
+              userPlan={userPlan}
+            />
+          </div>
 
           <FeatureGate
             isLocked={!canUseAdvancedFilters && (filters.minSize > 0 || filters.maxRisk < 10)}
