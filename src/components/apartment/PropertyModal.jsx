@@ -26,6 +26,8 @@ export default function PropertyModal({
   canUseWhatsApp = false
 }) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [showGallery, setShowGallery] = useState(false);
+  const [includeFood, setIncludeFood] = useState(false);
 
   if (!apartment) return null;
 
@@ -100,6 +102,21 @@ export default function PropertyModal({
 
   const nextPhoto = () => setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
   const prevPhoto = () => setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
+
+  const handleShareLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success(t.linkCopied);
+  };
+
+  const handleScheduleVisit = () => {
+    toast.success(t.visitScheduled);
+  };
+
+  const calculateTotalCost = () => {
+    if (!apartment.trueCost) return apartment.price;
+    const base = apartment.trueCost.rent + apartment.trueCost.utilities + apartment.trueCost.internet;
+    return includeFood ? base + (apartment.trueCost.food || 300) : base;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
