@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { 
   User, Settings, Bell, Activity, Crown, LogOut, 
-  ChevronDown, Sparkles, Mail, Globe
+  ChevronDown, Sparkles, Mail, Globe, Heart
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -219,6 +219,14 @@ export default function UserMenu({ language, onLanguageChange, onUpgradeClick })
                 <button className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
                   <Activity className="h-4 w-4 text-gray-600" />
                   <span className="text-sm text-gray-700">{t.activity}</span>
+                </button>
+              </Link>
+
+              {/* Favorites */}
+              <Link to={createPageUrl('Favorites')} onClick={() => setIsOpen(false)}>
+                <button className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
+                  <Heart className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">Favorites</span>
                 </button>
               </Link>
 

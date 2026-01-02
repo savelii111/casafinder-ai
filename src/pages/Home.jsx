@@ -469,6 +469,7 @@ export default function Home() {
           onSortChange={setSortBy}
           language={language}
           isLoading={!apartments.length}
+          onUpgradeClick={() => setShowUpgradeModal(true)}
         />
       </main>
 

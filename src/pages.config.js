@@ -2,6 +2,7 @@ import Activity from './pages/Activity';
 import Home from './pages/Home';
 import Settings from './pages/Settings';
 import Subscription from './pages/Subscription';
+import Favorites from './pages/Favorites';
 import __Layout from './Layout.jsx';
 
 
@@ -10,6 +11,7 @@ export const PAGES = {
     "Home": Home,
     "Settings": Settings,
     "Subscription": Subscription,
+    "Favorites": Favorites,
 }
 
 export const pagesConfig = {
