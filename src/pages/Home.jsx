@@ -61,6 +61,10 @@ export default function Home() {
     canSaveFavorites,
     canUseAdvancedFilters,
     canCompareProperties,
+    canAccessLiveData,
+    canUseWhatsApp,
+    canUseClustering,
+    canUsePortfolio,
     subscription
   } = useFeatureAccess();
 
@@ -306,7 +310,7 @@ export default function Home() {
               {userPlan !== 'free' && (
                 <Badge className="hidden sm:flex bg-black text-white border-white/20">
                   <Crown className="h-3 w-3 mr-1" />
-                  {userPlan === 'builder' ? 'Builder' : 'Pro'}
+                  {userPlan === 'pro1' ? 'Pro 1' : userPlan === 'pro2' ? 'Pro 2' : 'Ultimate'}
                 </Badge>
               )}
               

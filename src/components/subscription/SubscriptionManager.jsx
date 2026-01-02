@@ -19,41 +19,59 @@ const PLAN_FEATURES = {
       { name: 'View limited properties', included: true },
       { name: '3 AI queries per day', included: true },
       { name: 'Basic filters', included: true },
-      { name: 'Map view with mock data', included: true },
-      { name: 'Property cards', included: true },
-      { name: 'Daily notifications', included: false },
+      { name: 'Demo map with mock data', included: true },
+      { name: 'Basic property cards', included: true },
+      { name: 'Mock AI responses', included: true },
       { name: 'Save favorites', included: false },
-      { name: 'Advanced AI analysis', included: false },
-      { name: 'Live property data', included: false }
+      { name: 'Live property data', included: false },
+      { name: 'Advanced analytics', included: false }
     ]
   },
-  builder: {
-    name: 'Builder',
-    price: 9,
+  pro1: {
+    name: 'Pro 1',
+    price: 20,
     features: [
       { name: 'View all properties', included: true },
       { name: 'Unlimited AI queries', included: true },
-      { name: 'Advanced filters', included: true },
-      { name: 'Daily notifications', included: true },
-      { name: 'Save favorites', included: true },
+      { name: 'Live map (ZenRows + Idealista)', included: true },
       { name: 'True Cost calculator', included: true },
-      { name: 'Fast sorting', included: true },
-      { name: 'Advanced AI analysis', included: false },
-      { name: 'Live property data (ZenRows)', included: false }
+      { name: 'Risk assessment', included: true },
+      { name: 'Market price analysis', included: true },
+      { name: 'Compare apartments', included: true },
+      { name: 'Save favorites', included: true },
+      { name: 'Basic notifications', included: true },
+      { name: 'Neighborhood analysis', included: true }
     ]
   },
-  pro: {
-    name: 'Pro',
+  pro2: {
+    name: 'Pro 2',
     price: 29,
     features: [
-      { name: 'Everything in Builder', included: true },
-      { name: 'Instant notifications', included: true },
-      { name: 'Advanced AI comparisons', included: true },
-      { name: 'Neighborhood analysis', included: true },
-      { name: 'Risk assessment', included: true },
-      { name: 'Live property data (ZenRows + Idealista)', included: true },
-      { name: 'Detailed reports', included: true },
-      { name: 'AI WhatsApp concierge', included: true },
+      { name: 'Everything in Pro 1', included: true },
+      { name: 'Advanced AI analysis', included: true },
+      { name: 'Price predictions', included: true },
+      { name: 'Full map with clustering', included: true },
+      { name: 'Custom markers & popups', included: true },
+      { name: 'Real-time notifications', included: true },
+      { name: 'WhatsApp concierge', included: true },
+      { name: 'Portfolio management', included: true },
+      { name: 'Client reports', included: true },
+      { name: 'View history tracking', included: true }
+    ]
+  },
+  ultimate: {
+    name: 'Ultimate',
+    price: 49,
+    features: [
+      { name: 'Everything in Pro 2', included: true },
+      { name: 'Full DeepSeek integration', included: true },
+      { name: 'Portfolio comparisons', included: true },
+      { name: 'Heatmap zones', included: true },
+      { name: 'PDF/CSV export', included: true },
+      { name: 'Custom filters', included: true },
+      { name: 'Unlimited leads', included: true },
+      { name: 'Priority support', included: true },
+      { name: 'All integrations', included: true },
       { name: 'Personalized recommendations', included: true }
     ]
   }
@@ -134,10 +152,10 @@ export default function SubscriptionManager({ language = 'en' }) {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">{t.title}</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Object.entries(PLAN_FEATURES).map(([planId, plan]) => {
           const isCurrent = currentPlan === planId;
-          const isUpgrade = ['builder', 'pro'].indexOf(planId) > ['free', 'builder', 'pro'].indexOf(currentPlan);
+          const isUpgrade = ['pro1', 'pro2', 'ultimate'].indexOf(planId) > ['free', 'pro1', 'pro2', 'ultimate'].indexOf(currentPlan);
           
           return (
             <Card 
@@ -231,12 +249,17 @@ export function useFeatureAccess() {
     plan,
     aiRequestsToday,
     canUseAI: plan === 'free' ? aiRequestsToday < 3 : true,
-    canSaveFavorites: plan !== 'free',
-    canReceiveNotifications: plan !== 'free',
-    canUseAdvancedFilters: plan === 'pro',
-    canCompareProperties: plan === 'pro',
-    canAccessLiveData: plan === 'pro',
-    canUseWhatsApp: plan === 'pro',
+    canSaveFavorites: ['pro1', 'pro2', 'ultimate'].includes(plan),
+    canReceiveNotifications: ['pro1', 'pro2', 'ultimate'].includes(plan),
+    canUseAdvancedFilters: ['pro2', 'ultimate'].includes(plan),
+    canCompareProperties: ['pro1', 'pro2', 'ultimate'].includes(plan),
+    canAccessLiveData: ['pro1', 'pro2', 'ultimate'].includes(plan),
+    canUseWhatsApp: ['pro2', 'ultimate'].includes(plan),
+    canExportData: plan === 'ultimate',
+    canUseHeatmap: plan === 'ultimate',
+    canUsePortfolio: ['pro2', 'ultimate'].includes(plan),
+    canUsePredictions: ['pro2', 'ultimate'].includes(plan),
+    canUseClustering: ['pro2', 'ultimate'].includes(plan),
     subscription
   };
 }

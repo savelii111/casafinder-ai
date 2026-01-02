@@ -17,43 +17,55 @@ const plans = {
       period: '/forever',
       features: [
         { text: '3 AI requests/day', included: true },
-        { text: 'Limited map access', included: true },
-        { text: 'Basic apartment listings', included: true },
-        { text: 'Full AI analysis', included: false },
-        { text: 'Compare apartments', included: false },
-        { text: 'Instant notifications', included: false },
+        { text: 'Demo map (mock data)', included: true },
+        { text: 'Basic property cards', included: true },
+        { text: 'Live data', included: false },
+        { text: 'Save favorites', included: false },
       ],
       icon: Sparkles,
       popular: false
     },
     {
-      id: 'builder',
-      name: 'Builder',
-      price: '€9',
+      id: 'pro1',
+      name: 'Pro 1',
+      price: '€20',
       period: '/month',
       features: [
-        { text: 'Unlimited AI requests', included: true },
-        { text: 'Full map access', included: true },
-        { text: 'Daily notifications', included: true },
-        { text: 'Save favorites', included: true },
+        { text: 'Unlimited AI queries', included: true },
+        { text: 'Live map (ZenRows)', included: true },
         { text: 'True Cost calculator', included: true },
-        { text: 'Advanced filters', included: false },
+        { text: 'Compare apartments', included: true },
+        { text: 'Save favorites', included: true },
       ],
       icon: Zap,
       popular: true
     },
     {
-      id: 'pro',
-      name: 'Pro',
+      id: 'pro2',
+      name: 'Pro 2',
       price: '€29',
       period: '/month',
       features: [
-        { text: 'Everything in Builder', included: true },
-        { text: 'Advanced AI comparisons', included: true },
-        { text: 'Instant notifications', included: true },
-        { text: 'Advanced filters', included: true },
-        { text: 'Live property data', included: true },
-        { text: 'AI WhatsApp concierge', included: true },
+        { text: 'Everything in Pro 1', included: true },
+        { text: 'Advanced AI analysis', included: true },
+        { text: 'WhatsApp concierge', included: true },
+        { text: 'Real-time alerts', included: true },
+        { text: 'Portfolio management', included: true },
+      ],
+      icon: Crown,
+      popular: false
+    },
+    {
+      id: 'ultimate',
+      name: 'Ultimate',
+      price: '€49',
+      period: '/month',
+      features: [
+        { text: 'Everything in Pro 2', included: true },
+        { text: 'DeepSeek integration', included: true },
+        { text: 'PDF/CSV export', included: true },
+        { text: 'Heatmaps', included: true },
+        { text: 'Priority support', included: true },
       ],
       icon: Crown,
       popular: false
@@ -67,43 +79,55 @@ const plans = {
       period: '/siempre',
       features: [
         { text: '3 solicitudes IA/día', included: true },
-        { text: 'Acceso limitado al mapa', included: true },
-        { text: 'Listados básicos', included: true },
-        { text: 'Análisis IA completo', included: false },
-        { text: 'Comparar apartamentos', included: false },
-        { text: 'Notificaciones instantáneas', included: false },
+        { text: 'Mapa demo (datos falsos)', included: true },
+        { text: 'Tarjetas básicas', included: true },
+        { text: 'Datos en vivo', included: false },
+        { text: 'Guardar favoritos', included: false },
       ],
       icon: Sparkles,
       popular: false
     },
     {
-      id: 'builder',
-      name: 'Builder',
-      price: '€9',
+      id: 'pro1',
+      name: 'Pro 1',
+      price: '€20',
       period: '/mes',
       features: [
-        { text: 'Solicitudes IA ilimitadas', included: true },
-        { text: 'Acceso completo al mapa', included: true },
-        { text: 'Notificaciones diarias', included: true },
-        { text: 'Guardar favoritos', included: true },
+        { text: 'Consultas IA ilimitadas', included: true },
+        { text: 'Mapa en vivo (ZenRows)', included: true },
         { text: 'Calculadora de Coste Real', included: true },
-        { text: 'Filtros avanzados', included: false },
+        { text: 'Comparar apartamentos', included: true },
+        { text: 'Guardar favoritos', included: true },
       ],
       icon: Zap,
       popular: true
     },
     {
-      id: 'pro',
-      name: 'Pro',
+      id: 'pro2',
+      name: 'Pro 2',
       price: '€29',
       period: '/mes',
       features: [
-        { text: 'Todo en Builder', included: true },
-        { text: 'Comparaciones IA avanzadas', included: true },
-        { text: 'Notificaciones instantáneas', included: true },
-        { text: 'Filtros avanzados', included: true },
-        { text: 'Datos en vivo', included: true },
-        { text: 'Conserje IA WhatsApp', included: true },
+        { text: 'Todo en Pro 1', included: true },
+        { text: 'Análisis IA avanzado', included: true },
+        { text: 'Conserje WhatsApp', included: true },
+        { text: 'Alertas en tiempo real', included: true },
+        { text: 'Gestión de portafolio', included: true },
+      ],
+      icon: Crown,
+      popular: false
+    },
+    {
+      id: 'ultimate',
+      name: 'Ultimate',
+      price: '€49',
+      period: '/mes',
+      features: [
+        { text: 'Todo en Pro 2', included: true },
+        { text: 'Integración DeepSeek', included: true },
+        { text: 'Exportar PDF/CSV', included: true },
+        { text: 'Mapas de calor', included: true },
+        { text: 'Soporte prioritario', included: true },
       ],
       icon: Crown,
       popular: false
@@ -180,7 +204,7 @@ export default function UpgradeModal({ isOpen, onClose, currentPlan = 'free', on
         </div>
 
         <div className="p-8">
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {plansList.map((plan, index) => {
               const Icon = plan.icon;
               const isCurrentPlan = currentPlan === plan.id;
