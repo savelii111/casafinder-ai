@@ -72,7 +72,7 @@ async function getDeepSeekResponseReal(prompt, options = {}) {
 
 async function getDeepSeekResponseMock(prompt, options = {}) {
   // Use existing mock AI responses
-  const { mockAskAI } = await import('../utils/mockAI.js');
+  const { mockAskAI } = await import('../utils/mockAI');
   return mockAskAI({}, options.language || 'en');
 }
 
