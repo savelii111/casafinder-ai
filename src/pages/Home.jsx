@@ -15,6 +15,7 @@ import ApartmentMap from '@/components/map/ApartmentMap';
 import HeroSection from '@/components/home/HeroSection';
 import FeaturedProperties from '@/components/home/FeaturedProperties';
 import ApartmentList from '@/components/apartment/ApartmentList';
+import ApartmentCard from '@/components/apartment/ApartmentCard';
 import ApartmentFilters from '@/components/apartment/ApartmentFilters';
 import PropertyModal from '@/components/apartment/PropertyModal';
 import UpgradeModal from '@/components/subscription/UpgradeModal';
@@ -74,6 +75,8 @@ export default function Home() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [mapLoading, setMapLoading] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [propertiesFoundCount, setPropertiesFoundCount] = useState(0);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -196,6 +199,7 @@ export default function Home() {
     const userMessage = { role: 'user', content };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+    setHasSearched(true);
 
     // Automatically show map when user searches
     setShowMap(true);
@@ -235,15 +239,17 @@ export default function Home() {
       });
 
       const propertiesCount = response.properties_found || filteredApartments.length;
+      setPropertiesFoundCount(propertiesCount);
+      
       const countText = {
-        en: `We found ${propertiesCount} properties matching your request`,
-        es: `Encontramos ${propertiesCount} propiedades que coinciden con tu búsqueda`,
-        ru: `Мы нашли ${propertiesCount} объектов по вашему запросу`
+        en: `We found ${propertiesCount} properties matching your request.`,
+        es: `Encontramos ${propertiesCount} propiedades que coinciden con tu búsqueda.`,
+        ru: `Мы нашли ${propertiesCount} объектов по вашему запросу.`
       };
 
       const assistantMessage = { 
         role: 'assistant', 
-        content: `${countText[language] || countText.en}. ${response.response || "Check out the map and listings below!"}`
+        content: `${countText[language] || countText.en} ${response.response || ""}`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -597,7 +603,7 @@ export default function Home() {
 
         {/* Desktop Layout */}
         <div className="hidden lg:block h-full overflow-hidden">
-          {messages.length === 0 ? (
+          {!hasSearched ? (
             /* Landing Page */
             <div className="h-full overflow-y-auto bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
               <HeroSection 
@@ -608,77 +614,113 @@ export default function Home() {
               <FeaturedProperties language={language} />
             </div>
           ) : (
-            /* Split Layout */
-            <div className="flex h-full">
-              {/* Left Panel - Chat (30%) */}
-              <div className="w-[30%] flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-                {/* Chat Header */}
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {language === 'es' ? 'Búsqueda AI' : language === 'ru' ? 'Поиск с AI' : 'AI Search'}
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {filteredApartments.length} {language === 'es' ? 'propiedades' : language === 'ru' ? 'объектов' : 'properties'}
-                  </p>
-                </div>
+            /* Search Results Layout */
+            <div className="h-full flex flex-col overflow-hidden">
+              {/* Top Section: Chat + Map Side-by-Side */}
+              <div className="flex h-[60vh] border-b border-gray-200 dark:border-gray-700">
+                {/* Left Panel - Chat (35%) */}
+                <div className="w-[35%] flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {language === 'es' ? 'Búsqueda AI' : language === 'ru' ? 'Поиск с AI' : 'AI Search'}
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {propertiesFoundCount} {language === 'es' ? 'propiedades' : language === 'ru' ? 'объектов' : 'properties'}
+                    </p>
+                  </div>
 
-                {/* Chat Messages */}
-                <div 
-                  ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto p-4 space-y-3"
-                >
-                  <AnimatePresence>
-                    {messages.map((msg, index) => (
-                      <ChatMessage 
-                        key={index} 
-                        message={msg} 
-                        isUser={msg.role === 'user'} 
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
+                  {/* Chat Messages */}
+                  <div 
+                    ref={chatContainerRef}
+                    className="flex-1 overflow-y-auto p-4 space-y-3"
+                  >
+                    <AnimatePresence>
+                      {messages.map((msg, index) => (
+                        <ChatMessage 
+                          key={index} 
+                          message={msg} 
+                          isUser={msg.role === 'user'} 
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
 
-                {/* Chat Input */}
-                <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-800/70">
-                  <ChatInput 
-                    onSend={handleSendMessage}
-                    isLoading={isLoading}
-                    language={language}
-                    placeholder={
-                      language === 'es' ? 'Buscar apartamento...' :
-                      language === 'ru' ? 'Найти квартиру...' :
-                      'Search apartment...'
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Right Panel - Map (70%) */}
-              <div className="w-[70%] relative">
-                {/* Map Controls Overlay */}
-                <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start">
-                  <div className="flex gap-2">
-                    <SmartFilters filters={filters} onFiltersChange={setFilters} />
-                    <ApartmentFilters
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                      isPro={canUseAdvancedFilters}
+                  {/* Chat Input */}
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-800/70">
+                    <ChatInput 
+                      onSend={handleSendMessage}
+                      isLoading={isLoading}
                       language={language}
-                      onUpgradeClick={() => setShowUpgradeModal(true)}
+                      placeholder={
+                        language === 'es' ? 'Buscar apartamento...' :
+                        language === 'ru' ? 'Найти квартиру...' :
+                        'Search apartment...'
+                      }
                     />
                   </div>
                 </div>
 
-                {/* Full-Height Map */}
-                <div className="h-full w-full">
-                  <ApartmentMap
-                    apartments={filteredApartments}
-                    center={mapCenter}
-                    zoom={13}
-                    onApartmentClick={handleApartmentClick}
-                    selectedId={selectedApartment?.id}
-                    language={language}
-                  />
+                {/* Right Panel - Map (65%) */}
+                <div className="w-[65%] relative">
+                  {/* Map Controls Overlay */}
+                  <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start">
+                    <div className="flex gap-2">
+                      <SmartFilters filters={filters} onFiltersChange={setFilters} />
+                      <ApartmentFilters
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        isPro={canUseAdvancedFilters}
+                        language={language}
+                        onUpgradeClick={() => setShowUpgradeModal(true)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Full-Height Map */}
+                  <div className="h-full w-full">
+                    <ApartmentMap
+                      apartments={filteredApartments}
+                      center={mapCenter}
+                      zoom={13}
+                      onApartmentClick={handleApartmentClick}
+                      selectedId={selectedApartment?.id}
+                      language={language}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Section: Top Matches (Scrollable) */}
+              <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                <div className="max-w-7xl mx-auto p-6">
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {language === 'es' ? 'Mejores Coincidencias' : language === 'ru' ? 'Лучшие Совпадения' : 'Top Matches for Your Search'}
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {language === 'es' ? 'Mostrando las 6 mejores propiedades' : language === 'ru' ? 'Показаны 6 лучших объектов' : 'Showing top 6 properties'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredApartments.slice(0, 6).map((apt, index) => (
+                      <motion.div
+                        key={apt.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <ApartmentCard
+                          apartment={apt}
+                          onClick={handleApartmentClick}
+                          isSelected={selectedApartment?.id === apt.id}
+                          language={language}
+                          onUpgradeClick={() => setShowUpgradeModal(true)}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
