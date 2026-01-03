@@ -27,7 +27,7 @@ const plans = {
     },
     {
       id: 'pro1',
-      name: 'Pro 1',
+      name: 'Pro',
       price: '€20',
       period: '/month',
       features: [
@@ -42,7 +42,7 @@ const plans = {
     },
     {
       id: 'pro2',
-      name: 'Pro 2',
+      name: 'Pro+',
       price: '€29',
       period: '/month',
       features: [
