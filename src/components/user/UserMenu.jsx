@@ -46,7 +46,7 @@ export default function UserMenu() {
       plan: 'Plan',
       starter: 'Starter',
       aiRequests: 'AI Requests Today',
-      unlimited: 'Unlimited',
+      unlimited: 'Unlimited AI',
       settings: 'Settings',
       notifications: 'Notifications',
       activity: 'My Activity',
@@ -70,9 +70,9 @@ export default function UserMenu() {
     ru: {
       myAccount: 'Мой Аккаунт',
       plan: 'План',
-      starter: 'Стартовый',
-      aiRequests: 'AI Запросы Сегодня',
-      unlimited: 'Безлимит',
+      starter: 'Бесплатно',
+      aiRequests: 'AI Запросов Сегодня',
+      unlimited: 'Безлимитный AI',
       settings: 'Настройки',
       notifications: 'Уведомления',
       activity: 'Моя Активность',
@@ -85,9 +85,9 @@ export default function UserMenu() {
   const t = labels[language] || labels.en;
 
   const planNames = {
-    free: t.starter,
-    pro1: 'Pro 1',
-    pro2: 'Pro 2',
+    free: language === 'es' ? 'Gratis' : language === 'ru' ? 'Бесплатно' : 'Free',
+    pro1: 'Pro',
+    pro2: 'Pro+',
     ultimate: 'Ultimate'
   };
 
@@ -165,8 +165,8 @@ export default function UserMenu() {
                 </div>
               )}
               {plan !== 'free' && (
-                <div className="mt-2 p-2 bg-black/5 rounded-lg text-center">
-                  <span className="text-xs font-semibold text-gray-700">{t.unlimited} ✨</span>
+                <div className="mt-2 p-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg text-center border border-purple-200">
+                  <span className="text-xs font-semibold text-purple-900">✨ {t.unlimited}</span>
                 </div>
               )}
             </div>

@@ -89,7 +89,7 @@ const plans = {
     },
     {
       id: 'pro1',
-      name: 'Pro 1',
+      name: 'Pro',
       price: '€20',
       period: '/mes',
       features: [
@@ -104,7 +104,7 @@ const plans = {
     },
     {
       id: 'pro2',
-      name: 'Pro 2',
+      name: 'Pro+',
       price: '€29',
       period: '/mes',
       features: [
@@ -151,7 +151,7 @@ const plans = {
     },
     {
       id: 'pro1',
-      name: 'Pro 1',
+      name: 'Pro',
       price: '€20',
       period: '/месяц',
       features: [
@@ -166,7 +166,7 @@ const plans = {
     },
     {
       id: 'pro2',
-      name: 'Pro 2',
+      name: 'Pro+',
       price: '€29',
       period: '/месяц',
       features: [
@@ -235,7 +235,7 @@ export default function UpgradeModal({ isOpen, onClose, currentPlan = 'free', on
                 >
                   {plan.popular && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white font-semibold border border-white/20 shadow-lg">
-                      Most Popular
+                      {language === 'es' ? 'Más Popular' : language === 'ru' ? 'Популярный' : 'Most Popular'}
                     </Badge>
                   )}
 
@@ -279,7 +279,12 @@ export default function UpgradeModal({ isOpen, onClose, currentPlan = 'free', on
                     onClick={() => !isCurrentPlan && onSelectPlan?.(plan.id)}
                     disabled={isCurrentPlan}
                   >
-                    {isCurrentPlan ? 'Current Plan' : plan.id === 'free' ? 'Get Started' : 'Upgrade'}
+                    {isCurrentPlan 
+                      ? (language === 'es' ? 'Plan Actual' : language === 'ru' ? 'Текущий План' : 'Current Plan')
+                      : plan.id === 'free' 
+                        ? (language === 'es' ? 'Comenzar' : language === 'ru' ? 'Начать' : 'Get Started')
+                        : (language === 'es' ? 'Mejorar' : language === 'ru' ? 'Улучшить' : 'Upgrade')
+                    }
                   </Button>
                 </motion.div>
               );

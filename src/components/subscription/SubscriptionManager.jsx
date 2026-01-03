@@ -28,7 +28,7 @@ const PLAN_FEATURES = {
     ]
   },
   pro1: {
-    name: 'Pro 1',
+    name: 'Pro',
     price: 20,
     features: [
       { name: 'View all properties', included: true },
@@ -44,7 +44,7 @@ const PLAN_FEATURES = {
     ]
   },
   pro2: {
-    name: 'Pro 2',
+    name: 'Pro+',
     price: 29,
     features: [
       { name: 'Everything in Pro 1', included: true },

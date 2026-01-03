@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Slider } from "@/components/ui/slider";
 import { 
   SlidersHorizontal, Wifi, Car, Wind, Coffee, TreePine, 
   Dumbbell, Shield, PawPrint, Baby, Snowflake, Waves
 } from "lucide-react";
+import { useLanguage } from '@/components/context/LanguageContext';
 
-export default function SmartFilters({ filters, onFiltersChange, language = 'en' }) {
+export default function SmartFilters({ filters, onFiltersChange }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { language } = useLanguage();
 
   const labels = {
     en: {

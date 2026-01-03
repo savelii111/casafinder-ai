@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import SubscriptionManager from '@/components/subscription/SubscriptionManager';
-import LanguageSelector from '@/components/common/LanguageSelector';
+import { useLanguage } from '@/components/context/LanguageContext';
 
 export default function Subscription() {
-  const [language, setLanguage] = useState('en');
+  const { language } = useLanguage();
 
   const labels = {
     en: { backHome: 'Back to Home' },
@@ -28,10 +28,6 @@ export default function Subscription() {
                 {t.backHome}
               </Button>
             </Link>
-            <LanguageSelector 
-              currentLanguage={language} 
-              onLanguageChange={setLanguage} 
-            />
           </div>
         </div>
       </header>

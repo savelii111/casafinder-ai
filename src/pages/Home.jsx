@@ -58,7 +58,8 @@ export default function Home() {
     priceMax: 5000,
     rooms: 'any',
     minSize: 0,
-    maxRisk: 10
+    maxRisk: 10,
+    amenities: {}
   });
   const [mapCenter, setMapCenter] = useState([40.4168, -3.7038]);
   const [aiLoading, setAiLoading] = useState(false);
@@ -393,21 +394,36 @@ export default function Home() {
   };
 
   const filteredApartments = apartments.filter(apt => {
+    // Price filters
     if (filters.priceMin && apt.price < filters.priceMin) return false;
     if (filters.priceMax && apt.price > filters.priceMax) return false;
+    
+    // Room filters
     if (filters.rooms !== 'any') {
       const roomFilter = parseInt(filters.rooms);
       if (roomFilter === 4 && apt.rooms < 4) return false;
       if (roomFilter < 4 && apt.rooms !== roomFilter) return false;
     }
+    
+    // Basic amenities
     if (filters.furnished === 'yes' && !apt.furnished) return false;
     if (filters.furnished === 'no' && apt.furnished) return false;
     if (filters.pets_allowed === 'yes' && !apt.pets_allowed) return false;
     if (filters.pets_allowed === 'no' && apt.pets_allowed) return false;
+    
+    // Smart filters (amenities)
+    if (filters.amenities) {
+      for (const [key, value] of Object.entries(filters.amenities)) {
+        if (value && !apt[key]) return false;
+      }
+    }
+    
+    // Pro filters
     if (userPlan !== 'free') {
       if (filters.minSize && apt.size < filters.minSize) return false;
       if (filters.maxRisk && apt.riskScore > filters.maxRisk) return false;
     }
+    
     return true;
   });
 
@@ -578,7 +594,6 @@ export default function Home() {
             <SmartFilters
               filters={filters}
               onFiltersChange={setFilters}
-              language={language}
             />
 
             <FeatureGate
