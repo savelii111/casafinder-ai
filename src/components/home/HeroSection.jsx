@@ -42,8 +42,12 @@ export default function HeroSection({ onSearch, isLoading, language = 'en' }) {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="max-w-4xl mx-auto text-center px-4 py-12 lg:py-20"
+      className="max-w-4xl mx-auto text-center px-4 py-12 lg:py-20 relative"
     >
+      {/* Ad Space Placeholder - Top Right */}
+      <div className="hidden lg:block absolute top-0 right-0 w-48 h-48 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-xs text-gray-400 dark:text-gray-600">
+        Ad Space
+      </div>
       {/* Headline */}
       <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-6 leading-tight">
         {t.headline}
@@ -67,15 +71,6 @@ export default function HeroSection({ onSearch, isLoading, language = 'en' }) {
               className="flex-1 pl-12 pr-20 h-14 lg:h-16 border-0 bg-transparent focus-visible:ring-0 text-base lg:text-lg text-gray-800 dark:text-gray-200 placeholder:text-gray-400"
               disabled={isLoading}
             />
-
-            {/* Voice Icon (UI only) */}
-            <button
-              type="button"
-              className="absolute right-16 lg:right-20 h-10 w-10 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title="Voice search (coming soon)"
-            >
-              <Mic className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-            </button>
 
             {/* Search Button */}
             <Button
