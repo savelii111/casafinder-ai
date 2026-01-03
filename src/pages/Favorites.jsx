@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   Heart, ArrowLeft, Trash2, MapPin, Home as HomeIcon,
-  SortAsc, Calendar, GripVertical, FolderPlus
+  SortAsc, Calendar, GripVertical, FolderPlus, Folder
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -17,6 +17,7 @@ import SkeletonLoader from '@/components/common/SkeletonLoader';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
 import { useLanguage } from '@/components/context/LanguageContext';
 import { toast } from 'sonner';
+import FolderManager from '@/components/favorites/FolderManager';
 
 export default function Favorites() {
   const { language } = useLanguage();
@@ -24,6 +25,8 @@ export default function Favorites() {
   const [selectedApartment, setSelectedApartment] = useState(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [draggedItems, setDraggedItems] = useState([]);
+  const [showFolderManager, setShowFolderManager] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState('all');
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
@@ -57,9 +60,28 @@ export default function Favorites() {
     queryFn: () => base44.entities.Apartment.list(),
   });
 
-  const favoriteApartments = apartments.filter(apt => 
+  const { data: folders = [] } = useQuery({
+    queryKey: ['portfolios', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      return base44.entities.Portfolio.filter({ user_email: user.email });
+    },
+    enabled: !!user?.email && canSaveFavorites
+  });
+
+  let favoriteApartments = apartments.filter(apt => 
     favorites.some(fav => fav.apartment_id === apt.id)
   );
+
+  // Filter by folder
+  if (selectedFolder !== 'all') {
+    const folder = folders.find(f => f.id === selectedFolder);
+    if (folder) {
+      favoriteApartments = favoriteApartments.filter(apt => 
+        folder.apartment_ids?.includes(apt.id)
+      );
+    }
+  }
 
   const sortedApartments = [...favoriteApartments].sort((a, b) => {
     if (sortBy === 'price-asc') return a.price - b.price;
@@ -175,6 +197,41 @@ export default function Favorites() {
             <p className="text-gray-600 mt-2">
               {favoriteApartments.length} {favoriteApartments.length === 1 ? 'property' : 'properties'}
             </p>
+            
+            {/* Folder selector */}
+            <div className="flex items-center gap-2 mt-3">
+              <Button
+                variant={selectedFolder === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFolder('all')}
+              >
+                All
+              </Button>
+              {folders.map(folder => (
+                <Button
+                  key={folder.id}
+                  variant={selectedFolder === folder.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedFolder(folder.id)}
+                  className="gap-2"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: folder.color }}
+                  />
+                  {folder.name}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFolderManager(true)}
+                className="gap-2"
+              >
+                <FolderPlus className="h-4 w-4" />
+                Manage
+              </Button>
+            </div>
           </div>
 
           {favoriteApartments.length > 0 && (
@@ -282,6 +339,12 @@ export default function Favorites() {
         onClose={() => setShowPropertyModal(false)}
         language={language}
         userPlan={plan}
+      />
+
+      <FolderManager
+        isOpen={showFolderManager}
+        onClose={() => setShowFolderManager(false)}
+        language={language}
       />
     </div>
   );

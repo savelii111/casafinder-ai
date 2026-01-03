@@ -494,7 +494,26 @@ export default function Home() {
             onSend={handleSendMessage}
             isLoading={isLoading}
             language={language}
+            placeholder={
+              language === 'es' ? '🏠 "Busco un 2-habitaciones con terraza cerca del metro..."' :
+              language === 'ru' ? '🏠 "Ищу 2-комнатную с балконом рядом с метро..."' :
+              '🏠 "Looking for a 2-bedroom with balcony near metro..."'
+            }
           />
+          {isLoading && (
+            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <span>
+                {language === 'es' ? 'AI está buscando...' : 
+                 language === 'ru' ? 'AI ищет...' : 
+                 'AI is searching...'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Search History */}
