@@ -13,6 +13,7 @@ import {
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
+import { useLanguage } from '@/components/context/LanguageContext';
 import moment from 'moment';
 
 // Mock activity data - will be replaced with real data later
@@ -71,7 +72,7 @@ const mockActivityData = {
 };
 
 export default function Activity() {
-  const [language, setLanguage] = useState('en');
+  const { language } = useLanguage();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -89,13 +90,6 @@ export default function Activity() {
   });
 
   const { plan, aiRequestsToday } = useFeatureAccess();
-
-  // Set language from subscription
-  React.useEffect(() => {
-    if (subscription?.language) {
-      setLanguage(subscription.language);
-    }
-  }, [subscription]);
 
   const activityData = mockActivityData[language] || mockActivityData.en;
 

@@ -15,10 +15,11 @@ import ApartmentCard from '@/components/apartment/ApartmentCard';
 import PropertyModal from '@/components/apartment/PropertyModal';
 import SkeletonLoader from '@/components/common/SkeletonLoader';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
+import { useLanguage } from '@/components/context/LanguageContext';
 import { toast } from 'sonner';
 
 export default function Favorites() {
-  const [language, setLanguage] = useState('en');
+  const { language } = useLanguage();
   const [sortBy, setSortBy] = useState('date');
   const [selectedApartment, setSelectedApartment] = useState(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
@@ -41,12 +42,6 @@ export default function Favorites() {
   });
 
   const { plan, canSaveFavorites } = useFeatureAccess();
-
-  React.useEffect(() => {
-    if (subscription?.language) {
-      setLanguage(subscription.language);
-    }
-  }, [subscription]);
 
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ['favorites', user?.email],

@@ -2,20 +2,31 @@ import React from 'react';
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Bed, Maximize, Shield, MapPin } from "lucide-react";
+import { Bed, Maximize, Shield, MapPin, Share2, Sparkles, TrendingDown, PawPrint, Sofa } from "lucide-react";
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import FavoriteButton from './FavoriteButton';
 import { useFeatureAccess } from '@/components/subscription/SubscriptionManager';
+import ShareModal from '../share/ShareModal';
 
 export default function ApartmentCard({ apartment, onClick, isSelected, language = 'en', onUpgradeClick }) {
+  const [showShareModal, setShowShareModal] = React.useState(false);
+  
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me()
   });
 
   const { canSaveFavorites } = useFeatureAccess();
+
+  // Check if property is new (created < 48h ago)
+  const isNew = apartment.created_date && 
+    (new Date() - new Date(apartment.created_date)) < 48 * 60 * 60 * 1000;
+
+  // Check if price dropped (mock - in production check price history)
+  const hasPriceDropped = apartment.marketPriceDiff && apartment.marketPriceDiff < -10;
   const getRiskColor = (score) => {
     if (score <= 3) return 'bg-green-500';
     if (score <= 6) return 'bg-amber-500';
@@ -67,19 +78,45 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
               />
             </div>
             
-            {apartment.riskScore && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge className={`absolute top-2 left-2 ${getRiskColor(apartment.riskScore)} text-white border-0`}>
-                    <Shield className="h-3 w-3 mr-1" />
-                    {getRiskLabel(apartment.riskScore)}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Risk Score: {apartment.riskScore}/10</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            <div className="absolute top-2 left-2 flex flex-col gap-1">
+              {apartment.riskScore && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge className={`${getRiskColor(apartment.riskScore)} text-white border-0`}>
+                      <Shield className="h-3 w-3 mr-1" />
+                      {getRiskLabel(apartment.riskScore)}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Risk Score: {apartment.riskScore}/10</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {isNew && (
+                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 animate-pulse">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  {language === 'es' ? 'Nueva' : language === 'ru' ? 'Новая' : 'New'}
+                </Badge>
+              )}
+              {hasPriceDropped && (
+                <Badge className="bg-green-500 text-white border-0">
+                  <TrendingDown className="h-3 w-3 mr-1" />
+                  {language === 'es' ? 'Rebajado' : language === 'ru' ? 'Скидка' : 'Price Drop'}
+                </Badge>
+              )}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowShareModal(true);
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
           </div>
 
         <div className="p-4">
@@ -98,7 +135,7 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
             {apartment.address}
           </p>
 
-          <div className="flex gap-3 text-xs text-gray-600">
+          <div className="flex gap-2 text-xs text-gray-600 flex-wrap">
             {apartment.rooms && (
               <span className="flex items-center gap-1">
                 <Bed className="h-3 w-3" />
@@ -111,6 +148,18 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
                 {apartment.size} m²
               </span>
             )}
+            {apartment.furnished && (
+              <span className="flex items-center gap-1 text-blue-600">
+                <Sofa className="h-3 w-3" />
+                {language === 'es' ? 'Amueblado' : language === 'ru' ? 'Мебель' : 'Furnished'}
+              </span>
+            )}
+            {apartment.pets_allowed && (
+              <span className="flex items-center gap-1 text-green-600">
+                <PawPrint className="h-3 w-3" />
+                {language === 'es' ? 'Mascotas' : language === 'ru' ? 'Питомцы' : 'Pets OK'}
+              </span>
+            )}
           </div>
 
           {apartment.aiInsight && (
@@ -120,6 +169,13 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
           )}
         </div>
       </Card>
+
+      <ShareModal
+        apartment={apartment}
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        language={language}
+      />
     </motion.div>
     </TooltipProvider>
   );

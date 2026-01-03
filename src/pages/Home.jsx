@@ -25,6 +25,7 @@ import UserMenu from '@/components/user/UserMenu';
 import NotificationBell from '@/components/user/NotificationBell';
 import ResultsCounter from '@/components/common/ResultsCounter';
 import CompareModal from '@/components/apartment/CompareModal';
+import NewPropertyAlert from '@/components/alerts/NewPropertyAlert';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import SearchHistory from '@/components/search/SearchHistory';
 import SmartFilters from '@/components/filters/SmartFilters';
@@ -69,6 +70,7 @@ export default function Home() {
   const [compareList, setCompareList] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [mapLoading, setMapLoading] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -398,6 +400,10 @@ export default function Home() {
       if (roomFilter === 4 && apt.rooms < 4) return false;
       if (roomFilter < 4 && apt.rooms !== roomFilter) return false;
     }
+    if (filters.furnished === 'yes' && !apt.furnished) return false;
+    if (filters.furnished === 'no' && apt.furnished) return false;
+    if (filters.pets_allowed === 'yes' && !apt.pets_allowed) return false;
+    if (filters.pets_allowed === 'no' && apt.pets_allowed) return false;
     if (userPlan !== 'free') {
       if (filters.minSize && apt.size < filters.minSize) return false;
       if (filters.maxRisk && apt.riskScore > filters.maxRisk) return false;
@@ -533,6 +539,15 @@ export default function Home() {
               {showMap ? t.hideMap : t.viewMap}
             </Button>
 
+            <Button
+              variant="outline"
+              onClick={() => setShowAlertModal(true)}
+              className="gap-2 bg-white/70 backdrop-blur-sm border-white/20 hover:bg-white"
+            >
+              <MessageSquare className="h-4 w-4" />
+              {language === 'es' ? 'Crear Alerta' : language === 'ru' ? 'Создать Оповещение' : 'Create Alert'}
+            </Button>
+
             <ExportManager 
               apartments={filteredApartments}
               language={language}
@@ -663,6 +678,12 @@ export default function Home() {
         onClose={() => setShowCompareModal(false)}
         onRemove={(id) => setCompareList(compareList.filter(a => a.id !== id))}
         language={language}
+      />
+
+      <NewPropertyAlert
+        isOpen={showAlertModal}
+        onClose={() => setShowAlertModal(false)}
+        filters={filters}
       />
     </div>
   );
