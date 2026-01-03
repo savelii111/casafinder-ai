@@ -42,12 +42,8 @@ export default function HeroSection({ onSearch, isLoading, language = 'en' }) {
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="max-w-4xl mx-auto text-center px-4 py-12 lg:py-20 relative"
+      className="max-w-4xl mx-auto text-center px-4 py-12 lg:py-20"
     >
-      {/* Ad Space Placeholder - Top Right */}
-      <div className="hidden lg:block absolute top-0 right-0 w-48 h-48 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-xs text-gray-400 dark:text-gray-600">
-        Ad Space
-      </div>
       {/* Headline */}
       <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-6 leading-tight">
         {t.headline}
@@ -68,7 +64,7 @@ export default function HeroSection({ onSearch, isLoading, language = 'en' }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t.placeholder}
-              className="flex-1 pl-12 pr-20 h-14 lg:h-16 border-0 bg-transparent focus-visible:ring-0 text-base lg:text-lg text-gray-800 dark:text-gray-200 placeholder:text-gray-400"
+              className="flex-1 pl-12 pr-4 h-14 lg:h-16 border-0 bg-transparent focus-visible:ring-0 text-base lg:text-lg text-gray-800 dark:text-gray-200 placeholder:text-gray-400"
               disabled={isLoading}
             />
 
@@ -77,7 +73,7 @@ export default function HeroSection({ onSearch, isLoading, language = 'en' }) {
               type="submit"
               size="lg"
               disabled={!query.trim() || isLoading}
-              className="h-12 lg:h-14 px-6 lg:px-8 rounded-xl bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-black font-semibold shadow-lg"
+              className="h-12 lg:h-14 px-6 lg:px-8 rounded-xl bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-black font-semibold shadow-lg flex-shrink-0"
             >
               {isLoading ? (
                 <div className="flex gap-1">
