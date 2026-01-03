@@ -169,7 +169,7 @@ export default function SubscriptionManager({ language = 'en' }) {
           return (
             <Card 
               key={planId}
-              className={`relative ${isCurrent ? 'ring-2 ring-black' : ''}`}
+              className={`relative ${isCurrent ? 'ring-2 ring-black dark:ring-white' : ''} bg-white dark:bg-gray-800`}
             >
               {isCurrent && (
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white">
@@ -208,7 +208,7 @@ export default function SubscriptionManager({ language = 'en' }) {
                 
                 {isUpgrade && (
                   <Button
-                    className="w-full bg-black hover:bg-gray-800"
+                    className="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 dark:text-black"
                     onClick={() => handleUpgrade(planId)}
                     disabled={loading}
                   >
