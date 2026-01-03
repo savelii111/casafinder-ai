@@ -116,21 +116,21 @@ export default function UserMenu() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-72 glass-card rounded-2xl shadow-2xl border border-white/30 overflow-hidden z-[9999]"
+          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[9999]"
           >
-            {/* User Info Section */}
-            <div className="p-4 border-b border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+          {/* User Info Section */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-black to-gray-700 flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-black to-gray-700 dark:from-gray-600 dark:to-gray-800 flex items-center justify-center text-white font-bold text-lg">
                   {user.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 truncate">{user.full_name || 'User'}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white truncate">{user.full_name || 'User'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                 </div>
               </div>
 
@@ -201,36 +201,52 @@ export default function UserMenu() {
               <div className="h-px bg-gray-200 my-2" />
 
               {/* Settings */}
-              <Link to={createPageUrl('Settings')} onClick={() => setIsOpen(false)}>
-                <button className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
-                  <Settings className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{t.settings}</span>
-                </button>
-              </Link>
+              <button 
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate(createPageUrl('Settings'));
+                }}
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <Settings className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">{t.settings}</span>
+              </button>
 
               {/* Notifications */}
-              <Link to={createPageUrl('Settings')} onClick={() => setIsOpen(false)}>
-                <button className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
-                  <Bell className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{t.notifications}</span>
-                </button>
-              </Link>
+              <button 
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate(createPageUrl('Settings'));
+                }}
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <Bell className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">{t.notifications}</span>
+              </button>
 
               {/* Activity */}
-              <Link to={createPageUrl('Activity')} onClick={() => setIsOpen(false)}>
-                <button className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
-                  <Activity className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{t.activity}</span>
-                </button>
-              </Link>
+              <button 
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate(createPageUrl('Activity'));
+                }}
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <Activity className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">{t.activity}</span>
+              </button>
 
               {/* Favorites */}
-              <Link to={createPageUrl('Favorites')} onClick={() => setIsOpen(false)}>
-                <button className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
-                  <Heart className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">Favorites</span>
-                </button>
-              </Link>
+              <button 
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate(createPageUrl('Favorites'));
+                }}
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <Heart className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                <span className="text-sm text-gray-700 dark:text-gray-200">Favorites</span>
+              </button>
 
               <div className="h-px bg-gray-200 my-2" />
 

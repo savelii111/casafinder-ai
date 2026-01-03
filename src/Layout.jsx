@@ -106,13 +106,26 @@ export default function Layout({ children }) {
           }
 
           .dark .glass-card {
-          background: rgba(30, 30, 30, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(20, 20, 20, 0.95);
+          border: 1px solid rgba(255, 255, 255, 0.15);
           }
 
           .dark .glass-dark {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.9);
           border: 1px solid rgba(255, 255, 255, 0.2);
+          }
+
+          .dark input,
+          .dark textarea,
+          .dark select {
+          background: rgba(30, 30, 30, 0.95);
+          border-color: rgba(255, 255, 255, 0.2);
+          color: white;
+          }
+
+          .dark input::placeholder,
+          .dark textarea::placeholder {
+          color: rgba(255, 255, 255, 0.5);
           }
           `}</style>
           {children}
