@@ -159,7 +159,7 @@ export default function SubscriptionManager({ language = 'en' }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">{t.title}</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t.title}</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Object.entries(PLAN_FEATURES).map(([planId, plan]) => {
@@ -182,10 +182,10 @@ export default function SubscriptionManager({ language = 'en' }) {
                   <span>{plan.name}</span>
                   {planId !== 'free' && <Crown className="h-5 w-5 text-gray-400" />}
                 </CardTitle>
-                <div className="text-3xl font-bold">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">
                   €{plan.price}
                   {planId !== 'free' && (
-                    <span className="text-sm font-normal text-gray-500">/{t.perMonth}</span>
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/{t.perMonth}</span>
                   )}
                 </div>
               </CardHeader>
@@ -197,9 +197,9 @@ export default function SubscriptionManager({ language = 'en' }) {
                       {feature.included ? (
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                       ) : (
-                        <X className="h-4 w-4 text-gray-300 mt-0.5 flex-shrink-0" />
+                        <X className="h-4 w-4 text-gray-300 dark:text-gray-600 mt-0.5 flex-shrink-0" />
                       )}
-                      <span className={feature.included ? 'text-gray-700' : 'text-gray-400'}>
+                      <span className={feature.included ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}>
                         {feature.name}
                       </span>
                     </li>

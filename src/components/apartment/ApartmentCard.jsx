@@ -48,8 +48,8 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
         animate={{ opacity: 1, y: 0 }}
       >
         <Card 
-          className={`cursor-pointer overflow-hidden backdrop-blur-xl bg-white/70 border transition-all duration-300 group ${
-            isSelected ? 'border-black shadow-xl' : 'border-white/20 hover:border-gray-300 hover:shadow-xl hover:-translate-y-1'
+          className={`cursor-pointer overflow-hidden backdrop-blur-xl bg-white/90 dark:bg-gray-800/90 border transition-all duration-300 group ${
+            isSelected ? 'border-black dark:border-white shadow-xl' : 'border-white/20 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-xl hover:-translate-y-1'
           }`}
           onClick={() => onClick?.(apartment)}
         >
@@ -121,21 +121,21 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
 
         <div className="p-4">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="font-semibold text-gray-900 text-sm line-clamp-1 flex-1">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-1 flex-1">
               {apartment.title}
             </h3>
           </div>
 
-          <p className="text-2xl font-bold text-black mb-2">
-            €{apartment.price?.toLocaleString()}<span className="text-sm font-normal text-gray-500">/mo</span>
+          <p className="text-2xl font-bold text-black dark:text-white mb-2">
+            €{apartment.price?.toLocaleString()}<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mo</span>
           </p>
 
-          <p className="text-xs text-gray-500 mb-3 line-clamp-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-1">
             <MapPin className="h-3 w-3 inline mr-1" />
             {apartment.address}
           </p>
 
-          <div className="flex gap-2 text-xs text-gray-600 flex-wrap">
+          <div className="flex gap-2 text-xs text-gray-600 dark:text-gray-300 flex-wrap">
             {apartment.rooms && (
               <span className="flex items-center gap-1">
                 <Bed className="h-3 w-3" />
@@ -149,13 +149,13 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
               </span>
             )}
             {apartment.furnished && (
-              <span className="flex items-center gap-1 text-blue-600">
+              <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                 <Sofa className="h-3 w-3" />
                 {language === 'es' ? 'Amueblado' : language === 'ru' ? 'Мебель' : 'Furnished'}
               </span>
             )}
             {apartment.pets_allowed && (
-              <span className="flex items-center gap-1 text-green-600">
+              <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
                 <PawPrint className="h-3 w-3" />
                 {language === 'es' ? 'Mascotas' : language === 'ru' ? 'Питомцы' : 'Pets OK'}
               </span>
@@ -163,7 +163,7 @@ export default function ApartmentCard({ apartment, onClick, isSelected, language
           </div>
 
           {apartment.aiInsight && (
-            <p className="text-xs text-gray-500 mt-3 line-clamp-2 italic">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 italic">
               "{apartment.aiInsight}"
             </p>
           )}
