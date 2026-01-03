@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { 
   User, Bell, Lock, Palette, Globe, CreditCard, 
   Shield, Activity, Trash2, Mail, Key, Smartphone,
