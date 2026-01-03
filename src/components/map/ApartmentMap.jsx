@@ -2,11 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { motion } from "framer-motion";
-import { Home, MapPin, Layers } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import HeatmapLayer from '../heatmap/HeatmapLayer';
-import RadiusSearch from './RadiusSearch';
+import { MapPin } from "lucide-react";
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -69,21 +65,14 @@ export default function ApartmentMap({
   zoom = 12,
   onApartmentClick,
   selectedId,
-  language = 'en',
-  showHeatmap = false
+  language = 'en'
 }) {
-  const [heatmapType, setHeatmapType] = useState('price');
-  const [showHeatmapLayer, setShowHeatmapLayer] = useState(false);
-
   const labels = {
     en: {
       properties: 'properties',
       property: 'property',
       found: 'found',
-      viewDetails: 'View Details',
-      heatmap: 'Heatmap',
-      price: 'Price',
-      risk: 'Risk'
+      viewDetails: 'View Details'
     },
     es: {
       properties: 'propiedades',
@@ -95,19 +84,11 @@ export default function ApartmentMap({
       properties: 'объектов',
       property: 'объект',
       found: 'найдено',
-      viewDetails: 'Подробнее',
-      heatmap: 'Тепловая Карта',
-      price: 'Цена',
-      risk: 'Риск'
+      viewDetails: 'Подробнее'
     }
   };
 
   const t = labels[language] || labels.en;
-
-  const handleRadiusSearch = ({ location, radius }) => {
-    // In production: geocode location and filter apartments by radius
-    console.log('Radius search:', { location, radius });
-  };
   return (
     <motion.div 
       className="relative w-full h-full rounded-2xl overflow-hidden shadow-xl"
@@ -128,45 +109,6 @@ export default function ApartmentMap({
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="absolute top-4 right-4 z-[1000] flex flex-col gap-2"
-      >
-        <RadiusSearch onSearch={handleRadiusSearch} language={language} />
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowHeatmapLayer(!showHeatmapLayer)}
-          className="gap-2 bg-white/90 backdrop-blur-sm"
-        >
-          <Layers className="h-4 w-4" />
-          {t.heatmap}
-        </Button>
-
-        {showHeatmapLayer && (
-          <div className="flex gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1">
-            <Button
-              size="sm"
-              variant={heatmapType === 'price' ? 'default' : 'ghost'}
-              onClick={() => setHeatmapType('price')}
-              className="text-xs h-7"
-            >
-              {t.price}
-            </Button>
-            <Button
-              size="sm"
-              variant={heatmapType === 'risk' ? 'default' : 'ghost'}
-              onClick={() => setHeatmapType('risk')}
-              className="text-xs h-7"
-            >
-              {t.risk}
-            </Button>
-          </div>
-        )}
-      </motion.div>
-
       <MapContainer
         center={center}
         zoom={zoom}
@@ -178,10 +120,6 @@ export default function ApartmentMap({
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <MapUpdater center={center} zoom={zoom} />
-
-        {showHeatmapLayer && (
-          <HeatmapLayer apartments={apartments} type={heatmapType} />
-        )}
 
         <MarkerClusterGroup
           chunkedLoading

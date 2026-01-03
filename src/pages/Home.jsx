@@ -443,30 +443,26 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3">
-              <div className="hidden lg:block">
-                <AIRequestTracker
-                  requestsUsed={subscription?.ai_requests_today || 0}
-                  requestsLimit={3}
-                  plan={userPlan}
-                  onUpgradeClick={() => setShowUpgradeModal(true)}
-                  language={language}
-                />
-              </div>
-
-              {/* Upgrade Plan Button */}
-              <Link to={createPageUrl('Subscription')}>
+              {/* Upgrade Plan Button - Desktop */}
+              <Link to={createPageUrl('Subscription')} className="hidden lg:block">
                 <Button 
                   variant="outline" 
                   size="sm"
                   className="gap-2 border-purple-200 dark:border-purple-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/50 dark:hover:to-pink-900/50 text-purple-900 dark:text-purple-300 font-semibold"
                 >
-                  <Crown className="h-3 w-3 lg:h-4 lg:w-4" />
-                  <span className="hidden sm:inline">
-                    {language === 'es' ? 'Mejorar Plan' : language === 'ru' ? 'Улучшить План' : 'Upgrade Plan'}
-                  </span>
-                  <span className="sm:hidden">
-                    {language === 'es' ? 'Pro' : language === 'ru' ? 'Pro' : 'Pro'}
-                  </span>
+                  <Crown className="h-4 w-4" />
+                  {language === 'es' ? 'Mejorar Plan' : language === 'ru' ? 'Улучшить План' : 'Upgrade Plan'}
+                </Button>
+              </Link>
+
+              {/* Upgrade Plan Button - Mobile (compact) */}
+              <Link to={createPageUrl('Subscription')} className="lg:hidden">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="gap-1 text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300"
+                >
+                  <Crown className="h-4 w-4" />
                 </Button>
               </Link>
 

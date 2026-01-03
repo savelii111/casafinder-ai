@@ -63,16 +63,16 @@ const PLAN_FEATURES = {
     name: 'Ultimate',
     price: 49,
     features: [
-      { name: 'Everything in Pro 2', included: true },
-      { name: 'Full DeepSeek integration', included: true },
-      { name: 'Portfolio comparisons', included: true },
-      { name: 'Heatmap zones', included: true },
-      { name: 'PDF/CSV export', included: true },
-      { name: 'Custom filters', included: true },
-      { name: 'Unlimited leads', included: true },
-      { name: 'Priority support', included: true },
-      { name: 'All integrations', included: true },
-      { name: 'Personalized recommendations', included: true }
+      { name: 'Advanced AI models & property intelligence', included: true },
+      { name: 'Full AI agent automation', included: true },
+      { name: 'Priority data processing', included: true },
+      { name: 'Future integrations access (Idealista, ZenRows)', included: true },
+      { name: 'Professional investor-level insights', included: true },
+      { name: 'Portfolio comparisons & analytics', included: true },
+      { name: 'PDF/CSV export & reporting', included: true },
+      { name: 'Custom filters & advanced search', included: true },
+      { name: 'Unlimited leads & contacts', included: true },
+      { name: 'Priority support & concierge', included: true }
     ]
   }
 };
