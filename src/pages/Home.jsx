@@ -485,9 +485,9 @@ export default function Home() {
       </header>
 
       {/* Desktop: Split Layout | Mobile: Stacked Layout */}
-      <main className="relative h-[calc(100vh-73px)] lg:h-[calc(100vh-81px)] overflow-hidden">
+      <main className="relative">
         {/* Mobile Layout */}
-        <div className="lg:hidden h-full overflow-y-auto">
+        <div className="lg:hidden">
           {messages.length === 0 ? (
             /* Landing Page */
             <div className="min-h-full bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
@@ -602,10 +602,10 @@ export default function Home() {
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden lg:block h-full overflow-hidden">
+        <div className="hidden lg:block">
           {!hasSearched ? (
             /* Landing Page */
-            <div className="h-full overflow-y-auto bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+            <div className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
               <HeroSection 
                 onSearch={handleSendMessage}
                 isLoading={isLoading}
@@ -615,9 +615,9 @@ export default function Home() {
             </div>
           ) : (
             /* Search Results Layout */
-            <div className="h-full flex flex-col overflow-hidden">
+            <div>
               {/* Top Section: Chat + Map Side-by-Side */}
-              <div className="flex h-[60vh] border-b border-gray-200 dark:border-gray-700">
+              <div className="flex min-h-[70vh] border-b border-gray-200 dark:border-gray-700">
                 {/* Left Panel - Chat (35%) */}
                 <div className="w-[35%] flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
                   {/* Chat Header */}
@@ -633,7 +633,7 @@ export default function Home() {
                   {/* Chat Messages */}
                   <div 
                     ref={chatContainerRef}
-                    className="flex-1 overflow-y-auto p-4 space-y-3"
+                    className="flex-1 p-4 space-y-3 max-h-[50vh] overflow-y-auto"
                   >
                     <AnimatePresence>
                       {messages.map((msg, index) => (
@@ -691,9 +691,9 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Bottom Section: Top Matches (Scrollable) */}
-              <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-                <div className="max-w-7xl mx-auto p-6">
+              {/* Bottom Section: Top Matches */}
+              <div className="bg-gray-50 dark:bg-gray-900 py-12">
+                <div className="max-w-7xl mx-auto px-6">
                   <div className="mb-6">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {language === 'es' ? 'Mejores Coincidencias' : language === 'ru' ? 'Лучшие Совпадения' : 'Top Matches for Your Search'}
