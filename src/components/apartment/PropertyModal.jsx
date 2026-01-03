@@ -183,11 +183,11 @@ export default function PropertyModal({
         <div className="p-6 space-y-6">
           {/* Header */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{apartment.title}</h2>
-            <p className="text-3xl font-bold text-black mt-2">
-              €{apartment.price?.toLocaleString()}<span className="text-base font-normal text-gray-500">/mo</span>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{apartment.title}</h2>
+            <p className="text-3xl font-bold text-black dark:text-white mt-2">
+              €{apartment.price?.toLocaleString()}<span className="text-base font-normal text-gray-500 dark:text-gray-400">/mo</span>
             </p>
-            <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
+            <div className="flex items-center gap-4 mt-3 text-sm text-gray-600 dark:text-gray-300">
               <span className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
                 {apartment.address}
@@ -214,45 +214,45 @@ export default function PropertyModal({
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-2 mb-4">
-              <Home className="h-5 w-5 text-gray-700" />
-              <h3 className="font-semibold text-gray-900">{t.details}</h3>
+              <Home className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              <h3 className="font-semibold text-gray-900 dark:text-white">{t.details}</h3>
             </div>
             
             <div className="grid grid-cols-2 gap-4 text-sm">
               {apartment.floor !== undefined && (
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                  <span className="text-gray-600">{t.floor}</span>
-                  <span className="font-medium">{apartment.floor}</span>
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400">{t.floor}</span>
+                  <span className="font-medium dark:text-gray-200">{apartment.floor}</span>
                 </div>
               )}
               {apartment.hasElevator !== undefined && (
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                  <span className="text-gray-600">{t.elevator}</span>
-                  <span className="font-medium">{apartment.hasElevator ? t.yes : t.no}</span>
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400">{t.elevator}</span>
+                  <span className="font-medium dark:text-gray-200">{apartment.hasElevator ? t.yes : t.no}</span>
                 </div>
               )}
               {apartment.furnished !== undefined && (
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                  <span className="text-gray-600">{t.furnished}</span>
-                  <span className="font-medium">{apartment.furnished ? t.yes : t.no}</span>
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400">{t.furnished}</span>
+                  <span className="font-medium dark:text-gray-200">{apartment.furnished ? t.yes : t.no}</span>
                 </div>
               )}
               {apartment.pets_allowed !== undefined && (
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                  <span className="text-gray-600 flex items-center gap-1">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                     <PawPrint className="h-3 w-3" />
                     {t.petsAllowed}
                   </span>
-                  <span className="font-medium">{apartment.pets_allowed ? t.yes : t.no}</span>
+                  <span className="font-medium dark:text-gray-200">{apartment.pets_allowed ? t.yes : t.no}</span>
                 </div>
               )}
               {apartment.available_from && (
-                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                  <span className="text-gray-600 flex items-center gap-1">
+                <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     {t.availableFrom}
                   </span>
-                  <span className="font-medium">{new Date(apartment.available_from).toLocaleDateString()}</span>
+                  <span className="font-medium dark:text-gray-200">{new Date(apartment.available_from).toLocaleDateString()}</span>
                 </div>
               )}
             </div>
@@ -311,13 +311,13 @@ export default function PropertyModal({
                     'bg-gray-500'
                   }`}
                 />
-                <p className="text-sm text-gray-600 mt-3 italic bg-gray-50 rounded-lg p-3">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-3 italic bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                   {apartment.marketPriceDiff > 5 ? (
-                    <>🔴 {t.overpriced}: This property is priced above the market average for the area.</>
+                    <>🔴 {t.overpriced}</>
                   ) : apartment.marketPriceDiff < -5 ? (
-                    <>🟢 {t.bargain}: Great deal! This property is priced below market average.</>
+                    <>🟢 {t.bargain}</>
                   ) : (
-                    <>⚪ {t.fairPrice}: This property is fairly priced for the market.</>
+                    <>⚪ {t.fairPrice}</>
                   )}
                 </p>
               </div>
