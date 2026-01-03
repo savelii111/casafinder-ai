@@ -29,34 +29,32 @@ export default function ChatInput({ onSend, isLoading, placeholder, language }) 
   };
 
   return (
-    <motion.form 
+    <form 
       onSubmit={handleSubmit}
       className="relative"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
     >
-      <div className="relative glass-card rounded-2xl shadow-xl p-2 hover:shadow-2xl transition-shadow duration-300">
+      <div className="relative glass-card rounded-xl shadow-sm p-2 hover:shadow-md transition-shadow bg-white/90 dark:bg-gray-800/90">
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder || placeholders[language] || placeholders.en}
-          className="min-h-[60px] max-h-[150px] resize-none border-0 bg-transparent focus-visible:ring-0 text-gray-800 placeholder:text-gray-400 pr-14"
+          className="min-h-[50px] lg:min-h-[60px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 pr-14 text-sm"
           disabled={isLoading}
         />
         <Button
           type="submit"
           size="icon"
           disabled={!message.trim() || isLoading}
-          className="absolute right-4 bottom-4 h-10 w-10 rounded-xl bg-black hover:bg-gray-800 text-white shadow-lg transition-all duration-300"
+          className="absolute right-3 bottom-3 h-8 w-8 lg:h-10 lg:w-10 rounded-lg bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-black shadow-md"
         >
           {isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className="h-4 w-4 lg:h-5 lg:w-5 animate-spin" />
           ) : (
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4 lg:h-5 lg:w-5" />
           )}
         </Button>
       </div>
-    </motion.form>
+    </form>
   );
 }
