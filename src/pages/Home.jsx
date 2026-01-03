@@ -12,6 +12,8 @@ import {
 import ChatInput from '@/components/chat/ChatInput';
 import ChatMessage from '@/components/chat/ChatMessage';
 import ApartmentMap from '@/components/map/ApartmentMap';
+import HeroSection from '@/components/home/HeroSection';
+import FeaturedProperties from '@/components/home/FeaturedProperties';
 import ApartmentList from '@/components/apartment/ApartmentList';
 import ApartmentFilters from '@/components/apartment/ApartmentFilters';
 import PropertyModal from '@/components/apartment/PropertyModal';
@@ -467,25 +469,21 @@ export default function Home() {
       <main className="relative h-[calc(100vh-73px)] lg:h-[calc(100vh-81px)] overflow-hidden">
         {/* Mobile Layout */}
         <div className="lg:hidden h-full overflow-y-auto">
-          <div className="p-4 space-y-4">
-            {/* Mobile Hero */}
-            {messages.length === 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center py-8"
-              >
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">
-                  {t.welcome}
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  {t.subtitle}
-                </p>
-              </motion.div>
-            )}
+          {messages.length === 0 ? (
+            /* Landing Page */
+            <div className="min-h-full bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+              <HeroSection 
+                onSearch={handleSendMessage}
+                isLoading={isLoading}
+                language={language}
+              />
+              <FeaturedProperties language={language} />
+            </div>
+          ) : (
+            /* Search Results View */
+            <div className="p-4 space-y-4">
 
-            {/* Mobile Chat Messages */}
-            {messages.length > 0 && (
+              {/* Mobile Chat Messages */}
               <div className="space-y-3 mb-4">
                 <AnimatePresence>
                   {messages.map((msg, index) => (
@@ -497,38 +495,36 @@ export default function Home() {
                   ))}
                 </AnimatePresence>
               </div>
-            )}
 
-            {/* Mobile Chat Input */}
-            <div className="mb-4">
-              <ChatInput 
-                onSend={handleSendMessage}
-                isLoading={isLoading}
-                language={language}
-                placeholder={
-                  language === 'es' ? 'Buscar apartamento...' :
-                  language === 'ru' ? 'Найти квартиру...' :
-                  'Search apartment...'
-                }
-              />
-              {isLoading && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              {/* Mobile Chat Input */}
+              <div className="mb-4">
+                <ChatInput 
+                  onSend={handleSendMessage}
+                  isLoading={isLoading}
+                  language={language}
+                  placeholder={
+                    language === 'es' ? 'Buscar apartamento...' :
+                    language === 'ru' ? 'Найти квартиру...' :
+                    'Search apartment...'
+                  }
+                />
+                {isLoading && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span>
+                      {language === 'es' ? 'Buscando...' : 
+                       language === 'ru' ? 'Поиск...' : 
+                       'Searching...'}
+                    </span>
                   </div>
-                  <span>
-                    {language === 'es' ? 'Buscando...' : 
-                     language === 'ru' ? 'Поиск...' : 
-                     'Searching...'}
-                  </span>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Mobile Filters */}
-            {messages.length > 0 && (
+              {/* Mobile Filters */}
               <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
                 <SmartFilters filters={filters} onFiltersChange={setFilters} />
                 <ApartmentFilters
@@ -539,10 +535,8 @@ export default function Home() {
                   onUpgradeClick={() => setShowUpgradeModal(true)}
                 />
               </div>
-            )}
 
-            {/* Mobile Map Toggle */}
-            {messages.length > 0 && (
+              {/* Mobile Map Toggle */}
               <Button 
                 variant="outline"
                 onClick={() => setShowMap(!showMap)}
@@ -551,33 +545,29 @@ export default function Home() {
                 <Map className="h-4 w-4" />
                 {showMap ? t.hideMap : t.viewMap}
               </Button>
-            )}
 
-            {/* Mobile Map */}
-            {showMap && messages.length > 0 && (
-              <div className="h-[300px] rounded-2xl overflow-hidden mb-4">
-                <ApartmentMap
-                  apartments={filteredApartments}
-                  center={mapCenter}
-                  zoom={13}
-                  onApartmentClick={handleApartmentClick}
-                  selectedId={selectedApartment?.id}
-                  language={language}
-                />
-              </div>
-            )}
+              {/* Mobile Map */}
+              {showMap && (
+                <div className="h-[300px] rounded-2xl overflow-hidden mb-4">
+                  <ApartmentMap
+                    apartments={filteredApartments}
+                    center={mapCenter}
+                    zoom={13}
+                    onApartmentClick={handleApartmentClick}
+                    selectedId={selectedApartment?.id}
+                    language={language}
+                  />
+                </div>
+              )}
 
-            {/* Mobile Results */}
-            {messages.length > 0 && (
+              {/* Mobile Results */}
               <div className="mb-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {filteredApartments.length} {language === 'es' ? 'propiedades encontradas' : language === 'ru' ? 'объектов найдено' : 'properties found'}
                 </p>
               </div>
-            )}
 
-            {/* Mobile Apartment List */}
-            {messages.length > 0 && (
+              {/* Mobile Apartment List */}
               <ApartmentList
                 apartments={filteredApartments}
                 onApartmentClick={handleApartmentClick}
@@ -588,83 +578,98 @@ export default function Home() {
                 isLoading={!apartments.length}
                 onUpgradeClick={() => setShowUpgradeModal(true)}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Desktop Split Layout */}
-        <div className="hidden lg:flex h-full">
-          {/* Left Panel - Chat (30%) */}
-          <div className="w-[30%] flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-            {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {language === 'es' ? 'Búsqueda AI' : language === 'ru' ? 'Поиск с AI' : 'AI Search'}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {filteredApartments.length} {language === 'es' ? 'propiedades' : language === 'ru' ? 'объектов' : 'properties'}
-              </p>
-            </div>
-
-            {/* Chat Messages */}
-            <div 
-              ref={chatContainerRef}
-              className="flex-1 overflow-y-auto p-4 space-y-3"
-            >
-              <AnimatePresence>
-                {messages.map((msg, index) => (
-                  <ChatMessage 
-                    key={index} 
-                    message={msg} 
-                    isUser={msg.role === 'user'} 
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {/* Chat Input */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-800/70">
-              <ChatInput 
-                onSend={handleSendMessage}
+        {/* Desktop Layout */}
+        <div className="hidden lg:block h-full overflow-hidden">
+          {messages.length === 0 ? (
+            /* Landing Page */
+            <div className="h-full overflow-y-auto bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+              <HeroSection 
+                onSearch={handleSendMessage}
                 isLoading={isLoading}
                 language={language}
-                placeholder={
-                  language === 'es' ? 'Buscar apartamento...' :
-                  language === 'ru' ? 'Найти квартиру...' :
-                  'Search apartment...'
-                }
               />
+              <FeaturedProperties language={language} />
             </div>
-          </div>
+          ) : (
+            /* Split Layout */
+            <div className="flex h-full">
+              {/* Left Panel - Chat (30%) */}
+              <div className="w-[30%] flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+                {/* Chat Header */}
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {language === 'es' ? 'Búsqueda AI' : language === 'ru' ? 'Поиск с AI' : 'AI Search'}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {filteredApartments.length} {language === 'es' ? 'propiedades' : language === 'ru' ? 'объектов' : 'properties'}
+                  </p>
+                </div>
 
-          {/* Right Panel - Map (70%) */}
-          <div className="w-[70%] relative">
-            {/* Map Controls Overlay */}
-            <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start">
-              <div className="flex gap-2">
-                <SmartFilters filters={filters} onFiltersChange={setFilters} />
-                <ApartmentFilters
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  isPro={canUseAdvancedFilters}
-                  language={language}
-                  onUpgradeClick={() => setShowUpgradeModal(true)}
-                />
+                {/* Chat Messages */}
+                <div 
+                  ref={chatContainerRef}
+                  className="flex-1 overflow-y-auto p-4 space-y-3"
+                >
+                  <AnimatePresence>
+                    {messages.map((msg, index) => (
+                      <ChatMessage 
+                        key={index} 
+                        message={msg} 
+                        isUser={msg.role === 'user'} 
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+
+                {/* Chat Input */}
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-800/70">
+                  <ChatInput 
+                    onSend={handleSendMessage}
+                    isLoading={isLoading}
+                    language={language}
+                    placeholder={
+                      language === 'es' ? 'Buscar apartamento...' :
+                      language === 'ru' ? 'Найти квартиру...' :
+                      'Search apartment...'
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Right Panel - Map (70%) */}
+              <div className="w-[70%] relative">
+                {/* Map Controls Overlay */}
+                <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start">
+                  <div className="flex gap-2">
+                    <SmartFilters filters={filters} onFiltersChange={setFilters} />
+                    <ApartmentFilters
+                      filters={filters}
+                      onFiltersChange={setFilters}
+                      isPro={canUseAdvancedFilters}
+                      language={language}
+                      onUpgradeClick={() => setShowUpgradeModal(true)}
+                    />
+                  </div>
+                </div>
+
+                {/* Full-Height Map */}
+                <div className="h-full w-full">
+                  <ApartmentMap
+                    apartments={filteredApartments}
+                    center={mapCenter}
+                    zoom={13}
+                    onApartmentClick={handleApartmentClick}
+                    selectedId={selectedApartment?.id}
+                    language={language}
+                  />
+                </div>
               </div>
             </div>
-
-            {/* Full-Height Map */}
-            <div className="h-full w-full">
-              <ApartmentMap
-                apartments={filteredApartments}
-                center={mapCenter}
-                zoom={13}
-                onApartmentClick={handleApartmentClick}
-                selectedId={selectedApartment?.id}
-                language={language}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </main>
 
