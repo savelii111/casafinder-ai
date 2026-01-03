@@ -165,8 +165,8 @@ export default function UserMenu() {
                 </div>
               )}
               {plan !== 'free' && (
-                <div className="mt-2 p-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg text-center border border-purple-200">
-                  <span className="text-xs font-semibold text-purple-900">✨ {t.unlimited}</span>
+                <div className="hidden lg:block mt-2 p-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg text-center border border-purple-200 dark:border-purple-700">
+                  <span className="text-xs font-semibold text-purple-900 dark:text-purple-300">✨ {t.unlimited}</span>
                 </div>
               )}
             </div>
