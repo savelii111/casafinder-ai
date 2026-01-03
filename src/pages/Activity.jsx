@@ -145,7 +145,7 @@ export default function Activity() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -157,24 +157,24 @@ export default function Activity() {
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                 <ActivityIcon className="h-8 w-8" />
                 {t.title}
               </h1>
             </div>
-            <div className="glass-card rounded-xl px-4 py-2">
-              <div className="text-sm text-gray-600">{t.today}</div>
-              <div className="font-bold text-lg text-gray-900">
+            <div className="glass-card dark:glass-dark rounded-xl px-4 py-2">
+              <div className="text-sm text-gray-600 dark:text-gray-400">{t.today}</div>
+              <div className="font-bold text-lg text-gray-900 dark:text-white">
                 {plan === 'free' ? `${aiRequestsToday}/3` : t.unlimited}
               </div>
-              <div className="text-xs text-gray-500">{plan === 'free' ? t.requestsUsed : 'AI requests'}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{plan === 'free' ? t.requestsUsed : 'AI requests'}</div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="ai" className="w-full">
-          <TabsList className="glass-card border-white/30 mb-6">
+          <TabsList className="glass-card dark:glass-dark border-white/30 dark:border-gray-700/30 mb-6">
             <TabsTrigger value="ai" className="gap-2">
               <Sparkles className="h-4 w-4" />
               {t.aiRequests}
@@ -193,11 +193,11 @@ export default function Activity() {
           <TabsContent value="ai">
             <div className="space-y-4">
               {activityData.aiRequests.length === 0 ? (
-                <Card className="glass-card border-white/30">
+                <Card className="glass-card dark:glass-dark border-white/30 dark:border-gray-700/30">
                   <CardContent className="p-12 text-center">
-                    <Sparkles className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">{t.noActivity}</p>
-                    <p className="text-sm text-gray-400 mt-2">{t.startExploring}</p>
+                    <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">{t.noActivity}</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">{t.startExploring}</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -207,24 +207,24 @@ export default function Activity() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <Card className="glass-card border-white/30 hover:shadow-lg transition-shadow">
+                    <Card className="glass-card dark:glass-dark border-white/30 dark:border-gray-700/30 hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                            <Sparkles className="h-6 w-6 text-purple-600" />
+                          <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                            <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-start justify-between">
                               <div>
-                                <h3 className="font-semibold text-gray-900">{request.property}</h3>
-                                <p className="text-sm text-gray-600 mt-1">{request.result}</p>
+                                <h3 className="font-semibold text-gray-900 dark:text-white">{request.property}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{request.result}</p>
                               </div>
                               <Badge variant="outline" className="text-xs">
                                 {request.type === 'ai_analysis' ? '🔍 Analysis' :
                                  request.type === 'ai_comparison' ? '⚖️ Compare' : '🌐 Translate'}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+                            <div className="flex items-center gap-2 mt-3 text-xs text-gray-400 dark:text-gray-500">
                               <Clock className="h-3 w-3" />
                               {getTimeAgo(request.time)}
                             </div>
@@ -247,20 +247,20 @@ export default function Activity() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <Card className="glass-card border-white/30 hover:shadow-lg transition-shadow">
+                  <Card className="glass-card dark:glass-dark border-white/30 dark:border-gray-700/30 hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <Home className="h-6 w-6 text-blue-600" />
+                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                          <Home className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h3 className="font-semibold text-gray-900">{view.property}</h3>
-                              <p className="text-lg font-bold text-black mt-1">€{view.price}/mo</p>
+                              <h3 className="font-semibold text-gray-900 dark:text-white">{view.property}</h3>
+                              <p className="text-lg font-bold text-black dark:text-white mt-1">€{view.price}/mo</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+                          <div className="flex items-center gap-2 mt-3 text-xs text-gray-400 dark:text-gray-500">
                             <Clock className="h-3 w-3" />
                             {getTimeAgo(view.time)}
                           </div>
@@ -277,11 +277,11 @@ export default function Activity() {
           <TabsContent value="favorites">
             <div className="space-y-4">
               {activityData.favorites.length === 0 ? (
-                <Card className="glass-card border-white/30">
+                <Card className="glass-card dark:glass-dark border-white/30 dark:border-gray-700/30">
                   <CardContent className="p-12 text-center">
-                    <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">{t.noActivity}</p>
-                    <p className="text-sm text-gray-400 mt-2">{t.startExploring}</p>
+                    <Heart className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">{t.noActivity}</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">{t.startExploring}</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -291,20 +291,20 @@ export default function Activity() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <Card className="glass-card border-white/30 hover:shadow-lg transition-shadow">
+                    <Card className="glass-card dark:glass-dark border-white/30 dark:border-gray-700/30 hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                            <Heart className="h-6 w-6 text-red-500 fill-red-500" />
+                          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                            <Heart className="h-6 w-6 text-red-500 dark:text-red-400 fill-red-500 dark:fill-red-400" />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-start justify-between">
                               <div>
-                                <h3 className="font-semibold text-gray-900">{fav.property}</h3>
-                                <p className="text-lg font-bold text-black mt-1">€{fav.price}/mo</p>
+                                <h3 className="font-semibold text-gray-900 dark:text-white">{fav.property}</h3>
+                                <p className="text-lg font-bold text-black dark:text-white mt-1">€{fav.price}/mo</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+                            <div className="flex items-center gap-2 mt-3 text-xs text-gray-400 dark:text-gray-500">
                               <Clock className="h-3 w-3" />
                               {t.addedOn} {moment(fav.addedTime).format('MMM D, YYYY')}
                             </div>
