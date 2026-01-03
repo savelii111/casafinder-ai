@@ -579,10 +579,10 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Mobile Results */}
+              {/* Mobile Results Counter */}
               <div className="mb-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {filteredApartments.length} {language === 'es' ? 'propiedades encontradas' : language === 'ru' ? 'объектов найдено' : 'properties found'}
+                  {propertiesFoundCount || filteredApartments.length} {language === 'es' ? 'propiedades encontradas' : language === 'ru' ? 'объектов найдено' : 'properties found'}
                 </p>
               </div>
 
@@ -626,7 +626,7 @@ export default function Home() {
                       {language === 'es' ? 'Búsqueda AI' : language === 'ru' ? 'Поиск с AI' : 'AI Search'}
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {propertiesFoundCount} {language === 'es' ? 'propiedades' : language === 'ru' ? 'объектов' : 'properties'}
+                      {propertiesFoundCount || filteredApartments.length} {language === 'es' ? 'propiedades' : language === 'ru' ? 'объектов' : 'properties'}
                     </p>
                   </div>
 

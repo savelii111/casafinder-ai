@@ -11,71 +11,71 @@ import { toast } from "sonner";
 const STRIPE_PUBLIC_KEY = 'pk_test_YOUR_KEY'; // Replace with actual key
 const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
 
-const PLAN_FEATURES = {
+const getPlanFeatures = (language) => ({
   free: {
-    name: 'Free',
+    name: language === 'es' ? 'Gratis' : language === 'ru' ? 'Бесплатно' : 'Free',
     price: 0,
     features: [
-      { name: 'View limited properties', included: true },
-      { name: '3 AI queries per day', included: true },
-      { name: 'Basic filters', included: true },
-      { name: 'Demo map with mock data', included: true },
-      { name: 'Basic property cards', included: true },
-      { name: 'Mock AI responses', included: true },
-      { name: 'Save favorites', included: false },
-      { name: 'Live property data', included: false },
-      { name: 'Advanced analytics', included: false }
+      { name: language === 'es' ? 'Ver propiedades limitadas' : language === 'ru' ? 'Ограниченный просмотр' : 'View limited properties', included: true },
+      { name: language === 'es' ? '3 consultas IA por día' : language === 'ru' ? '3 AI запроса в день' : '3 AI queries per day', included: true },
+      { name: language === 'es' ? 'Filtros básicos' : language === 'ru' ? 'Базовые фильтры' : 'Basic filters', included: true },
+      { name: language === 'es' ? 'Mapa demo' : language === 'ru' ? 'Демо карта' : 'Demo map with mock data', included: true },
+      { name: language === 'es' ? 'Tarjetas básicas' : language === 'ru' ? 'Базовые карточки' : 'Basic property cards', included: true },
+      { name: language === 'es' ? 'Respuestas IA demo' : language === 'ru' ? 'Демо AI ответы' : 'Mock AI responses', included: true },
+      { name: language === 'es' ? 'Guardar favoritos' : language === 'ru' ? 'Сохранить избранное' : 'Save favorites', included: false },
+      { name: language === 'es' ? 'Datos en vivo' : language === 'ru' ? 'Живые данные' : 'Live property data', included: false },
+      { name: language === 'es' ? 'Análisis avanzado' : language === 'ru' ? 'Расширенная аналитика' : 'Advanced analytics', included: false }
     ]
   },
   pro1: {
     name: 'Pro',
     price: 20,
     features: [
-      { name: 'View all properties', included: true },
-      { name: 'Unlimited AI queries', included: true },
-      { name: 'Live map (ZenRows + Idealista)', included: true },
-      { name: 'True Cost calculator', included: true },
-      { name: 'Risk assessment', included: true },
-      { name: 'Market price analysis', included: true },
-      { name: 'Compare apartments', included: true },
-      { name: 'Save favorites', included: true },
-      { name: 'Basic notifications', included: true },
-      { name: 'Neighborhood analysis', included: true }
+      { name: language === 'es' ? 'Ver todas las propiedades' : language === 'ru' ? 'Все объекты' : 'View all properties', included: true },
+      { name: language === 'es' ? 'Consultas IA ilimitadas' : language === 'ru' ? 'Безлимитный AI' : 'Unlimited AI queries', included: true },
+      { name: language === 'es' ? 'Mapa en vivo' : language === 'ru' ? 'Живая карта' : 'Live map (ZenRows + Idealista)', included: true },
+      { name: language === 'es' ? 'Calculadora de costo real' : language === 'ru' ? 'Калькулятор реальной стоимости' : 'True Cost calculator', included: true },
+      { name: language === 'es' ? 'Evaluación de riesgo' : language === 'ru' ? 'Оценка рисков' : 'Risk assessment', included: true },
+      { name: language === 'es' ? 'Análisis de precio de mercado' : language === 'ru' ? 'Рыночный анализ' : 'Market price analysis', included: true },
+      { name: language === 'es' ? 'Comparar apartamentos' : language === 'ru' ? 'Сравнить квартиры' : 'Compare apartments', included: true },
+      { name: language === 'es' ? 'Guardar favoritos' : language === 'ru' ? 'Сохранить избранное' : 'Save favorites', included: true },
+      { name: language === 'es' ? 'Notificaciones básicas' : language === 'ru' ? 'Базовые уведомления' : 'Basic notifications', included: true },
+      { name: language === 'es' ? 'Análisis de barrio' : language === 'ru' ? 'Анализ районов' : 'Neighborhood analysis', included: true }
     ]
   },
   pro2: {
     name: 'Pro+',
     price: 29,
     features: [
-      { name: 'Everything in Pro 1', included: true },
-      { name: 'Advanced AI analysis', included: true },
-      { name: 'Price predictions', included: true },
-      { name: 'Full map with clustering', included: true },
-      { name: 'Custom markers & popups', included: true },
-      { name: 'Real-time notifications', included: true },
-      { name: 'WhatsApp concierge', included: true },
-      { name: 'Portfolio management', included: true },
-      { name: 'Client reports', included: true },
-      { name: 'View history tracking', included: true }
+      { name: language === 'es' ? 'Todo en Pro' : language === 'ru' ? 'Всё из Pro' : 'Everything in Pro 1', included: true },
+      { name: language === 'es' ? 'Análisis IA avanzado' : language === 'ru' ? 'Расширенный AI анализ' : 'Advanced AI analysis', included: true },
+      { name: language === 'es' ? 'Predicciones de precio' : language === 'ru' ? 'Прогноз цен' : 'Price predictions', included: true },
+      { name: language === 'es' ? 'Mapa completo con clustering' : language === 'ru' ? 'Полная карта с кластерами' : 'Full map with clustering', included: true },
+      { name: language === 'es' ? 'Marcadores personalizados' : language === 'ru' ? 'Настраиваемые маркеры' : 'Custom markers & popups', included: true },
+      { name: language === 'es' ? 'Notificaciones en tiempo real' : language === 'ru' ? 'Уведомления в реальном времени' : 'Real-time notifications', included: true },
+      { name: language === 'es' ? 'Concierge WhatsApp' : language === 'ru' ? 'WhatsApp консьерж' : 'WhatsApp concierge', included: true },
+      { name: language === 'es' ? 'Gestión de portafolio' : language === 'ru' ? 'Управление портфолио' : 'Portfolio management', included: true },
+      { name: language === 'es' ? 'Informes de cliente' : language === 'ru' ? 'Отчеты для клиентов' : 'Client reports', included: true },
+      { name: language === 'es' ? 'Historial de vistas' : language === 'ru' ? 'История просмотров' : 'View history tracking', included: true }
     ]
   },
   ultimate: {
     name: 'Ultimate',
     price: 49,
     features: [
-      { name: 'Advanced AI models & property intelligence', included: true },
-      { name: 'Full AI agent automation', included: true },
-      { name: 'Priority data processing', included: true },
-      { name: 'Future integrations access (Idealista, ZenRows)', included: true },
-      { name: 'Professional investor-level insights', included: true },
-      { name: 'Portfolio comparisons & analytics', included: true },
-      { name: 'PDF/CSV export & reporting', included: true },
-      { name: 'Custom filters & advanced search', included: true },
-      { name: 'Unlimited leads & contacts', included: true },
-      { name: 'Priority support & concierge', included: true }
+      { name: language === 'es' ? 'Modelos IA avanzados' : language === 'ru' ? 'Продвинутые AI модели' : 'Advanced AI models & property intelligence', included: true },
+      { name: language === 'es' ? 'Automatización total IA' : language === 'ru' ? 'Полная AI автоматизация' : 'Full AI agent automation', included: true },
+      { name: language === 'es' ? 'Procesamiento prioritario' : language === 'ru' ? 'Приоритетная обработка' : 'Priority data processing', included: true },
+      { name: language === 'es' ? 'Acceso futuras integraciones' : language === 'ru' ? 'Доступ к будущим интеграциям' : 'Future integrations access (Idealista, ZenRows)', included: true },
+      { name: language === 'es' ? 'Insights nivel inversor' : language === 'ru' ? 'Инвестиционная аналитика' : 'Professional investor-level insights', included: true },
+      { name: language === 'es' ? 'Comparación de portafolios' : language === 'ru' ? 'Сравнение портфолио' : 'Portfolio comparisons & analytics', included: true },
+      { name: language === 'es' ? 'Exportar PDF/CSV' : language === 'ru' ? 'Экспорт PDF/CSV' : 'PDF/CSV export & reporting', included: true },
+      { name: language === 'es' ? 'Filtros personalizados' : language === 'ru' ? 'Настраиваемые фильтры' : 'Custom filters & advanced search', included: true },
+      { name: language === 'es' ? 'Leads ilimitados' : language === 'ru' ? 'Безлимитные лиды' : 'Unlimited leads & contacts', included: true },
+      { name: language === 'es' ? 'Soporte prioritario' : language === 'ru' ? 'Приоритетная поддержка' : 'Priority support & concierge', included: true }
     ]
   }
-};
+});
 
 export default function SubscriptionManager({ language = 'en' }) {
   const [loading, setLoading] = useState(false);
@@ -156,6 +156,7 @@ export default function SubscriptionManager({ language = 'en' }) {
   };
 
   const t = labels[language] || labels.en;
+  const PLAN_FEATURES = getPlanFeatures(language);
 
   return (
     <div className="space-y-6">
