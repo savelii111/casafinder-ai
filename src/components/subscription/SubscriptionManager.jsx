@@ -179,9 +179,9 @@ export default function SubscriptionManager({ language = 'en' }) {
               )}
               
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between text-gray-900 dark:text-white">
                   <span>{plan.name}</span>
-                  {planId !== 'free' && <Crown className="h-5 w-5 text-gray-400" />}
+                  {planId !== 'free' && <Crown className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
                 </CardTitle>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white">
                   €{plan.price}
