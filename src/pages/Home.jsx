@@ -453,6 +453,23 @@ export default function Home() {
                 />
               </div>
 
+              {/* Upgrade Plan Button */}
+              <Link to={createPageUrl('Subscription')}>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-2 border-purple-200 dark:border-purple-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900/50 dark:hover:to-pink-900/50 text-purple-900 dark:text-purple-300 font-semibold"
+                >
+                  <Crown className="h-3 w-3 lg:h-4 lg:w-4" />
+                  <span className="hidden sm:inline">
+                    {language === 'es' ? 'Mejorar Plan' : language === 'ru' ? 'Улучшить План' : 'Upgrade Plan'}
+                  </span>
+                  <span className="sm:hidden">
+                    {language === 'es' ? 'Pro' : language === 'ru' ? 'Pro' : 'Pro'}
+                  </span>
+                </Button>
+              </Link>
+
               <NotificationBell language={language} />
 
               <div className="hidden lg:block">
