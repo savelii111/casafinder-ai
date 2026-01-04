@@ -248,15 +248,9 @@ export default function Home() {
       const propertiesCount = response.properties_found || filteredApartments.length;
       setPropertiesFoundCount(propertiesCount);
       
-      const countText = {
-        en: `We found ${propertiesCount} properties matching your request.`,
-        es: `Encontramos ${propertiesCount} propiedades que coinciden con tu búsqueda.`,
-        ru: `Мы нашли ${propertiesCount} объектов по вашему запросу.`
-      };
-
       const assistantMessage = { 
         role: 'assistant', 
-        content: `${countText[language] || countText.en} ${response.response || ""}`
+        content: response.response || `Found ${propertiesCount} properties matching your search.`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -510,7 +504,7 @@ export default function Home() {
             <div className="p-4 space-y-4">
 
               {/* Mobile Chat Messages */}
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-4 max-h-[40vh] overflow-y-auto">
                 <AnimatePresence>
                   {messages.map((msg, index) => (
                     <ChatMessage 

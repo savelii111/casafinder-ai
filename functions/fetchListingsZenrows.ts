@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { city = 'Madrid', listing_type = 'rent' } = body;
     
-    const ZENROWS_API_KEY = Deno.env.get('ZENROWS_API_KEY');
+    const ZENROWS_API_KEY = Deno.env.get('ZENROWS_API_KEY') || '6449a54e6a5e30b8426db9f0a9dd39cecddb8d76';
 
     // DEMO FALLBACK if no API key
     if (!ZENROWS_API_KEY) {

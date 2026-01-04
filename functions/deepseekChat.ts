@@ -30,15 +30,38 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a professional real estate AI assistant. Analyze user queries and provide helpful responses about apartments in Madrid, Spain. Always respond in ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}. Be concise and professional.`
+            content: `You are an expert real estate advisor in Madrid, Spain. Provide detailed, natural, conversational responses in ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}.
+
+When responding to property searches:
+1. Start with a warm, natural greeting acknowledging their search
+2. State the number of properties found clearly
+3. Describe the general location and neighborhood characteristics
+4. Mention the price range of available properties
+5. Provide neighborhood insights (safety, transport, amenities, schools if relevant)
+6. Suggest 2-3 top property highlights
+7. Offer helpful advice or considerations
+8. End with an encouraging note
+
+Be conversational, detailed, and helpful. Use multi-line responses (3-5 paragraphs). Make it feel like talking to a knowledgeable local real estate expert.`
           },
           {
             role: 'user',
-            content: `User query: "${query}"\nAvailable apartments: ${apartments.length}\nProvide a helpful response about their search.`
+            content: `User is searching for: "${query}"
+
+I found ${apartments.length} properties matching their criteria.
+
+${apartments.length > 0 ? `Here are some details about available properties:
+${apartments.slice(0, 5).map((apt, i) => `
+${i + 1}. ${apt.neighborhood || 'Madrid'} - €${apt.price}/month - ${apt.rooms} rooms${apt.size ? ` - ${apt.size}m²` : ''}`).join('')}
+
+Average price: €${Math.round(apartments.reduce((sum, a) => sum + a.price, 0) / apartments.length)}
+Price range: €${Math.min(...apartments.map(a => a.price))} - €${Math.max(...apartments.map(a => a.price))}` : ''}
+
+Provide a detailed, natural response about these properties and the Madrid rental market for their search.`
           }
         ],
-        temperature: 0.7,
-        max_tokens: 500
+        temperature: 0.8,
+        max_tokens: 800
       })
     });
 

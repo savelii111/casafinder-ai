@@ -28,7 +28,7 @@ const getPlanFeatures = (language) => ({
     ]
   },
   pro1: {
-    name: 'Pro',
+    name: 'Pro 1',
     price: 9,
     features: [
       { name: language === 'es' ? 'Ver todas las propiedades' : language === 'ru' ? 'Все объекты' : 'View all properties', included: true },
@@ -44,7 +44,7 @@ const getPlanFeatures = (language) => ({
     ]
   },
   pro2: {
-    name: 'Pro+',
+    name: 'Pro 2',
     price: 20,
     features: [
       { name: language === 'es' ? 'Todo en Pro' : language === 'ru' ? 'Всё из Pro' : 'Everything in Pro 1', included: true },
