@@ -86,8 +86,8 @@ export default function UserMenu() {
 
   const planNames = {
     free: language === 'es' ? 'Gratis' : language === 'ru' ? 'Бесплатно' : 'Free',
-    pro1: 'Pro',
-    pro2: 'Pro+',
+    pro1: 'Pro 1 (€9/mo)',
+    pro2: 'Pro 2 (€20/mo)',
     ultimate: 'Ultimate'
   };
 
@@ -144,38 +144,33 @@ export default function UserMenu() {
                   )}
                   <span className="text-sm font-medium text-gray-700">{t.plan}:</span>
                 </div>
-                <Badge className={`${plan === 'free' ? 'bg-gray-100 text-gray-700' : 'bg-black text-white'}`}>
+                <Badge className={`${plan === 'free' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200' : 'bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-600'}`}>
                   {planNames[plan]}
                 </Badge>
               </div>
 
               {/* AI Requests Counter */}
               {plan === 'free' && (
-                <div className="mt-2 p-2 bg-white rounded-lg">
+                <div className="mt-2 p-2 bg-white dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">{t.aiRequests}</span>
-                    <span className="font-semibold text-gray-900">{aiRequestsToday}/3</span>
+                    <span className="text-gray-600 dark:text-gray-300">{t.aiRequests}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{aiRequestsToday}/3</span>
                   </div>
-                  <div className="w-full h-1 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                  <div className="w-full h-1 bg-gray-200 dark:bg-gray-600 rounded-full mt-1 overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-black to-gray-700 transition-all duration-300"
+                      className="h-full bg-gradient-to-r from-black to-gray-700 dark:from-white dark:to-gray-300 transition-all duration-300"
                       style={{ width: `${(aiRequestsToday / 3) * 100}%` }}
                     />
                   </div>
                 </div>
               )}
-              <div className="mt-2 p-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg text-center border border-purple-200 dark:border-purple-700">
-                <span className="text-xs font-semibold text-purple-900 dark:text-purple-300">
-                  {plan !== 'free' ? `✨ ${t.unlimited}` : `${t.plan}: ${planNames[plan]}`}
-                </span>
-              </div>
             </div>
 
             {/* Menu Items */}
             <div className="py-2">
               {/* Language Selector */}
               <div className="px-4 py-2">
-                <div className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1">
+                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
                   <Globe className="h-3 w-3" />
                   {t.language}
                 </div>
@@ -187,9 +182,9 @@ export default function UserMenu() {
                         setLanguage(code);
                       }}
                       className={`flex-1 px-2 py-1.5 text-xs rounded-lg transition-all ${
-                        language === code
-                          ? 'bg-black text-white font-semibold'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                       language === code
+                         ? 'bg-black dark:bg-white text-white dark:text-black font-semibold'
+                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}
                     >
                       {name.split(' ')[0]}
@@ -250,15 +245,8 @@ export default function UserMenu() {
 
               <div className="h-px bg-gray-200 my-2" />
 
-              {/* Upgrade Plan or Unlimited Badge */}
-              {plan === 'ultimate' ? (
-                <div className="px-4 py-2.5 bg-gradient-to-r from-yellow-50 to-amber-50 mx-2 rounded-lg">
-                  <div className="flex items-center gap-2 justify-center">
-                    <Crown className="h-4 w-4 text-yellow-600" />
-                    <span className="text-sm font-semibold text-yellow-900">{t.unlimited} AI</span>
-                  </div>
-                </div>
-              ) : (
+              {/* Upgrade Plan */}
+              {(
                 <button
                   onClick={() => {
                     navigate(createPageUrl('Subscription'));
@@ -267,7 +255,7 @@ export default function UserMenu() {
                   className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gradient-to-r hover:from-black hover:to-gray-800 transition-all text-left group"
                 >
                   <Crown className="h-4 w-4 text-yellow-500 group-hover:text-yellow-300" />
-                  <span className="text-sm text-gray-700 group-hover:text-white font-medium">{t.upgrade}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-200 group-hover:text-white font-medium">{t.upgrade}</span>
                 </button>
               )}
 
@@ -276,10 +264,10 @@ export default function UserMenu() {
               {/* Logout */}
               <button
                 onClick={handleLogout}
-                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-50 transition-colors text-left group"
+                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left group"
               >
-                <LogOut className="h-4 w-4 text-gray-600 group-hover:text-red-600" />
-                <span className="text-sm text-gray-700 group-hover:text-red-600">{t.logout}</span>
+                <LogOut className="h-4 w-4 text-gray-600 dark:text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-200 group-hover:text-red-600 dark:group-hover:text-red-400">{t.logout}</span>
               </button>
             </div>
           </motion.div>
