@@ -45,7 +45,7 @@ export default function HeroSection({ onSearch, isLoading, language = 'en' }) {
       className="max-w-4xl mx-auto text-center px-4 py-12 lg:py-20"
     >
       {/* Headline */}
-      <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-6 leading-tight">
+      <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-4 lg:mb-6 leading-tight">
         {t.headline}
       </h1>
 

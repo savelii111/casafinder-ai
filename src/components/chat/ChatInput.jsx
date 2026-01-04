@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Mic } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ChatInput({ onSend, isLoading, placeholder, language }) {
@@ -34,12 +34,19 @@ export default function ChatInput({ onSend, isLoading, placeholder, language }) 
       className="relative"
     >
       <div className="relative glass-card rounded-xl shadow-sm p-2 hover:shadow-md transition-shadow bg-white/90 dark:bg-gray-800/90">
+        <button
+          type="button"
+          className="absolute left-3 top-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors z-10"
+          title="Voice search"
+        >
+          <Mic className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+        </button>
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder || placeholders[language] || placeholders.en}
-          className="min-h-[50px] lg:min-h-[60px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 pr-14 text-sm"
+          className="min-h-[50px] lg:min-h-[60px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 text-gray-800 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 pl-12 pr-14 text-sm"
           disabled={isLoading}
         />
         <Button
