@@ -9,20 +9,20 @@ export default function HeroSection({ onSearch, isLoading, language = 'en' }) {
 
   const labels = {
     en: {
-      headline: "Find Your Perfect Home in Spain",
-      subtitle: "AI-powered search with smart filters and real insights",
+      headline: "Find Your Perfect Home or Apartment in Spain",
+      subtitle: "AI-powered property search with neighborhood insights, true cost analysis, and real-time market data",
       placeholder: "Where do you want to live? (e.g. 'Madrid center, 2 bedrooms under €1200')",
       searchButton: "Search"
     },
     es: {
-      headline: "Encuentra Tu Hogar Perfecto en España",
-      subtitle: "Búsqueda inteligente con filtros y análisis en tiempo real",
+      headline: "Encuentra Tu Hogar o Apartamento Perfecto en España",
+      subtitle: "Búsqueda inteligente con IA, análisis de barrios, costes reales y datos del mercado en tiempo real",
       placeholder: "¿Dónde quieres vivir? (ej. 'Centro Madrid, 2 habitaciones menos de €1200')",
       searchButton: "Buscar"
     },
     ru: {
-      headline: "Найдите Идеальный Дом в Испании",
-      subtitle: "Умный поиск с фильтрами и анализом недвижимости",
+      headline: "Найдите Идеальный Дом или Квартиру в Испании",
+      subtitle: "Умный поиск с ИИ, анализ районов, расчёт реальной стоимости и актуальные данные рынка",
       placeholder: "Где вы хотите жить? (напр. 'Центр Мадрида, 2 комнаты до €1200')",
       searchButton: "Поиск"
     }

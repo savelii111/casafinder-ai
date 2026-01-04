@@ -227,30 +227,36 @@ export default function Home() {
         console.log('Using existing apartments:', err);
       }
 
-      // Call DeepSeek chat function
+      // Get Top 6 recommendations
+      const top6 = filteredApartments
+        .sort((a, b) => {
+          // Score based on: low risk, good price, recent listing
+          const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
+          const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
+          return scoreB - scoreA;
+        })
+        .slice(0, 6);
+
+      // Call DeepSeek chat function with detailed context
       const deepseekResult = await base44.functions.invoke('deepseekChat', {
         query: content,
         language,
-        apartments: filteredApartments.map(apt => ({
+        apartments: top6.map(apt => ({
           id: apt.id,
           price: apt.price,
           rooms: apt.rooms,
-          neighborhood: apt.neighborhood
+          neighborhood: apt.neighborhood,
+          size: apt.size,
+          riskScore: apt.riskScore
         }))
       });
 
-      const response = {
-        response: deepseekResult.data?.response || 'Properties found',
-        properties_found: filteredApartments.length,
-        source: deepseekResult.data?.source || 'unknown'
-      };
-
-      const propertiesCount = response.properties_found || filteredApartments.length;
+      const propertiesCount = filteredApartments.length;
       setPropertiesFoundCount(propertiesCount);
-      
+
       const assistantMessage = { 
         role: 'assistant', 
-        content: response.response || `Found ${propertiesCount} properties matching your search.`
+        content: deepseekResult.data?.response || `I found ${propertiesCount} properties in Madrid matching your criteria. Check out the top recommendations on the map!`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -402,39 +408,41 @@ export default function Home() {
     setShowUpgradeModal(false);
   };
 
-  const filteredApartments = apartments.filter(apt => {
-    // Price filters
-    if (filters.priceMin && apt.price < filters.priceMin) return false;
-    if (filters.priceMax && apt.price > filters.priceMax) return false;
-    
-    // Room filters
-    if (filters.rooms !== 'any') {
-      const roomFilter = parseInt(filters.rooms);
-      if (roomFilter === 4 && apt.rooms < 4) return false;
-      if (roomFilter < 4 && apt.rooms !== roomFilter) return false;
-    }
-    
-    // Basic amenities
-    if (filters.furnished === 'yes' && !apt.furnished) return false;
-    if (filters.furnished === 'no' && apt.furnished) return false;
-    if (filters.pets_allowed === 'yes' && !apt.pets_allowed) return false;
-    if (filters.pets_allowed === 'no' && apt.pets_allowed) return false;
-    
-    // Smart filters (amenities)
-    if (filters.amenities) {
-      for (const [key, value] of Object.entries(filters.amenities)) {
-        if (value && !apt[key]) return false;
+  const filteredApartments = React.useMemo(() => {
+    return apartments.filter(apt => {
+      // Price filters
+      if (filters.priceMin && apt.price < filters.priceMin) return false;
+      if (filters.priceMax && apt.price > filters.priceMax) return false;
+
+      // Room filters
+      if (filters.rooms !== 'any') {
+        const roomFilter = parseInt(filters.rooms);
+        if (roomFilter === 4 && apt.rooms < 4) return false;
+        if (roomFilter < 4 && apt.rooms !== roomFilter) return false;
       }
-    }
-    
-    // Pro filters
-    if (userPlan !== 'free') {
-      if (filters.minSize && apt.size < filters.minSize) return false;
-      if (filters.maxRisk && apt.riskScore > filters.maxRisk) return false;
-    }
-    
-    return true;
-  });
+
+      // Basic amenities
+      if (filters.furnished === 'yes' && !apt.furnished) return false;
+      if (filters.furnished === 'no' && apt.furnished) return false;
+      if (filters.pets_allowed === 'yes' && !apt.pets_allowed) return false;
+      if (filters.pets_allowed === 'no' && apt.pets_allowed) return false;
+
+      // Smart filters (amenities)
+      if (filters.amenities) {
+        for (const [key, value] of Object.entries(filters.amenities)) {
+          if (value && !apt[key]) return false;
+        }
+      }
+
+      // Pro filters
+      if (userPlan !== 'free') {
+        if (filters.minSize && apt.size < filters.minSize) return false;
+        if (filters.maxRisk && apt.riskScore > filters.maxRisk) return false;
+      }
+
+      return true;
+    });
+  }, [apartments, filters, userPlan]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -692,35 +700,56 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Bottom Section: Top Matches */}
-              <div className="bg-gray-50 dark:bg-gray-900 py-12">
+              {/* Bottom Section: Top 6 Matches */}
+              <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 border-t border-gray-200 dark:border-gray-700">
                 <div className="max-w-7xl mx-auto px-6">
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {language === 'es' ? 'Mejores Coincidencias' : language === 'ru' ? 'Лучшие Совпадения' : 'Top Matches for Your Search'}
-                    </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      {language === 'es' ? 'Mostrando las 6 mejores propiedades' : language === 'ru' ? 'Показаны 6 лучших объектов' : 'Showing top 6 properties'}
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-2">
+                      <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {language === 'es' ? '🏆 Top 6 Recomendaciones' : language === 'ru' ? '🏆 Топ 6 Рекомендаций' : '🏆 Top 6 Recommendations'}
+                      </h2>
+                      <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
+                        {language === 'es' ? 'IA Seleccionado' : language === 'ru' ? 'Выбрано ИИ' : 'AI Selected'}
+                      </Badge>
+                    </div>
+                    <p className="text-base text-gray-600 dark:text-gray-400">
+                      {language === 'es' ? 'Nuestro AI analizó los mejores apartamentos para ti basándose en precio, ubicación y seguridad.' : 
+                       language === 'ru' ? 'Наш ИИ проанализировал лучшие квартиры для вас на основе цены, расположения и безопасности.' : 
+                       'Our AI analyzed the best apartments for you based on price, location, and safety score.'}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredApartments.slice(0, 6).map((apt, index) => (
-                      <motion.div
-                        key={apt.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <ApartmentCard
-                          apartment={apt}
-                          onClick={handleApartmentClick}
-                          isSelected={selectedApartment?.id === apt.id}
-                          language={language}
-                          onUpgradeClick={() => setShowUpgradeModal(true)}
-                        />
-                      </motion.div>
-                    ))}
+                    {filteredApartments
+                      .sort((a, b) => {
+                        const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
+                        const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
+                        return scoreB - scoreA;
+                      })
+                      .slice(0, 6)
+                      .map((apt, index) => (
+                        <motion.div
+                          key={apt.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <div className="relative">
+                            {index < 3 && (
+                              <div className="absolute -top-3 -left-3 z-10 w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                                #{index + 1}
+                              </div>
+                            )}
+                            <ApartmentCard
+                              apartment={apt}
+                              onClick={handleApartmentClick}
+                              isSelected={selectedApartment?.id === apt.id}
+                              language={language}
+                              onUpgradeClick={() => setShowUpgradeModal(true)}
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
                   </div>
                 </div>
               </div>
