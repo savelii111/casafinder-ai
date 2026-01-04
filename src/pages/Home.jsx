@@ -211,32 +211,27 @@ export default function Home() {
       
       // Update AI request count
       updateAIRequestsMutation.mutate();
-      // Simulate AI response
-      const aiPrompt = `User is searching for apartments in Madrid. Their query: "${content}". 
-      Based on this, provide a helpful response about apartment hunting in Madrid.
-      Count how many properties match their criteria from the available ${apartments.length} properties.
-      Respond in ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}.
-      Be concise and helpful.`;
-
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: aiPrompt,
-        add_context_from_internet: false,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            response: { type: "string" },
-            properties_found: { type: "number" },
-            suggested_price_range: { 
-              type: "object",
-              properties: {
-                min: { type: "number" },
-                max: { type: "number" }
-              }
-            },
-            suggested_rooms: { type: "number" }
-          }
-        }
+      
+      // Call search_orchestrator agent
+      const conversation = await base44.agents.createConversation({
+        agent_name: 'search_orchestrator',
+        metadata: { language, user_query: content }
       });
+
+      await base44.agents.addMessage(conversation, {
+        role: 'user',
+        content: `Search for apartments: ${content}. Language: ${language}. Budget: €${filters.priceMin}-€${filters.priceMax}. Rooms: ${filters.rooms}. Available apartments: ${apartments.length}`
+      });
+
+      // Get agent response
+      const messages = conversation.messages || [];
+      const lastMessage = messages[messages.length - 1];
+      const response = {
+        response: lastMessage?.content || 'Properties found',
+        properties_found: filteredApartments.length,
+        suggested_price_range: { min: filters.priceMin, max: filters.priceMax },
+        suggested_rooms: filters.rooms !== 'any' ? parseInt(filters.rooms) : null
+      };
 
       const propertiesCount = response.properties_found || filteredApartments.length;
       setPropertiesFoundCount(propertiesCount);

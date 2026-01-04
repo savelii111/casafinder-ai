@@ -184,9 +184,13 @@ export default function SubscriptionManager({ language = 'en' }) {
                   {planId !== 'free' && <Crown className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
                 </CardTitle>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                  €{plan.price}
-                  {planId !== 'free' && (
-                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/{t.perMonth}</span>
+                  {plan.price === 0 ? (
+                    <span className="text-2xl">{plan.name}</span>
+                  ) : (
+                    <>
+                      €{plan.price}
+                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/{t.perMonth}</span>
+                    </>
                   )}
                 </div>
               </CardHeader>
