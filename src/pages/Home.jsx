@@ -212,25 +212,37 @@ export default function Home() {
       // Update AI request count
       updateAIRequestsMutation.mutate();
       
-      // Call search_orchestrator agent
-      const conversation = await base44.agents.createConversation({
-        agent_name: 'search_orchestrator',
-        metadata: { language, user_query: content }
+      // First, fetch fresh listings from ZenRows
+      try {
+        const listingsResult = await base44.functions.invoke('fetchListingsZenrows', {
+          city: 'Madrid',
+          listing_type: 'rent'
+        });
+        
+        if (listingsResult.data?.apartments) {
+          setApartments(listingsResult.data.apartments);
+          queryClient.invalidateQueries({ queryKey: ['apartments'] });
+        }
+      } catch (err) {
+        console.log('Using existing apartments:', err);
+      }
+
+      // Call DeepSeek chat function
+      const deepseekResult = await base44.functions.invoke('deepseekChat', {
+        query: content,
+        language,
+        apartments: filteredApartments.map(apt => ({
+          id: apt.id,
+          price: apt.price,
+          rooms: apt.rooms,
+          neighborhood: apt.neighborhood
+        }))
       });
 
-      await base44.agents.addMessage(conversation, {
-        role: 'user',
-        content: `Search for apartments: ${content}. Language: ${language}. Budget: €${filters.priceMin}-€${filters.priceMax}. Rooms: ${filters.rooms}. Available apartments: ${apartments.length}`
-      });
-
-      // Get agent response
-      const messages = conversation.messages || [];
-      const lastMessage = messages[messages.length - 1];
       const response = {
-        response: lastMessage?.content || 'Properties found',
+        response: deepseekResult.data?.response || 'Properties found',
         properties_found: filteredApartments.length,
-        suggested_price_range: { min: filters.priceMin, max: filters.priceMax },
-        suggested_rooms: filters.rooms !== 'any' ? parseInt(filters.rooms) : null
+        source: deepseekResult.data?.source || 'unknown'
       };
 
       const propertiesCount = response.properties_found || filteredApartments.length;
