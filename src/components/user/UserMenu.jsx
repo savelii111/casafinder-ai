@@ -193,7 +193,7 @@ export default function UserMenu() {
                 </div>
               </div>
 
-              <div className="h-px bg-gray-200 my-2" />
+              <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
 
               {/* Settings */}
               <button 
@@ -243,7 +243,7 @@ export default function UserMenu() {
                 <span className="text-sm text-gray-700 dark:text-gray-200">Favorites</span>
               </button>
 
-              <div className="h-px bg-gray-200 my-2" />
+              <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
 
               {/* Upgrade Plan */}
               {(
@@ -259,7 +259,7 @@ export default function UserMenu() {
                 </button>
               )}
 
-              <div className="h-px bg-gray-200 my-2" />
+              <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
 
               {/* Logout */}
               <button
