@@ -29,7 +29,7 @@ const getPlanFeatures = (language) => ({
   },
   pro1: {
     name: 'Pro',
-    price: 20,
+    price: 9,
     features: [
       { name: language === 'es' ? 'Ver todas las propiedades' : language === 'ru' ? 'Все объекты' : 'View all properties', included: true },
       { name: language === 'es' ? 'Consultas IA ilimitadas' : language === 'ru' ? 'Безлимитный AI' : 'Unlimited AI queries', included: true },
@@ -45,7 +45,7 @@ const getPlanFeatures = (language) => ({
   },
   pro2: {
     name: 'Pro+',
-    price: 29,
+    price: 20,
     features: [
       { name: language === 'es' ? 'Todo en Pro' : language === 'ru' ? 'Всё из Pro' : 'Everything in Pro 1', included: true },
       { name: language === 'es' ? 'Análisis IA avanzado' : language === 'ru' ? 'Расширенный AI анализ' : 'Advanced AI analysis', included: true },
