@@ -43,6 +43,9 @@ import { notifyAILimitReached } from '@/components/utils/notifications';
 import { useLanguage } from '@/components/context/LanguageContext';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import SavedSearches from '@/components/search/SavedSearches';
+import PriceChart from '@/components/analytics/PriceChart';
+import GoogleAnalytics, { trackPropertySearch, trackUpgradeClick } from '@/components/analytics/GoogleAnalytics';
 
 // Sample apartments are now loaded from database
 
@@ -205,6 +208,18 @@ export default function Home() {
     setShowMap(true);
     setMapLoading(true);
 
+    // Retry logic for API calls
+    const fetchWithRetry = async (fn, retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await fn();
+        } catch (error) {
+          if (i === retries - 1) throw error;
+          await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        }
+      }
+    };
+
     try {
       // Track search activity
       trackSearch(content, filteredApartments.length);
@@ -212,12 +227,14 @@ export default function Home() {
       // Update AI request count
       updateAIRequestsMutation.mutate();
       
-      // First, fetch fresh listings from ZenRows
+      // First, fetch fresh listings from ZenRows with retry
       try {
-        const listingsResult = await base44.functions.invoke('fetchListingsZenrows', {
-          city: 'Madrid',
-          listing_type: 'rent'
-        });
+        const listingsResult = await fetchWithRetry(() => 
+          base44.functions.invoke('fetchListingsZenrows', {
+            city: 'Madrid',
+            listing_type: 'rent'
+          })
+        );
         
         if (listingsResult.data?.apartments) {
           setApartments(listingsResult.data.apartments);
@@ -225,6 +242,7 @@ export default function Home() {
         }
       } catch (err) {
         console.log('Using existing apartments:', err);
+        // Fallback to existing data
       }
 
       // Get Top 6 recommendations
@@ -237,19 +255,21 @@ export default function Home() {
         })
         .slice(0, 6);
 
-      // Call DeepSeek chat function with detailed context
-      const deepseekResult = await base44.functions.invoke('deepseekChat', {
-        query: content,
-        language,
-        apartments: top6.map(apt => ({
-          id: apt.id,
-          price: apt.price,
-          rooms: apt.rooms,
-          neighborhood: apt.neighborhood,
-          size: apt.size,
-          riskScore: apt.riskScore
-        }))
-      });
+      // Call DeepSeek chat function with retry and detailed context
+      const deepseekResult = await fetchWithRetry(() =>
+        base44.functions.invoke('deepseekChat', {
+          query: content,
+          language,
+          apartments: top6.map(apt => ({
+            id: apt.id,
+            price: apt.price,
+            rooms: apt.rooms,
+            neighborhood: apt.neighborhood,
+            size: apt.size,
+            riskScore: apt.riskScore
+          }))
+        })
+      );
 
       const propertiesCount = filteredApartments.length;
       setPropertiesFoundCount(propertiesCount);
@@ -270,6 +290,9 @@ export default function Home() {
           results_count: propertiesCount
         });
       }
+
+      // Track in Google Analytics
+      trackPropertySearch(content, propertiesCount);
 
       // Update filters based on AI suggestions
       if (response.suggested_price_range) {
@@ -446,6 +469,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <GoogleAnalytics />
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-white/20 dark:border-gray-700/20">
         <div className="w-full px-4 py-3 lg:py-4">

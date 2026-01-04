@@ -103,27 +103,15 @@ export default function SubscriptionManager({ language = 'en' }) {
     
     setLoading(true);
     try {
-      const { createStripeCheckout } = await import('@/components/services/integrations');
-      const session = await createStripeCheckout(planId, user.email);
+      const result = await base44.functions.invoke('createStripeCheckout', {
+        planId
+      });
       
-      // In production with real Stripe, redirect to checkout
-      // const stripe = await stripePromise;
-      // await stripe.redirectToCheckout({ sessionId: session.sessionId });
-      
-      // For now, simulate success and trigger confetti
-      const { celebrateUpgrade } = await import('@/components/utils/confetti');
-      celebrateUpgrade();
-      toast.success('Upgrade Successful! 🎉');
-      
-      // Update subscription in database
-      if (user?.email) {
-        const subs = await base44.entities.UserSubscription.filter({ user_email: user.email });
-        if (subs.length > 0) {
-          await base44.entities.UserSubscription.update(subs[0].id, { plan: planId });
-        } else {
-          await base44.entities.UserSubscription.create({ user_email: user.email, plan: planId });
-        }
-        queryClient.invalidateQueries({ queryKey: ['subscription'] });
+      if (result.data?.url) {
+        // Redirect to Stripe checkout
+        window.location.href = result.data.url;
+      } else {
+        throw new Error('No checkout URL received');
       }
       
     } catch (error) {
