@@ -80,6 +80,8 @@ export default function Home() {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [propertiesFoundCount, setPropertiesFoundCount] = useState(0);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [orchestratorResults, setOrchestratorResults] = useState([]);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -222,12 +224,13 @@ export default function Home() {
 
     try {
       // Track search activity
-      trackSearch(content, filteredApartments.length);
+      trackSearch(content, 0);
       
       // Update AI request count
       updateAIRequestsMutation.mutate();
       
-      // First, fetch fresh listings from ZenRows with retry
+      // Fetch fresh listings from ZenRows with retry
+      let apartmentsData = [];
       try {
         const listingsResult = await fetchWithRetry(() => 
           base44.functions.invoke('fetchListingsZenrows', {
@@ -237,29 +240,48 @@ export default function Home() {
         );
         
         if (listingsResult.data?.apartments) {
-          setApartments(listingsResult.data.apartments);
+          apartmentsData = listingsResult.data.apartments;
+          setApartments(apartmentsData);
+          setIsDemoMode(false);
           queryClient.invalidateQueries({ queryKey: ['apartments'] });
         }
       } catch (err) {
-        console.log('Using existing apartments:', err);
-        // Fallback to existing data
+        console.log('ZenRows failed, using existing data:', err);
+        apartmentsData = apartments;
+        setIsDemoMode(true);
       }
 
-      // Get Top 6 recommendations
-      const top6 = filteredApartments
+      // Filter apartments based on current filters
+      const filtered = apartmentsData.filter(apt => {
+        if (filters.priceMin && apt.price < filters.priceMin) return false;
+        if (filters.priceMax && apt.price > filters.priceMax) return false;
+        if (filters.rooms !== 'any') {
+          const roomFilter = parseInt(filters.rooms);
+          if (roomFilter === 4 && apt.rooms < 4) return false;
+          if (roomFilter < 4 && apt.rooms !== roomFilter) return false;
+        }
+        return true;
+      });
+
+      // Get Top 6 from filtered results
+      const top6 = filtered
         .sort((a, b) => {
-          // Score based on: low risk, good price, recent listing
           const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
           const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
           return scoreB - scoreA;
         })
         .slice(0, 6);
 
-      // Call DeepSeek chat function with retry and detailed context
+      // Save results from orchestrator
+      setOrchestratorResults(top6);
+      setPropertiesFoundCount(filtered.length);
+
+      // Call DeepSeek for detailed human response
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
           language,
+          totalCount: filtered.length,
           apartments: top6.map(apt => ({
             id: apt.id,
             price: apt.price,
@@ -271,12 +293,9 @@ export default function Home() {
         })
       );
 
-      const propertiesCount = filteredApartments.length;
-      setPropertiesFoundCount(propertiesCount);
-
       const assistantMessage = { 
         role: 'assistant', 
-        content: deepseekResult.data?.response || `I found ${propertiesCount} properties in Madrid matching your criteria. Check out the top recommendations on the map!`
+        content: deepseekResult.data?.response || `I found ${filtered.length} properties in Madrid matching your criteria. Check out the top recommendations!`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -287,27 +306,13 @@ export default function Home() {
           user_email: user.email,
           query: content,
           filters: filters,
-          results_count: propertiesCount
+          results_count: filtered.length
         });
       }
 
       // Track in Google Analytics
-      trackPropertySearch(content, propertiesCount);
+      trackPropertySearch(content, filtered.length);
 
-      // Update filters based on AI suggestions
-      if (response.suggested_price_range) {
-        setFilters(prev => ({
-          ...prev,
-          priceMin: response.suggested_price_range.min || prev.priceMin,
-          priceMax: response.suggested_price_range.max || prev.priceMax
-        }));
-      }
-      if (response.suggested_rooms) {
-        setFilters(prev => ({
-          ...prev,
-          rooms: response.suggested_rooms.toString()
-        }));
-      }
     } catch (error) {
       console.error('AI Error:', error);
       const errorMessage = { 
@@ -598,11 +603,20 @@ export default function Home() {
                 {showMap ? t.hideMap : t.viewMap}
               </Button>
 
+              {/* Demo Mode Banner */}
+              {isDemoMode && (
+                <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    ⚠️ {language === 'es' ? 'Modo Demo - Datos de ejemplo' : language === 'ru' ? 'Демо режим - Примерные данные' : 'Demo Mode - Sample data'}
+                  </p>
+                </div>
+              )}
+
               {/* Mobile Map */}
               {showMap && (
                 <div className="h-[300px] rounded-2xl overflow-hidden mb-4">
                   <ApartmentMap
-                    apartments={filteredApartments}
+                    apartments={orchestratorResults.length > 0 ? orchestratorResults : filteredApartments}
                     center={mapCenter}
                     zoom={13}
                     onApartmentClick={handleApartmentClick}
@@ -710,10 +724,21 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {/* Demo Mode Banner */}
+                  {isDemoMode && (
+                    <div className="absolute top-20 left-4 right-4 z-10">
+                      <div className="bg-yellow-50 dark:bg-yellow-900/90 border border-yellow-200 dark:border-yellow-700 rounded-lg px-4 py-2 shadow-lg">
+                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                          ⚠️ {language === 'es' ? 'Modo Demo - Datos de ejemplo' : language === 'ru' ? 'Демо режим - Примерные данные' : 'Demo Mode - Sample data'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Full-Height Map */}
                   <div className="h-full w-full">
                     <ApartmentMap
-                      apartments={filteredApartments}
+                      apartments={orchestratorResults.length > 0 ? orchestratorResults : filteredApartments}
                       center={mapCenter}
                       zoom={13}
                       onApartmentClick={handleApartmentClick}
@@ -744,13 +769,7 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredApartments
-                      .sort((a, b) => {
-                        const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
-                        const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
-                        return scoreB - scoreA;
-                      })
-                      .slice(0, 6)
+                    {(orchestratorResults.length > 0 ? orchestratorResults : filteredApartments.slice(0, 6))
                       .map((apt, index) => (
                         <motion.div
                           key={apt.id}
