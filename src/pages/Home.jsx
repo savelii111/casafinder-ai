@@ -225,35 +225,67 @@ export default function Home() {
     try {
       // Track search activity
       trackSearch(content, 0);
-      
+
       // Update AI request count
       updateAIRequestsMutation.mutate();
-      
+
       // Fetch fresh listings from ZenRows with retry
       let apartmentsData = [];
+      let zenrowsFailed = false;
+      let zenrowsResponse = null;
+
       try {
+        console.log('[DEBUG] Fetching from ZenRows...');
         const listingsResult = await fetchWithRetry(() => 
           base44.functions.invoke('fetchListingsZenrows', {
             city: 'Madrid',
             listing_type: 'rent'
           })
         );
-        
-        if (listingsResult.data?.success === false || listingsResult.data?.error === 'DEMO_MODE') {
-          console.log('ZenRows returned DEMO_MODE');
-          apartmentsData = listingsResult.data.apartments || apartments;
-          setIsDemoMode(true);
-        } else if (listingsResult.data?.apartments) {
-          apartmentsData = listingsResult.data.apartments;
+
+        zenrowsResponse = listingsResult.data;
+        console.log('[DEBUG] ZenRows response:', {
+          success: zenrowsResponse?.success,
+          error: zenrowsResponse?.error,
+          apartmentsCount: zenrowsResponse?.apartments?.length || 0
+        });
+
+        if (zenrowsResponse?.success === false || zenrowsResponse?.error === 'DEMO_MODE') {
+          console.log('[DEBUG] ZenRows returned error/DEMO_MODE flag');
+          zenrowsFailed = true;
+          apartmentsData = zenrowsResponse.apartments || [];
+        } else if (zenrowsResponse?.apartments) {
+          console.log('[DEBUG] ZenRows success - got', zenrowsResponse.apartments.length, 'listings');
+          apartmentsData = zenrowsResponse.apartments;
           setApartments(apartmentsData);
-          setIsDemoMode(false);
           queryClient.invalidateQueries({ queryKey: ['apartments'] });
+          zenrowsFailed = false;
         }
       } catch (err) {
-        console.log('ZenRows failed, using existing data:', err);
-        apartmentsData = apartments;
-        setIsDemoMode(true);
+        console.log('[DEBUG] ZenRows exception:', err.message);
+        zenrowsFailed = true;
+        apartmentsData = [];
       }
+
+      // Check database count for current city
+      const dbCount = apartments.length;
+      console.log('[DEBUG] Database apartments count:', dbCount);
+
+      // Demo Mode activates ONLY if ZenRows failed AND no DB data
+      const shouldActivateDemoMode = zenrowsFailed && dbCount === 0;
+      console.log('[DEBUG] Demo Mode decision:', {
+        zenrowsFailed,
+        dbCount,
+        shouldActivateDemoMode
+      });
+
+      // If ZenRows failed but we have DB data, use DB data
+      if (zenrowsFailed && dbCount > 0) {
+        console.log('[DEBUG] Using database apartments as fallback');
+        apartmentsData = apartments;
+      }
+
+      setIsDemoMode(shouldActivateDemoMode);
 
       // Filter apartments based on current filters
       const filtered = apartmentsData.filter(apt => {
@@ -277,6 +309,11 @@ export default function Home() {
       // Save ALL filtered results (NO LIMIT)
       setOrchestratorResults(sortedByScore);
       setPropertiesFoundCount(sortedByScore.length);
+
+      console.log('[DEBUG] orchestratorResults set:', {
+        totalFiltered: sortedByScore.length,
+        source: zenrowsFailed ? 'database' : 'zenrows'
+      });
 
       // Call DeepSeek for detailed human response (send Top 6 for summary)
       const deepseekResult = await fetchWithRetry(() =>
