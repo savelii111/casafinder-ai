@@ -4,7 +4,9 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { city = 'Madrid', listing_type = 'rent' } = body;
+    const { city = 'Madrid', listing_type = 'both' } = body;
+    
+    console.log('[ZenRows] Request params:', { city, listing_type });
     
     const ZENROWS_API_KEY = Deno.env.get('ZENROWS_API_KEY');
 
@@ -23,36 +25,50 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use Idealista's internal AJAX API endpoint (returns JSON with lat/lng)
-    const apiUrl = listing_type === 'rent'
-      ? 'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=rent&numPage=1&maxItems=200&order=publicationDate&language=en'
-      : 'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=sale&numPage=1&maxItems=200&order=publicationDate&language=en';
+    // Fetch both rentals AND sales if listing_type === 'both'
+    const urls = listing_type === 'both' 
+      ? [
+          'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=rent&numPage=1&maxItems=200&order=publicationDate&language=en',
+          'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=sale&numPage=1&maxItems=200&order=publicationDate&language=en'
+        ]
+      : listing_type === 'rent'
+        ? ['https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=rent&numPage=1&maxItems=200&order=publicationDate&language=en']
+        : ['https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=sale&numPage=1&maxItems=200&order=publicationDate&language=en'];
 
-    // ZenRows with JSON rendering
-    const zenrowsUrl = `https://api.zenrows.com/v1/?url=${encodeURIComponent(apiUrl)}&apikey=${ZENROWS_API_KEY}&json_response=true`;
+    console.log('[ZenRows] Fetching from', urls.length, 'endpoint(s)');
 
-    console.log('Fetching JSON API from Idealista AJAX endpoint');
-
-    const response = await fetch(zenrowsUrl);
+    const allListings = [];
     
-    if (!response.ok) {
-      console.error('ZenRows API error:', response.status);
-      const apartments = await base44.asServiceRole.entities.Apartment.filter({
-        city: city,
-        listing_status: 'active'
-      });
-      return Response.json({ 
-        success: false, 
-        error: 'DEMO_MODE',
-        apartments 
-      });
+    for (const apiUrl of urls) {
+      const currentType = apiUrl.includes('operation=rent') ? 'rent' : 'sale';
+      console.log(`[ZenRows] Fetching ${currentType} listings...`);
+      
+      const zenrowsUrl = `https://api.zenrows.com/v1/?url=${encodeURIComponent(apiUrl)}&apikey=${ZENROWS_API_KEY}&json_response=true`;
+      
+      const response = await fetch(zenrowsUrl);
+      
+      if (!response.ok) {
+        console.error(`[ZenRows] API error for ${currentType}:`, response.status);
+        continue;
+      }
+
+      const data = await response.json();
+      
+      // Check if response is HTML (scraping failed)
+      if (typeof data === 'string' || !data.elementList) {
+        console.error(`[ZenRows] Received HTML instead of JSON for ${currentType}`);
+        continue;
+      }
+
+      const listings = data.elementList || [];
+      console.log(`[ZenRows] Parsed ${listings.length} ${currentType} listings`);
+      
+      allListings.push(...listings.map(item => ({ ...item, listing_type: currentType })));
     }
 
-    const data = await response.json();
-    
-    // Check if response is HTML (scraping failed)
-    if (typeof data === 'string' || !data.elementList) {
-      console.error('Received HTML instead of JSON - aborting sync');
+    // If no listings fetched from any endpoint, return demo mode
+    if (allListings.length === 0) {
+      console.error('[ZenRows] No listings fetched, activating demo mode');
       const apartments = await base44.asServiceRole.entities.Apartment.filter({
         city: city,
         listing_status: 'active'
@@ -66,10 +82,11 @@ Deno.serve(async (req) => {
 
     // Parse JSON response from Idealista API
     const apartments = [];
-    const listings = data.elementList || [];
     const now = new Date().toISOString();
 
-    for (const item of listings) {
+    console.log(`[ZenRows] Processing ${allListings.length} total listings...`);
+
+    for (const item of allListings) {
       try {
         // Extract required fields from JSON
         const external_id = item.propertyCode || item.id;
@@ -88,7 +105,7 @@ Deno.serve(async (req) => {
         const apartment = {
           title: `${title} in ${item.district || 'Madrid'}`,
           price,
-          listing_type,
+          listing_type: item.listing_type,
           address: item.address || `${item.district}, Madrid`,
           rooms: item.rooms || 2,
           size: item.size || 50,
@@ -126,6 +143,8 @@ Deno.serve(async (req) => {
         console.error('Error processing listing:', err);
       }
     }
+
+    console.log(`[ZenRows] Successfully synced ${apartments.length} apartments`);
 
     return Response.json({
       success: true,

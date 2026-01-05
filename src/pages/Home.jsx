@@ -239,7 +239,7 @@ export default function Home() {
         const listingsResult = await fetchWithRetry(() => 
           base44.functions.invoke('fetchListingsZenrows', {
             city: 'Madrid',
-            listing_type: 'rent'
+            listing_type: 'both'
           })
         );
 
