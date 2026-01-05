@@ -51,6 +51,7 @@ export default function ApartmentList({
   const t = labels[language] || labels.en;
 
   const sortedApartments = React.useMemo(() => {
+    console.log('📋 [APARTMENTLIST] Input apartments:', apartments?.length || 0);
     if (!apartments) return [];
     const sorted = [...apartments];
     
@@ -108,7 +109,12 @@ export default function ApartmentList({
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {sortedApartments.map((apt, index) => (
+          {(() => {
+            console.log('📋 [APARTMENTLIST] Rendering', sortedApartments.length, 'cards');
+            if (sortedApartments.length === 20) {
+              console.error('❌❌❌ APARTMENTLIST RENDERING EXACTLY 20 ❌❌❌');
+            }
+            return sortedApartments.map((apt, index) => (
             <motion.div
               key={apt.id}
               initial={{ opacity: 0, y: 20 }}
@@ -123,7 +129,8 @@ export default function ApartmentList({
                 onUpgradeClick={onUpgradeClick}
               />
             </motion.div>
-          ))}
+          ));
+          })()}
         </div>
       )}
     </div>
