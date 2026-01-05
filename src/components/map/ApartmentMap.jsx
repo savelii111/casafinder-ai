@@ -15,13 +15,13 @@ L.Icon.Default.mergeOptions({
 });
 
 function createPriceMarker(price, isSelected = false, riskScore = 5) {
-  // Color code by risk score
-  let bgColor = '#3b82f6'; // default blue
-  if (riskScore <= 3) bgColor = '#10b981'; // green - low risk
-  else if (riskScore <= 6) bgColor = '#f59e0b'; // amber - medium risk
-  else if (riskScore >= 7) bgColor = '#ef4444'; // red - high risk
+  // Color code by risk score (lower is better)
+  let bgColor = '#10b981'; // default green
+  if (riskScore <= 3) bgColor = '#10b981'; // green - BEST (low risk)
+  else if (riskScore <= 6) bgColor = '#f59e0b'; // orange - MEDIUM
+  else if (riskScore >= 7) bgColor = '#ef4444'; // red - BAD (high risk)
 
-  if (isSelected) bgColor = '#000000';
+  if (isSelected) bgColor = '#8b5cf6'; // purple for selected
 
   return L.divIcon({
     className: 'custom-price-marker',

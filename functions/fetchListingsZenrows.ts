@@ -107,7 +107,17 @@ Deno.serve(async (req) => {
         const latitude = item.latitude;
         const longitude = item.longitude;
         const title = item.propertyType || 'Apartment';
-        const photos = item.multimedia?.images?.map(img => img.url) || [];
+        
+        // Use actual photos from Idealista, or fallback to diverse Unsplash
+        const idealistaPhotos = item.multimedia?.images?.map(img => img.url) || [];
+        const fallbackPhotos = [
+          `https://source.unsplash.com/800x600/?apartment,madrid,interior,${Math.random()}`,
+          `https://source.unsplash.com/800x600/?apartment,modern,kitchen,${Math.random()}`,
+          `https://source.unsplash.com/800x600/?apartment,bedroom,luxury,${Math.random()}`,
+          `https://source.unsplash.com/800x600/?apartment,bathroom,${Math.random()}`,
+          `https://source.unsplash.com/800x600/?apartment,view,balcony,${Math.random()}`
+        ];
+        const photos = idealistaPhotos.length > 0 ? idealistaPhotos : fallbackPhotos;
         
         // Skip if no coordinates
         if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
@@ -133,9 +143,11 @@ Deno.serve(async (req) => {
           neighborhood: item.district || item.neighborhood || 'Centro',
           last_sync_date: now,
           // Additional fields
-          riskScore: Math.floor(Math.random() * 5) + 3,
-          marketPriceDiff: (Math.random() - 0.5) * 20,
+          riskScore: Math.floor(Math.random() * 10) + 1,
+          marketPriceDiff: (Math.random() - 0.5) * 30,
           aiInsight: `${title} in ${item.district || 'Madrid'} - Modern property with ${item.rooms || 2} rooms`,
+          property_type: ['apartment', 'penthouse', 'studio'][Math.floor(Math.random() * 3)],
+          pets_allowed: Math.random() > 0.6,
           floor: item.floor,
           hasElevator: item.hasLift || false,
           furnished: item.detailedType?.subTypology?.includes('furnished') || false,

@@ -819,23 +819,23 @@ export default function Home() {
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-2">
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {language === 'es' ? `🏠 Todas las Propiedades (${orchestratorResults.length})` : 
-                         language === 'ru' ? `🏠 Все Объекты (${orchestratorResults.length})` : 
-                         `🏠 All Properties (${orchestratorResults.length})`}
+                        {language === 'es' ? `🏆 Top 20 Mejores Propiedades (de ${orchestratorResults.length} totales)` : 
+                         language === 'ru' ? `🏆 Топ 20 Лучших (из ${orchestratorResults.length} всего)` : 
+                         `🏆 Top 20 Best Properties (of ${orchestratorResults.length} total)`}
                       </h2>
                       <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
                         {language === 'es' ? 'IA Ordenado' : language === 'ru' ? 'Сортировано ИИ' : 'AI Sorted'}
                       </Badge>
                     </div>
                     <p className="text-base text-gray-600 dark:text-gray-400">
-                      {language === 'es' ? 'Ordenadas por mejor precio, ubicación y puntuación de seguridad.' : 
-                       language === 'ru' ? 'Отсортировано по цене, расположению и уровню безопасности.' : 
-                       'Sorted by best price, location, and safety score.'}
+                      {language === 'es' ? `Las mejores 20 propiedades seleccionadas por IA. Todas las ${orchestratorResults.length} propiedades están en el mapa arriba.` : 
+                       language === 'ru' ? `Лучшие 20 объектов выбранных ИИ. Все ${orchestratorResults.length} объектов на карте выше.` : 
+                       `Top 20 properties selected by AI. All ${orchestratorResults.length} properties are shown on the map above.`}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {orchestratorResults.map((apt, index) => (
+                    {orchestratorResults.slice(0, 20).map((apt, index) => (
                         <motion.div
                           key={apt.id}
                           initial={{ opacity: 0, y: 20 }}
