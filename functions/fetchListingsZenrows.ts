@@ -30,8 +30,8 @@ Deno.serve(async (req) => {
     const operations = listing_type === 'both' ? ['rent', 'sale'] : [listing_type];
     
     for (const operation of operations) {
-      // Fetch first 20 pages (up to 4000 listings per operation)
-      for (let page = 1; page <= 20; page++) {
+      // Fetch first 50 pages (up to 10,000 listings per operation)
+      for (let page = 1; page <= 50; page++) {
         urls.push(
           `https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=${operation}&numPage=${page}&maxItems=200&order=publicationDate&language=en`
         );
