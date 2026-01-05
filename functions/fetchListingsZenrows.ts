@@ -97,7 +97,9 @@ Deno.serve(async (req) => {
     const apartments = [];
     const now = new Date().toISOString();
 
-    console.log(`[ZenRows] Processing ${allListings.length} total listings...`);
+    console.log('═══════════════════════════════════════════════════════');
+    console.log(`[STAGE 1] RAW LISTINGS FROM ZENROWS: ${allListings.length}`);
+    console.log('═══════════════════════════════════════════════════════');
 
     for (const item of allListings) {
       try {
@@ -165,34 +167,43 @@ Deno.serve(async (req) => {
           const created = await base44.asServiceRole.entities.Apartment.create(apartment);
           apartments.push(created);
         }
-      } catch (err) {
+        } catch (err) {
         console.error('Error processing listing:', err);
-      }
-    }
+        }
+        }
 
-    console.log('═══════════════════════════════════════════════════════');
-    console.log(`[ZenRows] ✅ SYNC COMPLETE`);
-    console.log(`Total Raw Listings Fetched: ${allListings.length}`);
-    console.log(`Successfully Processed & Saved: ${apartments.length}`);
-    console.log(`Rent Listings: ${apartments.filter(a => a.listing_type === 'rent').length}`);
-    console.log(`Sale Listings: ${apartments.filter(a => a.listing_type === 'sale').length}`);
-    console.log(`With Valid Coordinates: ${apartments.filter(a => a.lat && a.lng).length}`);
-    console.log(`Synced At: ${now}`);
-    console.log('═══════════════════════════════════════════════════════');
+        console.log('═══════════════════════════════════════════════════════');
+        console.log(`[STAGE 2] AFTER PROCESSING: ${apartments.length} apartments`);
+        console.log('═══════════════════════════════════════════════════════');
 
-    return Response.json({
-      success: true,
-      source: 'zenrows',
-      count: apartments.length,
-      apartments,
-      synced_at: now,
-      stats: {
-        total: apartments.length,
-        rent: apartments.filter(a => a.listing_type === 'rent').length,
-        sale: apartments.filter(a => a.listing_type === 'sale').length,
-        withCoords: apartments.filter(a => a.lat && a.lng).length
-      }
-    });
+        console.log('═══════════════════════════════════════════════════════');
+        console.log(`[STAGE 3 - FINAL] RETURNING TO CLIENT`);
+        console.log(`Total Raw Listings Fetched: ${allListings.length}`);
+        console.log(`Successfully Processed & Saved: ${apartments.length}`);
+        console.log(`Rent Listings: ${apartments.filter(a => a.listing_type === 'rent').length}`);
+        console.log(`Sale Listings: ${apartments.filter(a => a.listing_type === 'sale').length}`);
+        console.log(`With Valid Coordinates: ${apartments.filter(a => a.lat && a.lng).length}`);
+
+        if (apartments.length === 20) {
+          console.error('❌❌❌ DETECTED EXACTLY 20 APARTMENTS - LIMIT FOUND HERE! ❌❌❌');
+        }
+
+        console.log(`Synced At: ${now}`);
+        console.log('═══════════════════════════════════════════════════════');
+
+        return Response.json({
+          success: true,
+          source: 'zenrows',
+          count: apartments.length,
+          apartments: apartments,
+          synced_at: now,
+          stats: {
+            total: apartments.length,
+            rent: apartments.filter(a => a.listing_type === 'rent').length,
+            sale: apartments.filter(a => a.listing_type === 'sale').length,
+            withCoords: apartments.filter(a => a.lat && a.lng).length
+          }
+        });
 
   } catch (error) {
     console.error('fetchListingsZenrows error:', error);
