@@ -310,13 +310,20 @@ export default function Home() {
       setOrchestratorResults(sortedByScore);
       setPropertiesFoundCount(sortedByScore.length);
 
-      console.log('[DEBUG] orchestratorResults set:', {
-        totalFiltered: sortedByScore.length,
-        source: zenrowsFailed ? 'database' : 'zenrows'
-      });
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('[DEBUG] ORCHESTRATOR RESULTS SET');
+      console.log('Total Fetched from ZenRows:', apartmentsData.length);
+      console.log('Total After Filtering:', filtered.length);
+      console.log('Total After Sorting (orchestratorResults):', sortedByScore.length);
+      console.log('Source:', zenrowsFailed ? 'DATABASE' : 'ZENROWS');
+      console.log('Demo Mode Active:', shouldActivateDemoMode);
+      console.log('First 3 Properties:', sortedByScore.slice(0, 3).map(a => ({
+        id: a.id, price: a.price, rooms: a.rooms, neighborhood: a.neighborhood
+      })));
+      console.log('═══════════════════════════════════════════════════════');
 
-      // Call DeepSeek for detailed human response (send top properties for summary)
-      const topProperties = sortedByScore.slice(0, 10).map(apt => ({
+      // Call DeepSeek for detailed human response (send top 20 for summary)
+      const topProperties = sortedByScore.slice(0, 20).map(apt => ({
         id: apt.id,
         price: apt.price,
         rooms: apt.rooms,
@@ -329,6 +336,13 @@ export default function Home() {
         pets_allowed: apt.pets_allowed
       }));
 
+      console.log('[DEBUG] Calling DeepSeek with:', {
+        totalCount: sortedByScore.length,
+        topPropertiesForSummary: topProperties.length,
+        query: content,
+        language
+      });
+
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
@@ -337,6 +351,11 @@ export default function Home() {
           apartments: topProperties
         })
       );
+
+      console.log('[DEBUG] DeepSeek response received:', {
+        hasResponse: !!deepseekResult.data?.response,
+        responseLength: deepseekResult.data?.response?.length
+      });
 
       const assistantMessage = { 
         role: 'assistant', 

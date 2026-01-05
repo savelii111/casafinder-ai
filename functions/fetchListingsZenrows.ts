@@ -158,14 +158,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`[ZenRows] Successfully synced ${apartments.length} apartments`);
+    console.log('═══════════════════════════════════════════════════════');
+    console.log(`[ZenRows] ✅ SYNC COMPLETE`);
+    console.log(`Total Raw Listings Fetched: ${allListings.length}`);
+    console.log(`Successfully Processed & Saved: ${apartments.length}`);
+    console.log(`Rent Listings: ${apartments.filter(a => a.listing_type === 'rent').length}`);
+    console.log(`Sale Listings: ${apartments.filter(a => a.listing_type === 'sale').length}`);
+    console.log(`With Valid Coordinates: ${apartments.filter(a => a.lat && a.lng).length}`);
+    console.log(`Synced At: ${now}`);
+    console.log('═══════════════════════════════════════════════════════');
 
     return Response.json({
       success: true,
       source: 'zenrows',
       count: apartments.length,
       apartments,
-      synced_at: now
+      synced_at: now,
+      stats: {
+        total: apartments.length,
+        rent: apartments.filter(a => a.listing_type === 'rent').length,
+        sale: apartments.filter(a => a.listing_type === 'sale').length,
+        withCoords: apartments.filter(a => a.lat && a.lng).length
+      }
     });
 
   } catch (error) {

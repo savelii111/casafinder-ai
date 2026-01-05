@@ -31,12 +31,12 @@ Deno.serve(async (req) => {
 
     const userPrompt = `User query: "${query}"
 
-Total properties found: ${totalCount}
+IMPORTANT: Total properties found: ${totalCount} (ALL are shown on map and available to user)
 
-Top properties (sorted by AI):
+Top ${apartments.length} properties for summary (sorted by AI):
 ${apartmentsContext}
 
-Provide a detailed, human-like response about the search results. Mention the total count, highlight the best options, and give helpful advice. Keep it natural and conversational.`;
+Provide a detailed, human-like response about the search results. CRITICAL: Emphasize that ALL ${totalCount} properties are available - not just these top ones. Mention the total count, highlight the best options from the list above, and give helpful advice about what makes them stand out. Keep it natural and conversational. The user can see ALL properties on the map and list.`;
 
     console.log('[DeepSeek] Calling API...');
 
