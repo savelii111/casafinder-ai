@@ -239,7 +239,11 @@ export default function Home() {
           })
         );
         
-        if (listingsResult.data?.apartments) {
+        if (listingsResult.data?.success === false || listingsResult.data?.error === 'DEMO_MODE') {
+          console.log('ZenRows returned DEMO_MODE');
+          apartmentsData = listingsResult.data.apartments || apartments;
+          setIsDemoMode(true);
+        } else if (listingsResult.data?.apartments) {
           apartmentsData = listingsResult.data.apartments;
           setApartments(apartmentsData);
           setIsDemoMode(false);
