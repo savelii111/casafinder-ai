@@ -618,7 +618,7 @@ export default function Home() {
               {showMap && (
                 <div className="h-[300px] rounded-2xl overflow-hidden mb-4">
                   <ApartmentMap
-                    apartments={orchestratorResults.length > 0 ? orchestratorResults : filteredApartments}
+                    apartments={orchestratorResults}
                     center={mapCenter}
                     zoom={13}
                     onApartmentClick={handleApartmentClick}
@@ -740,7 +740,7 @@ export default function Home() {
                   {/* Full-Height Map */}
                   <div className="h-full w-full">
                     <ApartmentMap
-                      apartments={orchestratorResults.length > 0 ? orchestratorResults : filteredApartments}
+                      apartments={orchestratorResults}
                       center={mapCenter}
                       zoom={13}
                       onApartmentClick={handleApartmentClick}
@@ -771,8 +771,7 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {(orchestratorResults.length > 0 ? orchestratorResults.slice(0, 6) : filteredApartments.slice(0, 6))
-                      .map((apt, index) => (
+                    {orchestratorResults.slice(0, 6).map((apt, index) => (
                         <motion.div
                           key={apt.id}
                           initial={{ opacity: 0, y: 20 }}
