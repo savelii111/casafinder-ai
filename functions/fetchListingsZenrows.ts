@@ -25,8 +25,8 @@ Deno.serve(async (req) => {
 
     // Use Idealista's internal AJAX API endpoint (returns JSON with lat/lng)
     const apiUrl = listing_type === 'rent'
-      ? 'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=rent&numPage=1&maxItems=50&order=publicationDate&language=en'
-      : 'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=sale&numPage=1&maxItems=50&order=publicationDate&language=en';
+      ? 'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=rent&numPage=1&maxItems=200&order=publicationDate&language=en'
+      : 'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=sale&numPage=1&maxItems=200&order=publicationDate&language=en';
 
     // ZenRows with JSON rendering
     const zenrowsUrl = `https://api.zenrows.com/v1/?url=${encodeURIComponent(apiUrl)}&apikey=${ZENROWS_API_KEY}&json_response=true`;
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     const listings = data.elementList || [];
     const now = new Date().toISOString();
 
-    for (const item of listings.slice(0, 50)) {
+    for (const item of listings) {
       try {
         // Extract required fields from JSON
         const external_id = item.propertyCode || item.id;
