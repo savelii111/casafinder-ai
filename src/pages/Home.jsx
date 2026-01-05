@@ -82,7 +82,6 @@ export default function Home() {
   const [propertiesFoundCount, setPropertiesFoundCount] = useState(0);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [orchestratorResults, setOrchestratorResults] = useState([]);
-  const [topN, setTopN] = useState(20);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -245,11 +244,13 @@ export default function Home() {
         );
 
         zenrowsResponse = listingsResult.data;
-        console.log('[DEBUG] ZenRows response:', {
-          success: zenrowsResponse?.success,
-          error: zenrowsResponse?.error,
-          apartmentsCount: zenrowsResponse?.apartments?.length || 0
-        });
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('[DEBUG] ZenRows Response');
+        console.log('Success:', zenrowsResponse?.success);
+        console.log('Error:', zenrowsResponse?.error);
+        console.log('Apartments Count:', zenrowsResponse?.apartments?.length || 0);
+        console.log('Stats:', zenrowsResponse?.stats);
+        console.log('═══════════════════════════════════════════════════════');
 
         if (zenrowsResponse?.success === false || zenrowsResponse?.error === 'DEMO_MODE') {
           console.log('[DEBUG] ZenRows returned error/DEMO_MODE flag');
@@ -323,8 +324,8 @@ export default function Home() {
       })));
       console.log('═══════════════════════════════════════════════════════');
 
-      // Call DeepSeek for detailed human response (send top 20 for summary)
-      const topProperties = sortedByScore.slice(0, 20).map(apt => ({
+      // Call DeepSeek for detailed human response (send top 10 for summary, but mention total)
+      const topProperties = sortedByScore.slice(0, 10).map(apt => ({
         id: apt.id,
         price: apt.price,
         rooms: apt.rooms,
@@ -820,23 +821,23 @@ export default function Home() {
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-2">
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {language === 'es' ? `🏆 Top ${topN} Mejores Propiedades (de ${orchestratorResults.length} totales)` : 
-                                                       language === 'ru' ? `🏆 Топ ${topN} Лучших (из ${orchestratorResults.length} всего)` : 
-                                                       `🏆 Top ${topN} Best Properties (of ${orchestratorResults.length} total)`}
+                        {language === 'es' ? `🏠 Todas las Propiedades Encontradas (${orchestratorResults.length})` : 
+                         language === 'ru' ? `🏠 Все Найденные Объекты (${orchestratorResults.length})` : 
+                         `🏠 All Properties Found (${orchestratorResults.length})`}
                       </h2>
                       <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
                         {language === 'es' ? 'IA Ordenado' : language === 'ru' ? 'Сортировано ИИ' : 'AI Sorted'}
                       </Badge>
                     </div>
                     <p className="text-base text-gray-600 dark:text-gray-400">
-                      {language === 'es' ? `Las mejores 20 propiedades seleccionadas por IA. Todas las ${orchestratorResults.length} propiedades están en el mapa arriba.` : 
-                       language === 'ru' ? `Лучшие 20 объектов выбранных ИИ. Все ${orchestratorResults.length} объектов на карте выше.` : 
-                       `Top 20 properties selected by AI. All ${orchestratorResults.length} properties are shown on the map above.`}
+                      {language === 'es' ? 'Ordenadas por mejor puntuación IA, precio y ubicación. Todas están en el mapa arriba.' : 
+                       language === 'ru' ? 'Отсортировано по лучшему рейтингу ИИ, цене и расположению. Все на карте выше.' : 
+                       'Sorted by best AI score, price and location. All shown on map above.'}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {orchestratorResults.slice(0, topN).map((apt, index) => (
+                    {orchestratorResults.map((apt, index) => (
                         <motion.div
                           key={apt.id}
                           initial={{ opacity: 0, y: 20 }}
