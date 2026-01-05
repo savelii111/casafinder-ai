@@ -13,11 +13,7 @@ Deno.serve(async (req) => {
     // DEMO FALLBACK if no API key
     if (!ZENROWS_API_KEY) {
       console.log('ZenRows API key not set, using demo mode');
-      const apartments = await base44.asServiceRole.entities.Apartment.filter({
-        city: city,
-        listing_status: 'active',
-        listing_type: listing_type
-      });
+      const apartments = await base44.asServiceRole.entities.Apartment.list('-updated_date', 99999);
       return Response.json({ 
         success: false,
         error: 'DEMO_MODE',
@@ -82,10 +78,7 @@ Deno.serve(async (req) => {
     // If no listings fetched from any endpoint, return demo mode
     if (allListings.length === 0) {
       console.error('[ZenRows] No listings fetched, activating demo mode');
-      const apartments = await base44.asServiceRole.entities.Apartment.filter({
-        city: city,
-        listing_status: 'active'
-      });
+      const apartments = await base44.asServiceRole.entities.Apartment.list('-updated_date', 99999);
       return Response.json({ 
         success: false, 
         error: 'DEMO_MODE',
@@ -211,10 +204,7 @@ Deno.serve(async (req) => {
     // DEMO FALLBACK on any error
     try {
       const base44 = createClientFromRequest(req);
-      const apartments = await base44.asServiceRole.entities.Apartment.filter({
-        city: 'Madrid',
-        listing_status: 'active'
-      });
+      const apartments = await base44.asServiceRole.entities.Apartment.list('-updated_date', 99999);
       return Response.json({ 
         success: false, 
         error: 'DEMO_MODE',
