@@ -67,6 +67,14 @@ export default function ApartmentMap({
   selectedId,
   language = 'en'
 }) {
+  // Debug logging
+  useEffect(() => {
+    console.log('[MAP DEBUG] Received apartments:', {
+      total: apartments?.length || 0,
+      withValidCoords: apartments?.filter(a => a.lat && a.lng).length || 0,
+      sample: apartments?.slice(0, 3).map(a => ({ id: a.id, lat: a.lat, lng: a.lng, price: a.price }))
+    });
+  }, [apartments]);
   const labels = {
     en: {
       properties: 'properties',
