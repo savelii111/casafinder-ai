@@ -315,26 +315,32 @@ export default function Home() {
         source: zenrowsFailed ? 'database' : 'zenrows'
       });
 
-      // Call DeepSeek for detailed human response (send Top 6 for summary)
+      // Call DeepSeek for detailed human response (send top properties for summary)
+      const topProperties = sortedByScore.slice(0, 10).map(apt => ({
+        id: apt.id,
+        price: apt.price,
+        rooms: apt.rooms,
+        neighborhood: apt.neighborhood,
+        size: apt.size,
+        riskScore: apt.riskScore,
+        floor: apt.floor,
+        hasElevator: apt.hasElevator,
+        furnished: apt.furnished,
+        pets_allowed: apt.pets_allowed
+      }));
+
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
           language,
           totalCount: sortedByScore.length,
-          apartments: sortedByScore.slice(0, 6).map(apt => ({
-            id: apt.id,
-            price: apt.price,
-            rooms: apt.rooms,
-            neighborhood: apt.neighborhood,
-            size: apt.size,
-            riskScore: apt.riskScore
-          }))
+          apartments: topProperties
         })
       );
 
       const assistantMessage = { 
         role: 'assistant', 
-        content: deepseekResult.data?.response || `I found ${sortedByScore.length} properties in Madrid matching your criteria. Check out the top recommendations!`
+        content: deepseekResult.data?.response || `Found ${sortedByScore.length} properties in Madrid. All are shown on the map and sorted below by best match.`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -674,7 +680,7 @@ export default function Home() {
 
               {/* Mobile Apartment List */}
               <ApartmentList
-                apartments={filteredApartments}
+                apartments={orchestratorResults.length > 0 ? orchestratorResults : filteredApartments}
                 onApartmentClick={handleApartmentClick}
                 selectedId={selectedApartment?.id}
                 sortBy={sortBy}
@@ -788,32 +794,34 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Bottom Section: Top 6 Matches */}
+              {/* Bottom Section: All Properties */}
               <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 border-t border-gray-200 dark:border-gray-700">
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-2">
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {language === 'es' ? '🏆 Top 6 Recomendaciones' : language === 'ru' ? '🏆 Топ 6 Рекомендаций' : '🏆 Top 6 Recommendations'}
+                        {language === 'es' ? `🏠 Todas las Propiedades (${orchestratorResults.length})` : 
+                         language === 'ru' ? `🏠 Все Объекты (${orchestratorResults.length})` : 
+                         `🏠 All Properties (${orchestratorResults.length})`}
                       </h2>
                       <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
-                        {language === 'es' ? 'IA Seleccionado' : language === 'ru' ? 'Выбрано ИИ' : 'AI Selected'}
+                        {language === 'es' ? 'IA Ordenado' : language === 'ru' ? 'Сортировано ИИ' : 'AI Sorted'}
                       </Badge>
                     </div>
                     <p className="text-base text-gray-600 dark:text-gray-400">
-                      {language === 'es' ? 'Nuestro AI analizó los mejores apartamentos para ti basándose en precio, ubicación y seguridad.' : 
-                       language === 'ru' ? 'Наш ИИ проанализировал лучшие квартиры для вас на основе цены, расположения и безопасности.' : 
-                       'Our AI analyzed the best apartments for you based on price, location, and safety score.'}
+                      {language === 'es' ? 'Ordenadas por mejor precio, ubicación y puntuación de seguridad.' : 
+                       language === 'ru' ? 'Отсортировано по цене, расположению и уровню безопасности.' : 
+                       'Sorted by best price, location, and safety score.'}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {orchestratorResults.slice(0, 6).map((apt, index) => (
+                    {orchestratorResults.map((apt, index) => (
                         <motion.div
                           key={apt.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                          transition={{ delay: Math.min(index * 0.05, 0.5) }}
                         >
                           <div className="relative">
                             {index < 3 && (

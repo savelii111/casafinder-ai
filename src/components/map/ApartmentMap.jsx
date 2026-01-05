@@ -155,23 +155,44 @@ export default function ApartmentMap({
                 }}
               >
                 <Popup>
-                  <div className="p-2 min-w-[200px]">
+                  <div className="p-2 min-w-[240px]">
                     {apt.photos?.[0] && (
                       <img 
                         src={apt.photos[0]} 
                         alt={apt.title}
-                        className="w-full h-24 object-cover rounded-lg mb-2"
+                        className="w-full h-32 object-cover rounded-lg mb-2"
                       />
                     )}
-                    <h3 className="font-semibold text-gray-900 text-sm">{apt.title}</h3>
-                    <p className="text-lg font-bold text-black">€{apt.price?.toLocaleString()}/mo</p>
-                    <p className="text-xs text-gray-500 mt-1">{apt.address}</p>
-                    {apt.aiInsight && (
-                      <p className="text-xs text-gray-600 mt-2 line-clamp-2">{apt.aiInsight}</p>
-                    )}
+                    <h3 className="font-semibold text-gray-900 text-sm mb-1">{apt.title}</h3>
+                    <p className="text-lg font-bold text-black mb-1">
+                      €{apt.price?.toLocaleString()}{apt.listing_type === 'sale' ? '' : '/mo'}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                      <span>{apt.rooms} rooms</span>
+                      <span>•</span>
+                      <span>{apt.size}m²</span>
+                      {apt.floor && (
+                        <>
+                          <span>•</span>
+                          <span>Floor {apt.floor}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex gap-1 mb-2">
+                      {apt.hasElevator && (
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">Elevator</span>
+                      )}
+                      {apt.furnished && (
+                        <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded">Furnished</span>
+                      )}
+                      {apt.pets_allowed && (
+                        <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">Pets OK</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">{apt.address}</p>
                     <button
                       onClick={() => onApartmentClick?.(apt)}
-                      className="w-full mt-2 bg-black text-white text-xs py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                      className="w-full bg-black text-white text-xs py-2 rounded-lg hover:bg-gray-800 transition-colors"
                     >
                       {t.viewDetails}
                     </button>
