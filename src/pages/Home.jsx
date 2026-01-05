@@ -107,10 +107,10 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // Load apartments from database
+  // Load apartments from database - NO LIMIT
   const { data: dbApartments = [] } = useQuery({
     queryKey: ['apartments'],
-    queryFn: () => base44.entities.Apartment.list(),
+    queryFn: () => base44.entities.Apartment.list('-updated_date', 9999),
   });
 
   const { data: user } = useQuery({
@@ -267,26 +267,24 @@ export default function Home() {
         return true;
       });
 
-      // Get Top 6 from filtered results
-      const top6 = filtered
-        .sort((a, b) => {
-          const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
-          const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
-          return scoreB - scoreA;
-        })
-        .slice(0, 6);
+      // Sort ALL filtered results by AI score
+      const sortedByScore = filtered.sort((a, b) => {
+        const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
+        const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
+        return scoreB - scoreA;
+      });
 
-      // Save results from orchestrator
-      setOrchestratorResults(top6);
-      setPropertiesFoundCount(filtered.length);
+      // Save ALL filtered results (NO LIMIT)
+      setOrchestratorResults(sortedByScore);
+      setPropertiesFoundCount(sortedByScore.length);
 
-      // Call DeepSeek for detailed human response
+      // Call DeepSeek for detailed human response (send Top 6 for summary)
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
           language,
-          totalCount: filtered.length,
-          apartments: top6.map(apt => ({
+          totalCount: sortedByScore.length,
+          apartments: sortedByScore.slice(0, 6).map(apt => ({
             id: apt.id,
             price: apt.price,
             rooms: apt.rooms,
@@ -299,7 +297,7 @@ export default function Home() {
 
       const assistantMessage = { 
         role: 'assistant', 
-        content: deepseekResult.data?.response || `I found ${filtered.length} properties in Madrid matching your criteria. Check out the top recommendations!`
+        content: deepseekResult.data?.response || `I found ${sortedByScore.length} properties in Madrid matching your criteria. Check out the top recommendations!`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -310,12 +308,12 @@ export default function Home() {
           user_email: user.email,
           query: content,
           filters: filters,
-          results_count: filtered.length
+          results_count: sortedByScore.length
         });
       }
 
       // Track in Google Analytics
-      trackPropertySearch(content, filtered.length);
+      trackPropertySearch(content, sortedByScore.length);
 
     } catch (error) {
       console.error('AI Error:', error);
@@ -773,7 +771,7 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {(orchestratorResults.length > 0 ? orchestratorResults : filteredApartments.slice(0, 6))
+                    {(orchestratorResults.length > 0 ? orchestratorResults.slice(0, 6) : filteredApartments.slice(0, 6))
                       .map((apt, index) => (
                         <motion.div
                           key={apt.id}
