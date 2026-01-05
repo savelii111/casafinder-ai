@@ -623,11 +623,10 @@ export default function Home() {
               {showMap && orchestratorResults.length > 0 && (
                 <div className="h-[300px] rounded-2xl overflow-hidden mb-4">
                   {(() => {
-                    console.log('═════════ MOBILE MAP RENDER ═════════');
-                    console.log('orchestratorResults:', orchestratorResults);
-                    console.log('orchestratorResults.length:', orchestratorResults.length);
-                    console.log('Valid coords count:', orchestratorResults.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
-                    console.log('═════════════════════════════════════');
+                    console.log('📱 [MOBILE MAP] Passing to ApartmentMap:', orchestratorResults.length);
+                    if (orchestratorResults.length === 20) {
+                      console.error('❌❌❌ MOBILE MAP RECEIVED EXACTLY 20 ❌❌❌');
+                    }
                     return null;
                   })()}
                   <ApartmentMap
@@ -753,11 +752,10 @@ export default function Home() {
                   {/* Full-Height Map */}
                   <div className="h-full w-full">
                     {orchestratorResults.length > 0 && (() => {
-                      console.log('═════════ DESKTOP MAP RENDER ═════════');
-                      console.log('orchestratorResults:', orchestratorResults);
-                      console.log('orchestratorResults.length:', orchestratorResults.length);
-                      console.log('Valid coords count:', orchestratorResults.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
-                      console.log('═════════════════════════════════════');
+                      console.log('🖥️ [DESKTOP MAP] Passing to ApartmentMap:', orchestratorResults.length);
+                      if (orchestratorResults.length === 20) {
+                        console.error('❌❌❌ DESKTOP MAP RECEIVED EXACTLY 20 ❌❌❌');
+                      }
                       return null;
                     })()}
                     {orchestratorResults.length > 0 ? (

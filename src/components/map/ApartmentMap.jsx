@@ -139,45 +139,17 @@ export default function ApartmentMap({
         />
         <MapUpdater center={center} zoom={zoom} />
 
-        <MarkerClusterGroup
-          chunkedLoading
-          maxClusterRadius={60}
-          spiderfyOnMaxZoom={true}
-          showCoverageOnHover={false}
-          iconCreateFunction={(cluster) => {
-            const count = cluster.getChildCount();
-            console.log('🔵 [CLUSTER] Created cluster with', count, 'items');
-            return L.divIcon({
-              html: `<div style="
-                background: #3b82f6;
-                color: white;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 14px;
-                border: 3px solid white;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-              ">${count}</div>`,
-              className: 'custom-cluster-icon',
-              iconSize: L.point(40, 40)
-            });
-          }}
-        >
-          {(() => {
-            console.log('🔵 [MAP] Rendering markers for', apartments.length, 'apartments');
-            return apartments.map((apt) => {
+        {/* CLUSTERING TEMPORARILY DISABLED - DIRECT RENDER */}
+        {(() => {
+          console.log('🗺️ [DIRECT RENDER] About to render', apartments.length, 'markers');
+          const markersToRender = apartments.filter(apt => {
             const hasValidLat = apt.lat !== undefined && apt.lat !== null && !isNaN(parseFloat(apt.lat));
             const hasValidLng = apt.lng !== undefined && apt.lng !== null && !isNaN(parseFloat(apt.lng));
+            return hasValidLat && hasValidLng;
+          });
+          console.log('🗺️ [DIRECT RENDER] Valid markers:', markersToRender.length);
 
-            if (!hasValidLat || !hasValidLng) {
-              console.warn('Skipping apartment with invalid coords:', apt.id, 'lat:', apt.lat, 'lng:', apt.lng);
-              return null;
-            }
-
+          return markersToRender.map((apt) => {
             return (
               <Marker
                 key={apt.id}
@@ -186,7 +158,7 @@ export default function ApartmentMap({
                 eventHandlers={{
                   click: () => onApartmentClick?.(apt)
                 }}
-                >
+              >
                 <Popup>
                   <div className="p-2 min-w-[240px]">
                     {apt.photos?.[0] && (
@@ -231,11 +203,10 @@ export default function ApartmentMap({
                     </button>
                   </div>
                 </Popup>
-                </Marker>
-                );
-                });
-                })()}
-                </MarkerClusterGroup>
+              </Marker>
+            );
+          });
+        })()}
       </MapContainer>
     </motion.div>
   );
