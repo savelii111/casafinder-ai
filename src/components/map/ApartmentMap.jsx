@@ -68,24 +68,27 @@ export default function ApartmentMap({
   language = 'en'
 }) {
   // CRITICAL DEBUG - LOG EVERYTHING
-  console.log('═════════ APARTMENTMAP COMPONENT ═════════');
-  console.log('Total apartments received:', apartments.length);
-  console.log('apartments array:', apartments);
-  console.log('Valid lat/lng count:', apartments.filter(a => {
+  console.log('🗺️🗺️🗺️ [APARTMENTMAP RENDER] 🗺️🗺️🗺️');
+  console.log('📍 Total apartments received:', apartments.length);
+  
+  if (apartments.length === 20) {
+    console.error('❌❌❌ MAP RECEIVED EXACTLY 20 APARTMENTS - TRUNCATION DETECTED ❌❌❌');
+  }
+  
+  const validCoords = apartments.filter(a => {
     const hasLat = a.lat !== undefined && a.lat !== null && !isNaN(a.lat);
     const hasLng = a.lng !== undefined && a.lng !== null && !isNaN(a.lng);
     return hasLat && hasLng;
-  }).length);
-  console.log('Sample apartments:', apartments.slice(0, 5).map(a => ({
+  });
+  
+  console.log('✅ Valid coordinates:', validCoords.length);
+  console.log('📊 Sample (first 3):', apartments.slice(0, 3).map(a => ({
     id: a.id,
     lat: a.lat,
     lng: a.lng,
-    latType: typeof a.lat,
-    lngType: typeof a.lng,
-    latValid: !isNaN(a.lat),
-    lngValid: !isNaN(a.lng)
+    price: a.price
   })));
-  console.log('═════════════════════════════════════');
+  console.log('═══════════════════════════════════');
   const labels = {
     en: {
       properties: 'properties',
@@ -143,6 +146,7 @@ export default function ApartmentMap({
           showCoverageOnHover={false}
           iconCreateFunction={(cluster) => {
             const count = cluster.getChildCount();
+            console.log('🔵 [CLUSTER] Created cluster with', count, 'items');
             return L.divIcon({
               html: `<div style="
                 background: #3b82f6;
@@ -163,7 +167,9 @@ export default function ApartmentMap({
             });
           }}
         >
-          {apartments.map((apt) => {
+          {(() => {
+            console.log('🔵 [MAP] Rendering markers for', apartments.length, 'apartments');
+            return apartments.map((apt) => {
             const hasValidLat = apt.lat !== undefined && apt.lat !== null && !isNaN(parseFloat(apt.lat));
             const hasValidLng = apt.lng !== undefined && apt.lng !== null && !isNaN(parseFloat(apt.lng));
 
@@ -227,8 +233,9 @@ export default function ApartmentMap({
                 </Popup>
                 </Marker>
                 );
-                })}
-        </MarkerClusterGroup>
+                });
+                })()}
+                </MarkerClusterGroup>
       </MapContainer>
     </motion.div>
   );

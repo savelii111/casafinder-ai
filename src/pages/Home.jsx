@@ -110,7 +110,11 @@ export default function Home() {
   // Load apartments from database - ABSOLUTELY NO LIMIT
   const { data: dbApartments = [] } = useQuery({
     queryKey: ['apartments'],
-    queryFn: () => base44.entities.Apartment.list('-updated_date', 99999),
+    queryFn: async () => {
+      const result = await base44.entities.Apartment.list('-updated_date', 99999);
+      console.log('🔵 [DB QUERY] Fetched from database:', result.length);
+      return result;
+    },
   });
 
   const { data: user } = useQuery({
@@ -129,6 +133,7 @@ export default function Home() {
 
   useEffect(() => {
     if (dbApartments.length > 0) {
+      console.log('🔵 [STATE UPDATE] Setting apartments state:', dbApartments.length);
       setApartments(dbApartments);
     }
   }, [dbApartments]);
@@ -227,12 +232,13 @@ export default function Home() {
       trackSearch(content, 0);
       updateAIRequestsMutation.mutate();
 
-      console.log('🚀 NEW SEARCH PIPELINE START');
+      console.log('🚀🚀🚀 NEW SEARCH PIPELINE START 🚀🚀🚀');
       console.log('═══════════════════════════════════════════════════════');
 
       // STEP 1: Get ALL apartments from database (NO LIMIT)
       const allDbApartments = await base44.entities.Apartment.list('-updated_date', 99999);
-      console.log('📊 STEP 1: DB Query Result:', allDbApartments.length, 'apartments');
+      console.log('📊 [STEP 1] RAW DB FETCH:', allDbApartments.length);
+      if (allDbApartments.length === 20) console.error('❌❌❌ STEP 1 TRUNCATED TO 20 ❌❌❌');
 
       // STEP 2: Filter based on user query and filters
       const filtered = allDbApartments.filter(apt => {
@@ -245,31 +251,35 @@ export default function Home() {
         }
         return true;
       });
-      console.log('🔍 STEP 2: After Filtering:', filtered.length, 'apartments');
+      console.log('🔍 [STEP 2] AFTER FILTERING:', filtered.length);
+      if (filtered.length === 20) console.error('❌❌❌ STEP 2 TRUNCATED TO 20 ❌❌❌');
 
       // STEP 3: Sort by AI score (ALL results, NO SLICE)
-      const sorted = filtered.sort((a, b) => {
+      const sorted = [...filtered].sort((a, b) => {
         const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
         const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
         return scoreB - scoreA;
       });
-      console.log('⚡ STEP 3: After Sorting:', sorted.length, 'apartments');
+      console.log('⚡ [STEP 3] AFTER SORTING:', sorted.length);
+      if (sorted.length === 20) console.error('❌❌❌ STEP 3 TRUNCATED TO 20 ❌❌❌');
 
       // STEP 4: Set orchestrator results (ALL, NO LIMIT)
+      console.log('💾 [STEP 4] SETTING orchestratorResults:', sorted.length);
       setOrchestratorResults(sorted);
       setPropertiesFoundCount(sorted.length);
       setApartments(allDbApartments);
-      
-      console.log('✅ STEP 4: orchestratorResults SET TO:', sorted.length);
-      console.log('Valid coordinates:', sorted.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
-      
+
+      console.log('✅ [STEP 4 COMPLETE] orchestratorResults NOW:', sorted.length);
+      console.log('✅ Valid coordinates:', sorted.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
+
       if (sorted.length === 20) {
-        console.error('❌ FAIL: apartments.length === 20 (PAGINATION DETECTED)');
+        console.error('❌❌❌ ORCHESTRATOR RESULTS TRUNCATED TO 20 ❌❌❌');
       }
-      
+
       console.log('═══════════════════════════════════════════════════════');
 
       // STEP 5: Call DeepSeek with EXACT count
+      console.log('🤖 [STEP 5] CALLING DEEPSEEK with totalCount:', sorted.length);
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
@@ -289,6 +299,7 @@ export default function Home() {
         content: deepseekResult.data?.response || `Found exactly ${sorted.length} properties. All ${sorted.length} are shown on the map and list below.`
       };
 
+      console.log('💬 [STEP 5] AI Response generated. Count mentioned:', sorted.length);
       setMessages(prev => [...prev, assistantMessage]);
 
       // Save search to history
@@ -428,7 +439,7 @@ export default function Home() {
   };
 
   const filteredApartments = React.useMemo(() => {
-    return apartments.filter(apt => {
+    const result = apartments.filter(apt => {
       // Price filters
       if (filters.priceMin && apt.price < filters.priceMin) return false;
       if (filters.priceMax && apt.price > filters.priceMax) return false;
@@ -461,6 +472,11 @@ export default function Home() {
 
       return true;
     });
+    
+    console.log('🔄 [FILTERED_APARTMENTS MEMO] Input:', apartments.length, '→ Output:', result.length);
+    if (result.length === 20) console.error('❌❌❌ FILTERED_APARTMENTS TRUNCATED TO 20 ❌❌❌');
+    
+    return result;
   }, [apartments, filters, userPlan]);
 
   return (
