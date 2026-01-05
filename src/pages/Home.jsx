@@ -679,8 +679,16 @@ export default function Home() {
               )}
 
               {/* Mobile Map */}
-              {showMap && (
+              {showMap && orchestratorResults.length > 0 && (
                 <div className="h-[300px] rounded-2xl overflow-hidden mb-4">
+                  {(() => {
+                    console.log('═════════ MOBILE MAP RENDER ═════════');
+                    console.log('orchestratorResults:', orchestratorResults);
+                    console.log('orchestratorResults.length:', orchestratorResults.length);
+                    console.log('Valid coords count:', orchestratorResults.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
+                    console.log('═════════════════════════════════════');
+                    return null;
+                  })()}
                   <ApartmentMap
                     apartments={orchestratorResults}
                     center={mapCenter}
@@ -803,14 +811,28 @@ export default function Home() {
 
                   {/* Full-Height Map */}
                   <div className="h-full w-full">
-                    <ApartmentMap
-                      apartments={orchestratorResults}
-                      center={mapCenter}
-                      zoom={13}
-                      onApartmentClick={handleApartmentClick}
-                      selectedId={selectedApartment?.id}
-                      language={language}
-                    />
+                    {orchestratorResults.length > 0 && (() => {
+                      console.log('═════════ DESKTOP MAP RENDER ═════════');
+                      console.log('orchestratorResults:', orchestratorResults);
+                      console.log('orchestratorResults.length:', orchestratorResults.length);
+                      console.log('Valid coords count:', orchestratorResults.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
+                      console.log('═════════════════════════════════════');
+                      return null;
+                    })()}
+                    {orchestratorResults.length > 0 ? (
+                      <ApartmentMap
+                        apartments={orchestratorResults}
+                        center={mapCenter}
+                        zoom={13}
+                        onApartmentClick={handleApartmentClick}
+                        selectedId={selectedApartment?.id}
+                        language={language}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-500">
+                        No properties to display on map
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

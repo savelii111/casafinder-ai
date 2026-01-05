@@ -67,14 +67,25 @@ export default function ApartmentMap({
   selectedId,
   language = 'en'
 }) {
-  // Debug logging
-  useEffect(() => {
-    console.log('[MAP DEBUG] Received apartments:', {
-      total: apartments?.length || 0,
-      withValidCoords: apartments?.filter(a => a.lat && a.lng).length || 0,
-      sample: apartments?.slice(0, 3).map(a => ({ id: a.id, lat: a.lat, lng: a.lng, price: a.price }))
-    });
-  }, [apartments]);
+  // CRITICAL DEBUG - LOG EVERYTHING
+  console.log('═════════ APARTMENTMAP COMPONENT ═════════');
+  console.log('Total apartments received:', apartments.length);
+  console.log('apartments array:', apartments);
+  console.log('Valid lat/lng count:', apartments.filter(a => {
+    const hasLat = a.lat !== undefined && a.lat !== null && !isNaN(a.lat);
+    const hasLng = a.lng !== undefined && a.lng !== null && !isNaN(a.lng);
+    return hasLat && hasLng;
+  }).length);
+  console.log('Sample apartments:', apartments.slice(0, 5).map(a => ({
+    id: a.id,
+    lat: a.lat,
+    lng: a.lng,
+    latType: typeof a.lat,
+    lngType: typeof a.lng,
+    latValid: !isNaN(a.lat),
+    lngValid: !isNaN(a.lng)
+  })));
+  console.log('═════════════════════════════════════');
   const labels = {
     en: {
       properties: 'properties',
@@ -152,16 +163,24 @@ export default function ApartmentMap({
             });
           }}
         >
-          {apartments.map((apt) => (
-            apt.lat && apt.lng && (
+          {apartments.map((apt) => {
+            const hasValidLat = apt.lat !== undefined && apt.lat !== null && !isNaN(parseFloat(apt.lat));
+            const hasValidLng = apt.lng !== undefined && apt.lng !== null && !isNaN(parseFloat(apt.lng));
+
+            if (!hasValidLat || !hasValidLng) {
+              console.warn('Skipping apartment with invalid coords:', apt.id, 'lat:', apt.lat, 'lng:', apt.lng);
+              return null;
+            }
+
+            return (
               <Marker
                 key={apt.id}
-                position={[apt.lat, apt.lng]}
+                position={[parseFloat(apt.lat), parseFloat(apt.lng)]}
                 icon={createPriceMarker(apt.price, selectedId === apt.id, apt.riskScore)}
                 eventHandlers={{
                   click: () => onApartmentClick?.(apt)
                 }}
-              >
+                >
                 <Popup>
                   <div className="p-2 min-w-[240px]">
                     {apt.photos?.[0] && (
@@ -206,9 +225,9 @@ export default function ApartmentMap({
                     </button>
                   </div>
                 </Popup>
-              </Marker>
-            )
-          ))}
+                </Marker>
+                );
+                })}
         </MarkerClusterGroup>
       </MapContainer>
     </motion.div>
