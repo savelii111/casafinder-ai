@@ -225,72 +225,17 @@ export default function Home() {
     try {
       // Track search activity
       trackSearch(content, 0);
-
-      // Update AI request count
       updateAIRequestsMutation.mutate();
 
-      // Fetch fresh listings from ZenRows with retry
-      let apartmentsData = [];
-      let zenrowsFailed = false;
-      let zenrowsResponse = null;
+      console.log('🚀 NEW SEARCH PIPELINE START');
+      console.log('═══════════════════════════════════════════════════════');
 
-      try {
-        console.log('[DEBUG] Fetching from ZenRows...');
-        const listingsResult = await fetchWithRetry(() => 
-          base44.functions.invoke('fetchListingsZenrows', {
-            city: 'Madrid',
-            listing_type: 'both'
-          })
-        );
+      // STEP 1: Get ALL apartments from database (NO LIMIT)
+      const allDbApartments = await base44.entities.Apartment.list('-updated_date', 99999);
+      console.log('📊 STEP 1: DB Query Result:', allDbApartments.length, 'apartments');
 
-        zenrowsResponse = listingsResult.data;
-        console.log('═══════════════════════════════════════════════════════');
-        console.log('[DEBUG] ZenRows Response');
-        console.log('Success:', zenrowsResponse?.success);
-        console.log('Error:', zenrowsResponse?.error);
-        console.log('Apartments Count:', zenrowsResponse?.apartments?.length || 0);
-        console.log('Stats:', zenrowsResponse?.stats);
-        console.log('═══════════════════════════════════════════════════════');
-
-        if (zenrowsResponse?.success === false || zenrowsResponse?.error === 'DEMO_MODE') {
-          console.log('[DEBUG] ZenRows returned error/DEMO_MODE flag');
-          zenrowsFailed = true;
-          apartmentsData = zenrowsResponse.apartments || [];
-        } else if (zenrowsResponse?.apartments) {
-          console.log('[DEBUG] ZenRows success - got', zenrowsResponse.apartments.length, 'listings');
-          apartmentsData = zenrowsResponse.apartments;
-          setApartments(apartmentsData);
-          queryClient.invalidateQueries({ queryKey: ['apartments'] });
-          zenrowsFailed = false;
-        }
-      } catch (err) {
-        console.log('[DEBUG] ZenRows exception:', err.message);
-        zenrowsFailed = true;
-        apartmentsData = [];
-      }
-
-      // Check database count for current city
-      const dbCount = apartments.length;
-      console.log('[DEBUG] Database apartments count:', dbCount);
-
-      // Demo Mode activates ONLY if ZenRows failed AND no DB data
-      const shouldActivateDemoMode = zenrowsFailed && dbCount === 0;
-      console.log('[DEBUG] Demo Mode decision:', {
-        zenrowsFailed,
-        dbCount,
-        shouldActivateDemoMode
-      });
-
-      // If ZenRows failed but we have DB data, use DB data
-      if (zenrowsFailed && dbCount > 0) {
-        console.log('[DEBUG] Using database apartments as fallback');
-        apartmentsData = apartments;
-      }
-
-      setIsDemoMode(shouldActivateDemoMode);
-
-      // Filter apartments based on current filters
-      const filtered = apartmentsData.filter(apt => {
+      // STEP 2: Filter based on user query and filters
+      const filtered = allDbApartments.filter(apt => {
         if (filters.priceMin && apt.price < filters.priceMin) return false;
         if (filters.priceMax && apt.price > filters.priceMax) return false;
         if (filters.rooms !== 'any') {
@@ -300,68 +245,48 @@ export default function Home() {
         }
         return true;
       });
+      console.log('🔍 STEP 2: After Filtering:', filtered.length, 'apartments');
 
-      // Sort ALL filtered results by AI score
-      const sortedByScore = filtered.sort((a, b) => {
+      // STEP 3: Sort by AI score (ALL results, NO SLICE)
+      const sorted = filtered.sort((a, b) => {
         const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
         const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
         return scoreB - scoreA;
       });
+      console.log('⚡ STEP 3: After Sorting:', sorted.length, 'apartments');
 
-      // Save ALL filtered results (NO LIMIT)
-      setOrchestratorResults(sortedByScore);
-      setPropertiesFoundCount(sortedByScore.length);
-
+      // STEP 4: Set orchestrator results (ALL, NO LIMIT)
+      setOrchestratorResults(sorted);
+      setPropertiesFoundCount(sorted.length);
+      setApartments(allDbApartments);
+      
+      console.log('✅ STEP 4: orchestratorResults SET TO:', sorted.length);
+      console.log('Valid coordinates:', sorted.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
+      
+      if (sorted.length === 20) {
+        console.error('❌ FAIL: apartments.length === 20 (PAGINATION DETECTED)');
+      }
+      
       console.log('═══════════════════════════════════════════════════════');
-      console.log('[DEBUG] ORCHESTRATOR RESULTS SET');
-      console.log('Total Fetched from ZenRows:', apartmentsData.length);
-      console.log('Total After Filtering:', filtered.length);
-      console.log('Total After Sorting (orchestratorResults):', sortedByScore.length);
-      console.log('Source:', zenrowsFailed ? 'DATABASE' : 'ZENROWS');
-      console.log('Demo Mode Active:', shouldActivateDemoMode);
-      console.log('First 3 Properties:', sortedByScore.slice(0, 3).map(a => ({
-        id: a.id, price: a.price, rooms: a.rooms, neighborhood: a.neighborhood
-      })));
-      console.log('═══════════════════════════════════════════════════════');
 
-      // Call DeepSeek for detailed human response (send top 10 for summary, but mention total)
-      const topProperties = sortedByScore.slice(0, 10).map(apt => ({
-        id: apt.id,
-        price: apt.price,
-        rooms: apt.rooms,
-        neighborhood: apt.neighborhood,
-        size: apt.size,
-        riskScore: apt.riskScore,
-        floor: apt.floor,
-        hasElevator: apt.hasElevator,
-        furnished: apt.furnished,
-        pets_allowed: apt.pets_allowed
-      }));
-
-      console.log('[DEBUG] Calling DeepSeek with:', {
-        totalCount: sortedByScore.length,
-        topPropertiesForSummary: topProperties.length,
-        query: content,
-        language
-      });
-
+      // STEP 5: Call DeepSeek with EXACT count
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
           language,
-          totalCount: sortedByScore.length,
-          apartments: topProperties
+          totalCount: sorted.length,
+          apartments: sorted.slice(0, 10).map(apt => ({
+            price: apt.price,
+            rooms: apt.rooms,
+            neighborhood: apt.neighborhood,
+            size: apt.size
+          }))
         })
       );
 
-      console.log('[DEBUG] DeepSeek response received:', {
-        hasResponse: !!deepseekResult.data?.response,
-        responseLength: deepseekResult.data?.response?.length
-      });
-
       const assistantMessage = { 
         role: 'assistant', 
-        content: deepseekResult.data?.response || `Found ${sortedByScore.length} properties in Madrid. All are shown on the map and sorted below by best match.`
+        content: deepseekResult.data?.response || `Found exactly ${sorted.length} properties. All ${sorted.length} are shown on the map and list below.`
       };
 
       setMessages(prev => [...prev, assistantMessage]);
