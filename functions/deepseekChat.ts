@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { query, language = 'en', apartments = [] } = body;
+    const { query, language = 'en', apartments = [], totalCount = 0 } = body;
     
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
     
@@ -32,36 +32,55 @@ Deno.serve(async (req) => {
             role: 'system',
             content: `You are an expert real estate advisor in Madrid, Spain. Provide detailed, natural, conversational responses in ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}.
 
-When responding to property searches:
-1. Start with a warm, natural greeting acknowledging their search
-2. State the number of properties found clearly
-3. Describe the general location and neighborhood characteristics
-4. Mention the price range of available properties
-5. Provide neighborhood insights (safety, transport, amenities, schools if relevant)
-6. Suggest 2-3 top property highlights
-7. Offer helpful advice or considerations
-8. End with an encouraging note
+RESPONSE STRUCTURE (MANDATORY):
 
-Be conversational, detailed, and helpful. Use multi-line responses (3-5 paragraphs). Make it feel like talking to a knowledgeable local real estate expert.`
+1. **Warm Intro** (1-2 sentences)
+   - Acknowledge their search naturally
+   
+2. **Total Results** (1 sentence)
+   - State EXACT total count: "I found [X] properties..."
+   
+3. **Market Overview** (2-3 sentences)
+   - Price range
+   - Neighborhoods covered
+   - General market insights
+   
+4. **Top 6 Recommendations** (DETAILED)
+   - Explain WHY these 6 were selected (best value, location, safety)
+   - List each property with:
+     * Neighborhood
+     * Price
+     * Rooms & size
+     * Key highlight (e.g., "Great transport links", "Bargain price")
+   
+5. **Neighborhood Insights** (2-3 sentences)
+   - Safety, transport, amenities for mentioned areas
+   
+6. **Advice & Next Steps** (1-2 sentences)
+   - Helpful tips or considerations
+   - Encouraging close
+
+Use 4-6 paragraphs. Be conversational, detailed, and helpful. Make it feel like talking to a knowledgeable local expert.`
           },
           {
             role: 'user',
-            content: `User is searching for: "${query}"
+            content: `User search query: "${query}"
 
-I found ${apartments.length} properties matching their criteria.
+TOTAL PROPERTIES FOUND: ${totalCount || apartments.length}
 
-${apartments.length > 0 ? `Here are some details about available properties:
-${apartments.slice(0, 5).map((apt, i) => `
-${i + 1}. ${apt.neighborhood || 'Madrid'} - €${apt.price}/month - ${apt.rooms} rooms${apt.size ? ` - ${apt.size}m²` : ''}`).join('')}
+TOP 6 SELECTED PROPERTIES (display these):
+${apartments.length > 0 ? apartments.map((apt, i) => `
+${i + 1}. ${apt.neighborhood || 'Madrid'} - €${apt.price}/month - ${apt.rooms} rooms - ${apt.size || 'N/A'}m² - Risk: ${apt.riskScore}/10`).join('') : 'No properties to show'}
 
-Average price: €${Math.round(apartments.reduce((sum, a) => sum + a.price, 0) / apartments.length)}
-Price range: €${Math.min(...apartments.map(a => a.price))} - €${Math.max(...apartments.map(a => a.price))}` : ''}
+MARKET DATA:
+- Average price: €${apartments.length > 0 ? Math.round(apartments.reduce((sum, a) => sum + a.price, 0) / apartments.length) : 'N/A'}
+- Price range: €${apartments.length > 0 ? Math.min(...apartments.map(a => a.price)) : 'N/A'} - €${apartments.length > 0 ? Math.max(...apartments.map(a => a.price)) : 'N/A'}
 
-Provide a detailed, natural response about these properties and the Madrid rental market for their search.`
+Provide a DETAILED, NATURAL response following the structure above. Include ALL 6 properties in your response.`
           }
         ],
-        temperature: 0.8,
-        max_tokens: 800
+        temperature: 0.7,
+        max_tokens: 1200
       })
     });
 

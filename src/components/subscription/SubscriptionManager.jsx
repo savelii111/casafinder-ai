@@ -202,14 +202,9 @@ export default function SubscriptionManager({ language = 'en' }) {
                 {isUpgrade && (
                   <Button
                     className="w-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 dark:text-black"
-                    onClick={() => handleUpgrade(planId)}
-                    disabled={loading}
+                    disabled={true}
                   >
-                    {loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      t.upgrade
-                    )}
+                    {language === 'es' ? 'Próximamente' : language === 'ru' ? 'Скоро' : 'Coming Soon'}
                   </Button>
                 )}
                 
