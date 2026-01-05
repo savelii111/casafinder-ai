@@ -82,6 +82,7 @@ export default function Home() {
   const [propertiesFoundCount, setPropertiesFoundCount] = useState(0);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [orchestratorResults, setOrchestratorResults] = useState([]);
+  const [topN, setTopN] = useState(20);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -819,9 +820,9 @@ export default function Home() {
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-2">
                       <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {language === 'es' ? `🏆 Top 20 Mejores Propiedades (de ${orchestratorResults.length} totales)` : 
-                         language === 'ru' ? `🏆 Топ 20 Лучших (из ${orchestratorResults.length} всего)` : 
-                         `🏆 Top 20 Best Properties (of ${orchestratorResults.length} total)`}
+                        {language === 'es' ? `🏆 Top ${topN} Mejores Propiedades (de ${orchestratorResults.length} totales)` : 
+                                                       language === 'ru' ? `🏆 Топ ${topN} Лучших (из ${orchestratorResults.length} всего)` : 
+                                                       `🏆 Top ${topN} Best Properties (of ${orchestratorResults.length} total)`}
                       </h2>
                       <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
                         {language === 'es' ? 'IA Ordenado' : language === 'ru' ? 'Сортировано ИИ' : 'AI Sorted'}
@@ -835,7 +836,7 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {orchestratorResults.slice(0, 20).map((apt, index) => (
+                    {orchestratorResults.slice(0, topN).map((apt, index) => (
                         <motion.div
                           key={apt.id}
                           initial={{ opacity: 0, y: 20 }}

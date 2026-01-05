@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 
 export default function ChatInput({ onSend, isLoading, placeholder, language }) {
   const [message, setMessage] = useState('');
+  const [isListening, setIsListening] = useState(false);
 
   const placeholders = {
     en: "Search apartments: '2-bedroom in Madrid center under €1200'...",
@@ -28,6 +29,32 @@ export default function ChatInput({ onSend, isLoading, placeholder, language }) 
     }
   };
 
+  const handleVoiceClick = () => {
+    if (isLoading) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      alert(
+        language === 'es' ? 'Búsqueda por voz не поддерживается в этом браузере' :
+        language === 'ru' ? 'Голосовой поиск не поддерживается в этом браузере' :
+        'Voice search is not supported in this browser'
+      );
+      return;
+    }
+    const rec = new SR();
+    rec.lang = language === 'es' ? 'es-ES' : language === 'ru' ? 'ru-RU' : 'en-US';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    setIsListening(true);
+    rec.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      setMessage(transcript);
+      setIsListening(false);
+    };
+    rec.onerror = () => setIsListening(false);
+    rec.onend = () => setIsListening(false);
+    rec.start();
+  };
+
   return (
     <form 
       onSubmit={handleSubmit}
@@ -36,10 +63,11 @@ export default function ChatInput({ onSend, isLoading, placeholder, language }) 
       <div className="relative glass-card rounded-xl shadow-sm p-2 hover:shadow-md transition-shadow bg-white/90 dark:bg-gray-800/90">
         <button
           type="button"
+          onClick={handleVoiceClick}
           className="absolute left-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors z-10"
-          title="Voice search"
+          title={language === 'es' ? 'Búsqueda por voz' : language === 'ru' ? 'Голосовой поиск' : 'Voice search'}
         >
-          <Mic className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <Mic className={`h-4 w-4 ${isListening ? 'text-purple-600' : 'text-gray-500 dark:text-gray-400'}`} />
         </button>
         <Textarea
           value={message}
