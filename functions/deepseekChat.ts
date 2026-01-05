@@ -3,23 +3,44 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const body = await req.json();
-    const { query, language = 'en', apartments = [], totalCount = 0 } = body;
+    const body = await req.json().catch(() => ({}));
+    const { query, language = 'en', totalCount = 0, apartments = [] } = body;
+    
+    console.log('[DeepSeek] Chat request:', { query, language, totalCount, apartmentsCount: apartments.length });
     
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
-    
+
     if (!DEEPSEEK_API_KEY) {
-      // Fallback to basic analysis
-      return Response.json({
-        success: true,
-        response: `Found ${apartments.length} properties matching your criteria.`,
-        properties_found: apartments.length,
-        source: 'fallback'
+      console.error('[DeepSeek] API key not set');
+      return Response.json({ 
+        response: `I found ${totalCount} properties matching your search. All results are displayed on the map and sorted by AI below.`,
+        error: 'API_KEY_MISSING'
       });
     }
 
-    // Call DeepSeek API
-    const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    // Build context from apartments data
+    const apartmentsContext = apartments.map((apt, i) => 
+      `${i + 1}. €${apt.price}/mo - ${apt.rooms} rooms, ${apt.size}m² in ${apt.neighborhood}${apt.floor ? `, floor ${apt.floor}` : ''}${apt.hasElevator ? ' (elevator)' : ''}${apt.furnished ? ' (furnished)' : ''}${apt.pets_allowed ? ' (pets OK)' : ''} - Risk Score: ${apt.riskScore || 'N/A'}`
+    ).join('\n');
+
+    const systemPrompt = language === 'es' 
+      ? `Eres un asistente experto en bienes raíces en España. Ayudas a usuarios a encontrar el apartamento perfecto en Madrid. Sé amigable, útil y conciso. Responde SIEMPRE en español.`
+      : language === 'ru'
+      ? `Ты эксперт по недвижимости в Испании. Ты помогаешь пользователям найти идеальную квартиру в Мадриде. Будь дружелюбным, полезным и кратким. Отвечай ВСЕГДА на русском языке.`
+      : `You are an expert real estate assistant in Spain. You help users find the perfect apartment in Madrid. Be friendly, helpful, and concise. Always respond in English.`;
+
+    const userPrompt = `User query: "${query}"
+
+Total properties found: ${totalCount}
+
+Top properties (sorted by AI):
+${apartmentsContext}
+
+Provide a detailed, human-like response about the search results. Mention the total count, highlight the best options, and give helpful advice. Keep it natural and conversational.`;
+
+    console.log('[DeepSeek] Calling API...');
+
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,94 +49,39 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: [
-          {
-            role: 'system',
-            content: `You are an expert real estate advisor in Madrid, Spain. Provide detailed, natural, conversational responses in ${language === 'es' ? 'Spanish' : language === 'ru' ? 'Russian' : 'English'}.
-
-RESPONSE STRUCTURE (MANDATORY):
-
-1. **Warm Intro** (1-2 sentences)
-   - Acknowledge their search naturally
-   
-2. **Total Results** (1 sentence)
-   - State EXACT total count: "I found [X] properties..."
-   
-3. **Market Overview** (2-3 sentences)
-   - Price range
-   - Neighborhoods covered
-   - General market insights
-   
-4. **Top 6 Recommendations** (DETAILED)
-   - Explain WHY these 6 were selected (best value, location, safety)
-   - List each property with:
-     * Neighborhood
-     * Price
-     * Rooms & size
-     * Key highlight (e.g., "Great transport links", "Bargain price")
-   
-5. **Neighborhood Insights** (2-3 sentences)
-   - Safety, transport, amenities for mentioned areas
-   
-6. **Advice & Next Steps** (1-2 sentences)
-   - Helpful tips or considerations
-   - Encouraging close
-
-Use 4-6 paragraphs. Be conversational, detailed, and helpful. Make it feel like talking to a knowledgeable local expert.`
-          },
-          {
-            role: 'user',
-            content: `User search query: "${query}"
-
-TOTAL PROPERTIES FOUND: ${totalCount || apartments.length}
-
-TOP 6 SELECTED PROPERTIES (display these):
-${apartments.length > 0 ? apartments.map((apt, i) => `
-${i + 1}. ${apt.neighborhood || 'Madrid'} - €${apt.price}/month - ${apt.rooms} rooms - ${apt.size || 'N/A'}m² - Risk: ${apt.riskScore}/10`).join('') : 'No properties to show'}
-
-MARKET DATA:
-- Average price: €${apartments.length > 0 ? Math.round(apartments.reduce((sum, a) => sum + a.price, 0) / apartments.length) : 'N/A'}
-- Price range: €${apartments.length > 0 ? Math.min(...apartments.map(a => a.price)) : 'N/A'} - €${apartments.length > 0 ? Math.max(...apartments.map(a => a.price)) : 'N/A'}
-
-Provide a DETAILED, NATURAL response following the structure above. Include ALL 6 properties in your response.`
-          }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 1200
+        max_tokens: 800
       })
     });
 
-    if (!deepseekResponse.ok) {
-      console.error('DeepSeek API error:', deepseekResponse.status);
-      return Response.json({
-        success: true,
-        response: `Found ${apartments.length} properties matching your criteria.`,
-        properties_found: apartments.length,
-        source: 'fallback'
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[DeepSeek] API error:', response.status, errorText);
+      return Response.json({ 
+        response: `Found ${totalCount} properties in Madrid. Check out the results on the map and sorted list below!`,
+        error: 'API_ERROR'
       });
     }
 
-    const data = await deepseekResponse.json();
-    const aiResponse = data.choices?.[0]?.message?.content || 'Properties found';
+    const data = await response.json();
+    const aiResponse = data.choices?.[0]?.message?.content || `Found ${totalCount} properties. All are shown on the map!`;
+
+    console.log('[DeepSeek] Response generated:', aiResponse.substring(0, 100));
 
     return Response.json({
-      success: true,
       response: aiResponse,
-      properties_found: apartments.length,
-      source: 'deepseek'
+      totalCount,
+      model: 'deepseek-chat'
     });
 
   } catch (error) {
-    console.error('deepseekChat error:', error);
-    
-    // Fallback
-    const body = await req.json().catch(() => ({}));
-    const apartments = body.apartments || [];
-    
-    return Response.json({
-      success: true,
-      response: `Found ${apartments.length} properties matching your criteria.`,
-      properties_found: apartments.length,
-      source: 'error_fallback'
-    });
+    console.error('[DeepSeek] Error:', error);
+    return Response.json({ 
+      response: 'Found properties in Madrid. Check the map and list below for all results.',
+      error: error.message 
+    }, { status: 500 });
   }
 });

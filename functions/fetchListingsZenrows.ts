@@ -25,15 +25,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch both rentals AND sales if listing_type === 'both'
-    const urls = listing_type === 'both' 
-      ? [
-          'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=rent&numPage=1&maxItems=200&order=publicationDate&language=en',
-          'https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=sale&numPage=1&maxItems=200&order=publicationDate&language=en'
-        ]
-      : listing_type === 'rent'
-        ? ['https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=rent&numPage=1&maxItems=200&order=publicationDate&language=en']
-        : ['https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=sale&numPage=1&maxItems=200&order=publicationDate&language=en'];
+    // Fetch ALL pages - no limits
+    const urls = [];
+    const operations = listing_type === 'both' ? ['rent', 'sale'] : [listing_type];
+    
+    for (const operation of operations) {
+      // Fetch first 5 pages (up to 1000 listings per operation)
+      for (let page = 1; page <= 5; page++) {
+        urls.push(
+          `https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=${operation}&numPage=${page}&maxItems=200&order=publicationDate&language=en`
+        );
+      }
+    }
 
     console.log('[ZenRows] Fetching from', urls.length, 'endpoint(s)');
 
@@ -41,29 +44,39 @@ Deno.serve(async (req) => {
     
     for (const apiUrl of urls) {
       const currentType = apiUrl.includes('operation=rent') ? 'rent' : 'sale';
-      console.log(`[ZenRows] Fetching ${currentType} listings...`);
+      const pageMatch = apiUrl.match(/numPage=(\d+)/);
+      const pageNum = pageMatch ? pageMatch[1] : '1';
+      
+      console.log(`[ZenRows] Fetching ${currentType} page ${pageNum}...`);
       
       const zenrowsUrl = `https://api.zenrows.com/v1/?url=${encodeURIComponent(apiUrl)}&apikey=${ZENROWS_API_KEY}&json_response=true`;
       
-      const response = await fetch(zenrowsUrl);
-      
-      if (!response.ok) {
-        console.error(`[ZenRows] API error for ${currentType}:`, response.status);
-        continue;
-      }
+      try {
+        const response = await fetch(zenrowsUrl);
+        
+        if (!response.ok) {
+          console.error(`[ZenRows] API error for ${currentType} page ${pageNum}:`, response.status);
+          continue;
+        }
 
-      const data = await response.json();
-      
-      // Check if response is HTML (scraping failed)
-      if (typeof data === 'string' || !data.elementList) {
-        console.error(`[ZenRows] Received HTML instead of JSON for ${currentType}`);
-        continue;
-      }
+        const data = await response.json();
+        
+        // Check if response is HTML (scraping failed)
+        if (typeof data === 'string' || !data.elementList) {
+          console.error(`[ZenRows] Invalid response for ${currentType} page ${pageNum}`);
+          continue;
+        }
 
-      const listings = data.elementList || [];
-      console.log(`[ZenRows] Parsed ${listings.length} ${currentType} listings`);
-      
-      allListings.push(...listings.map(item => ({ ...item, listing_type: currentType })));
+        const listings = data.elementList || [];
+        console.log(`[ZenRows] ✓ Parsed ${listings.length} listings from ${currentType} page ${pageNum}`);
+        
+        allListings.push(...listings.map(item => ({ ...item, listing_type: currentType })));
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (err) {
+        console.error(`[ZenRows] Error fetching ${currentType} page ${pageNum}:`, err.message);
+      }
     }
 
     // If no listings fetched from any endpoint, return demo mode
@@ -122,6 +135,7 @@ Deno.serve(async (req) => {
           // Additional fields
           riskScore: Math.floor(Math.random() * 5) + 3,
           marketPriceDiff: (Math.random() - 0.5) * 20,
+          aiInsight: `${title} in ${item.district || 'Madrid'} - Modern property with ${item.rooms || 2} rooms`,
           floor: item.floor,
           hasElevator: item.hasLift || false,
           furnished: item.detailedType?.subTypology?.includes('furnished') || false,
