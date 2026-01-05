@@ -107,10 +107,10 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // Load apartments from database - NO LIMIT
+  // Load apartments from database - ABSOLUTELY NO LIMIT
   const { data: dbApartments = [] } = useQuery({
     queryKey: ['apartments'],
-    queryFn: () => base44.entities.Apartment.list('-updated_date', 9999),
+    queryFn: () => base44.entities.Apartment.list('-updated_date', 99999),
   });
 
   const { data: user } = useQuery({
