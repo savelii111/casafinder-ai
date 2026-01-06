@@ -5,60 +5,89 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     
     console.log('═══════════════════════════════════════════════════════');
-    console.log('🔵 [BACKEND FETCH] Starting cursor-based pagination');
+    console.log('🔵 [BACKEND FETCH] Starting FULL pagination (bypass 20 limit)');
     console.log('═══════════════════════════════════════════════════════');
     
     const startTime = Date.now();
     const allApartments = [];
-    let cursor = 0;
-    const batchSize = 1000;
+    let skip = 0;
     let batchCount = 0;
     let hasMore = true;
     
-    // CRITICAL FIX: Use filter() with pagination instead of list()
-    // list() has hard 20-item limit, filter() allows proper pagination
+    // CRITICAL: Base44 SDK might limit filter() to 20 items by default
+    // Solution: Keep fetching with increasing skip until we get 0 results
     while (hasMore) {
       batchCount++;
-      console.log(`📄 [BATCH ${batchCount}] Fetching with skip=${cursor}, limit=${batchSize}`);
+      console.log(`📄 [BATCH ${batchCount}] Fetching skip=${skip}, limit=1000`);
       
-      // Use filter({}) to get ALL apartments with pagination support
+      // Fetch batch - if SDK limits to 20, we'll detect it
       const batch = await base44.asServiceRole.entities.Apartment.filter(
-        {}, // empty filter = all records
+        {}, 
         '-updated_date', 
-        batchSize,
-        cursor
+        1000,
+        skip
       );
       
       console.log(`📄 [BATCH ${batchCount}] Received ${batch.length} apartments`);
-      console.log(`   First ID: ${batch[0]?.id || 'N/A'}, Last ID: ${batch[batch.length-1]?.id || 'N/A'}`);
       
       if (batch.length === 0) {
-        console.log(`✓ [BATCH ${batchCount}] No more data, stopping`);
+        console.log(`✓ [BATCH ${batchCount}] Empty batch, stopping`);
+        break;
+      }
+      
+      // CRITICAL CHECK: If first batch is exactly 20, SDK is limiting us
+      if (batchCount === 1 && batch.length === 20) {
+        console.error('🚨🚨🚨 SDK RETURNED EXACTLY 20 - TRYING WORKAROUND 🚨🚨🚨');
+        
+        // Workaround: Fetch multiple times with skip increments of 20
+        for (let i = 0; i < 500; i++) { // Max 10,000 apartments (500 * 20)
+          const microBatch = await base44.asServiceRole.entities.Apartment.filter(
+            {},
+            '-updated_date',
+            1000,
+            i * 20
+          );
+          
+          if (microBatch.length === 0) {
+            console.log(`✓ Micro-fetch complete at iteration ${i}`);
+            break;
+          }
+          
+          // Add only unique apartments
+          microBatch.forEach(apt => {
+            if (!allApartments.find(a => a.id === apt.id)) {
+              allApartments.push(apt);
+            }
+          });
+          
+          if (microBatch.length < 20) {
+            console.log(`✓ Last micro-batch had ${microBatch.length} items`);
+            break;
+          }
+          
+          if (i % 10 === 0) {
+            console.log(`→ Micro-fetch progress: ${allApartments.length} unique apartments`);
+          }
+        }
+        
         hasMore = false;
         break;
       }
       
+      // Normal pagination
       allApartments.push(...batch);
       
-      // CRITICAL: Check if this is the last batch
-      if (batch.length < batchSize) {
-        console.log(`✓ [BATCH ${batchCount}] Last batch (${batch.length} < ${batchSize})`);
+      if (batch.length < 1000) {
+        console.log(`✓ [BATCH ${batchCount}] Last batch`);
         hasMore = false;
       } else {
-        // Move cursor forward by batch size
-        cursor += batch.length;
-        console.log(`→ [BATCH ${batchCount}] Cursor moved to ${cursor}, continuing...`);
+        skip += batch.length;
+        console.log(`→ [BATCH ${batchCount}] Moving skip to ${skip}`);
       }
       
-      // Safety limit to prevent infinite loops (100k apartments max)
       if (batchCount > 100) {
-        console.error('🚨 Safety limit reached - stopping at 100 batches');
+        console.error('🚨 Safety limit: 100 batches');
         break;
-      }
-      
-      // CRITICAL: If we got exactly 20 in first batch, something is wrong
-      if (batchCount === 1 && batch.length === 20 && batch.length === batchSize) {
-        console.error('🚨 WARNING: First batch is exactly 20 - SDK may be limiting us!');
       }
     }
     
