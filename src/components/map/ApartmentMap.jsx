@@ -67,24 +67,8 @@ export default function ApartmentMap({
   selectedId,
   language = 'en'
 }) {
-  // CRITICAL ASSERTION - Detect 20-item limit in map
   React.useEffect(() => {
-    console.log('🗺️ [APARTMENTMAP] Received apartments:', apartments.length);
-    
-    if (apartments.length === 20) {
-      console.error('🚨🚨🚨 CRITICAL MAP ASSERTION FAILED 🚨🚨🚨');
-      console.error('Map received EXACTLY 20 apartments - implicit limit suspected');
-      console.error('Stack trace:', new Error().stack);
-    }
-    
-    const validCoords = apartments.filter(a => {
-      const hasLat = a.lat !== undefined && a.lat !== null && !isNaN(a.lat);
-      const hasLng = a.lng !== undefined && a.lng !== null && !isNaN(a.lng);
-      return hasLat && hasLng;
-    });
-    
-    console.log('🗺️ [APARTMENTMAP] Valid coordinates:', validCoords.length);
-    console.log('🗺️ [APARTMENTMAP] Will render', validCoords.length, 'markers');
+    console.log('🗺️ [MAP] Received apartments:', apartments.length);
   }, [apartments]);
   const labels = {
     en: {
@@ -136,7 +120,7 @@ export default function ApartmentMap({
         />
         <MapUpdater center={center} zoom={zoom} />
 
-        {/* CLUSTERING DISABLED - DIRECT MARKER RENDER (NO LIMITS) */}
+        {/* Direct marker rendering - no clustering, no limits */}
         {(() => {
           const markersToRender = apartments.filter(apt => {
             const hasValidLat = apt.lat !== undefined && apt.lat !== null && !isNaN(parseFloat(apt.lat));
@@ -144,13 +128,7 @@ export default function ApartmentMap({
             return hasValidLat && hasValidLng;
           });
 
-          console.log('🗺️ [MARKER RENDER] Input:', apartments.length, '→ Valid:', markersToRender.length);
-
-          // CRITICAL ASSERTION
-          if (markersToRender.length === 20 && apartments.length === 20) {
-            console.error('🚨 CRITICAL: Rendering exactly 20 markers from exactly 20 apartments');
-            console.error('🚨 This indicates upstream truncation in the data pipeline');
-          }
+          console.log('🗺️ [MAP RENDER]', markersToRender.length, 'markers');
 
           return markersToRender.map((apt) => {
             return (

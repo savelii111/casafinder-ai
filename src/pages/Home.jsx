@@ -109,35 +109,54 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // Load apartments from database - CURSOR-BASED PAGINATION (bypasses 20-item limit)
+  // CURSOR PAGINATION - Fetch ALL apartments bypassing 20-item SDK limit
   const { data: dbApartments = [] } = useQuery({
     queryKey: ['apartments'],
     queryFn: async () => {
-      console.log('🔵 [PAGINATION] Starting cursor-based fetch...');
-      let allApartments = [];
-      let hasMore = true;
-      let skip = 0;
-      const batchSize = 20;
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔵 [CURSOR PAGINATION] START');
+      console.log('═══════════════════════════════════════════════════════');
       
-      while (hasMore) {
-        const batch = await base44.entities.Apartment.list('-updated_date', batchSize, skip);
-        console.log(`🔵 [BATCH ${Math.floor(skip / batchSize) + 1}] Fetched ${batch.length} items (skip=${skip})`);
+      let allApartments = [];
+      let batchNumber = 1;
+      let skip = 0;
+      const limit = 20;
+      
+      while (true) {
+        console.log(`📦 [BATCH ${batchNumber}] Fetching with skip=${skip}, limit=${limit}`);
+        
+        const batch = await base44.entities.Apartment.list('-updated_date', limit, skip);
+        
+        console.log(`📦 [BATCH ${batchNumber}] Received: ${batch.length} items`);
         
         if (batch.length === 0) {
-          hasMore = false;
-        } else {
-          allApartments = [...allApartments, ...batch];
-          skip += batchSize;
-          
-          // Safety: stop after 1000 items to prevent infinite loop
-          if (allApartments.length >= 1000) {
-            console.warn('⚠️ [PAGINATION] Stopped at 1000 items (safety limit)');
-            hasMore = false;
-          }
+          console.log(`🛑 [BATCH ${batchNumber}] Empty batch - stopping pagination`);
+          break;
+        }
+        
+        allApartments = [...allApartments, ...batch];
+        console.log(`📊 [AGGREGATED] Total so far: ${allApartments.length}`);
+        
+        if (batch.length < limit) {
+          console.log(`🛑 [BATCH ${batchNumber}] Partial batch (${batch.length}/${limit}) - no more data`);
+          break;
+        }
+        
+        skip += limit;
+        batchNumber++;
+        
+        if (allApartments.length >= 1000) {
+          console.warn(`⚠️ [SAFETY] Reached 1000 items - stopping`);
+          break;
         }
       }
       
-      console.log('✅ [PAGINATION] Complete. Total fetched:', allApartments.length);
+      console.log('═══════════════════════════════════════════════════════');
+      console.log(`✅ [CURSOR PAGINATION] COMPLETE`);
+      console.log(`   Total batches: ${batchNumber}`);
+      console.log(`   Total apartments: ${allApartments.length}`);
+      console.log('═══════════════════════════════════════════════════════');
+      
       return allApartments;
     },
   });
@@ -260,28 +279,15 @@ export default function Home() {
       console.log('🚀🚀🚀 NEW SEARCH PIPELINE START 🚀🚀🚀');
       console.log('═══════════════════════════════════════════════════════');
 
-      // STEP 1: Fetch ALL apartments using cursor pagination
-      console.log('🔵 [SEARCH] Fetching all apartments via cursor pagination...');
-      let allDbApartments = [];
-      let hasMore = true;
-      let skip = 0;
-      const batchSize = 20;
+      // STEP 1: Use pre-fetched aggregated apartments from useQuery
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔍 [SEARCH PIPELINE] Using aggregated apartments from cache');
+      const allDbApartments = apartments;
+      console.log(`📊 [STEP 1] Total apartments available: ${allDbApartments.length}`);
+      console.log('═══════════════════════════════════════════════════════');
 
-      while (hasMore) {
-        const batch = await base44.entities.Apartment.list('-updated_date', batchSize, skip);
-        if (batch.length === 0) {
-          hasMore = false;
-        } else {
-          allDbApartments = [...allDbApartments, ...batch];
-          skip += batchSize;
-          if (allDbApartments.length >= 1000) break; // safety limit
-        }
-      }
-
-      console.log('✅ [SEARCH] Cursor pagination complete:', allDbApartments.length);
-      PipelineValidator.validateNoTruncation(allDbApartments, 'CURSOR FETCH');
-
-      // STEP 2: Filter based on user query and filters
+      // STEP 2: Filter AFTER full aggregation
+      console.log('🔍 [STEP 2] Applying filters to FULL dataset');
       const filtered = allDbApartments.filter(apt => {
         if (filters.priceMin && apt.price < filters.priceMin) return false;
         if (filters.priceMax && apt.price > filters.priceMax) return false;
@@ -292,53 +298,44 @@ export default function Home() {
         }
         return true;
       });
-      PipelineValidator.logPipelineStage('FILTERING', allDbApartments.length, filtered.length);
+      console.log(`📊 [STEP 2] Filtered: ${allDbApartments.length} → ${filtered.length}`);
 
-      // STEP 3: Sort by AI score (ALL results, NO SLICE)
+      // STEP 3: Sort by AI score
+      console.log('⚡ [STEP 3] Sorting by AI score');
       const sorted = [...filtered].sort((a, b) => {
         const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
         const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
         return scoreB - scoreA;
       });
-      PipelineValidator.logPipelineStage('SORTING', filtered.length, sorted.length, 'AI score ranking');
+      console.log(`📊 [STEP 3] Sorted: ${sorted.length} items`);
 
-      // STEP 4: Set orchestrator results (ALL, NO LIMIT)
-      console.log('💾 [STEP 4] SETTING orchestratorResults:', sorted.length);
-      
-      // CRITICAL ASSERTION - Detect implicit 20-item limit
-      if (sorted.length === 20 && allDbApartments.length > 20) {
-        console.error('🚨🚨🚨 CRITICAL: Implicit 20-item limit detected! 🚨🚨🚨');
-        console.error('DB has', allDbApartments.length, 'but sorted =', sorted.length);
-        throw new Error('SYSTEM FAILURE: Apartments truncated to exactly 20 - implicit limit detected');
-      }
-      
+      // STEP 4: Set orchestrator results
+      console.log('💾 [STEP 4] Setting orchestratorResults');
       setOrchestratorResults(sorted);
       setPropertiesFoundCount(sorted.length);
-      setApartments(allDbApartments);
 
-      console.log('✅ [STEP 4 COMPLETE] orchestratorResults NOW:', sorted.length);
-      console.log('✅ Valid coordinates:', sorted.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('✅ [PIPELINE COMPLETE]');
+      console.log(`   Source: ${allDbApartments.length} apartments`);
+      console.log(`   After filters: ${filtered.length}`);
+      console.log(`   Final sorted: ${sorted.length}`);
+      console.log(`   Valid coords: ${sorted.filter(a => a.lat && a.lng).length}`);
+      console.log('═══════════════════════════════════════════════════════');
 
       console.log('═══════════════════════════════════════════════════════');
 
-      // STEP 5: Call DeepSeek with ALL apartments (NO SLICE)
-      console.log('🤖 [STEP 5] CALLING DEEPSEEK with totalCount:', sorted.length);
-      console.log('🤖 [STEP 5] Passing FULL array to DeepSeek:', sorted.length);
+      // STEP 5: Call DeepSeek - pass totalCount only
+      console.log('🤖 [STEP 5] Calling DeepSeek with totalCount:', sorted.length);
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
           language,
           totalCount: sorted.length,
-          apartments: sorted.map(apt => ({
+          sampleApartments: sorted.slice(0, 10).map(apt => ({
             price: apt.price,
             rooms: apt.rooms,
             neighborhood: apt.neighborhood,
-            size: apt.size,
-            riskScore: apt.riskScore,
-            floor: apt.floor,
-            hasElevator: apt.hasElevator,
-            furnished: apt.furnished,
-            pets_allowed: apt.pets_allowed
+            size: apt.size
           }))
         })
       );
@@ -678,13 +675,6 @@ export default function Home() {
               {/* Mobile Map */}
               {showMap && orchestratorResults.length > 0 && (
                 <div className="h-[300px] rounded-2xl overflow-hidden mb-4">
-                  {(() => {
-                    console.log('📱 [MOBILE MAP] Passing to ApartmentMap:', orchestratorResults.length);
-                    if (orchestratorResults.length === 20) {
-                      console.error('❌❌❌ MOBILE MAP RECEIVED EXACTLY 20 ❌❌❌');
-                    }
-                    return null;
-                  })()}
                   <ApartmentMap
                     apartments={orchestratorResults}
                     center={mapCenter}
@@ -697,9 +687,12 @@ export default function Home() {
               )}
 
               {/* Mobile Results Counter */}
-              <div className="mb-4">
+              <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {propertiesFoundCount || filteredApartments.length} {language === 'es' ? 'propiedades encontradas' : language === 'ru' ? 'объектов найдено' : 'properties found'}
+                </p>
+                <p className="text-xs font-mono text-gray-500">
+                  Map: {orchestratorResults.length} markers
                 </p>
               </div>
 
@@ -807,13 +800,6 @@ export default function Home() {
 
                   {/* Full-Height Map */}
                   <div className="h-full w-full">
-                    {orchestratorResults.length > 0 && (() => {
-                      console.log('🖥️ [DESKTOP MAP] Passing to ApartmentMap:', orchestratorResults.length);
-                      if (orchestratorResults.length === 20) {
-                        console.error('❌❌❌ DESKTOP MAP RECEIVED EXACTLY 20 ❌❌❌');
-                      }
-                      return null;
-                    })()}
                     {orchestratorResults.length > 0 ? (
                       <ApartmentMap
                         apartments={orchestratorResults}

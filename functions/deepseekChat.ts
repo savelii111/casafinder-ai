@@ -4,28 +4,9 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { query, language = 'en', totalCount = 0, apartments = [] } = body;
+    const { query, language = 'en', totalCount = 0, sampleApartments = [] } = body;
     
-    // CRITICAL VALIDATION - DeepSeek input
-    console.log('🤖 [DEEPSEEK] Validation:');
-    console.log('   totalCount parameter:', totalCount);
-    console.log('   apartments.length:', apartments.length);
-    
-    // ASSERTION: Detect data mismatch
-    if (apartments.length === 20 && totalCount > 20) {
-      console.error('🚨🚨🚨 DEEPSEEK DATA MISMATCH 🚨🚨🚨');
-      console.error('   Expected:', totalCount);
-      console.error('   Received:', apartments.length);
-      console.error('   This indicates the frontend is truncating before sending to DeepSeek');
-      
-      // Return fallback that states EXACT count
-      return Response.json({
-        response: `I found ${totalCount} properties matching your search. All ${totalCount} are displayed on the interactive map and scrollable list below.`,
-        error: 'DATA_TRUNCATION_DETECTED',
-        receivedCount: apartments.length,
-        expectedCount: totalCount
-      });
-    }
+    console.log('🤖 [DEEPSEEK] Input totalCount:', totalCount);
     
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
 
@@ -50,19 +31,18 @@ Deno.serve(async (req) => {
 
     const userPrompt = `User query: "${query}"
 
-🔍 CRITICAL: ${totalCount} PROPERTIES TOTAL - ALL VISIBLE ON MAP & LIST
+TOTAL PROPERTIES: ${totalCount}
 
-Properties data (${apartments.length} items):
+Sample properties (top 10):
 ${apartmentsContext}
 
-YOUR RESPONSE MUST:
-1. Start with: "I found ${totalCount} properties matching your search"
-2. Describe characteristics of the full dataset
-3. Highlight 3-5 best options with specific details
-4. Remind: "All ${totalCount} properties are visible on the interactive map and scrollable list below"
-5. Keep under 200 words, friendly tone
+YOUR TASK:
+1. Start: "I found ${totalCount} properties matching your search"
+2. Analyze the sample and give helpful insights
+3. Remind: "All ${totalCount} are visible on the map and list below"
+4. Keep under 150 words
 
-ABSOLUTE RULE: State exact count ${totalCount}, NOT "top 20" or any other number.`;
+CRITICAL: State exact number ${totalCount}.`;
 
     console.log('[DeepSeek] Calling API...');
 
