@@ -548,6 +548,18 @@ export default function Home() {
     a.remove();
   };
 
+  const handleExportSheets = async () => {
+    const { data } = await base44.functions.invoke('syncListingsToGoogleSheets', {
+      // Provide spreadsheetId or sheetName here if you want to write to an existing file
+      // spreadsheetId: '...',
+      // sheetName: 'Listings'
+    });
+    alert(`Exported ${data.rows - 1} listings to Google Sheets.\n\nOpen: ${data.spreadsheetUrl}`);
+    if (data.spreadsheetUrl) {
+      window.open(data.spreadsheetUrl, '_blank');
+    }
+  };
+
   const handleSelectPlan = (planId) => {
     if (planId === 'free') {
       setShowUpgradeModal(false);
@@ -1019,6 +1031,9 @@ export default function Home() {
                         </Badge>
                         <Button variant="outline" size="sm" onClick={handleExportCsv} className="whitespace-nowrap">
                           {language === 'es' ? 'Exportar CSV' : language === 'ru' ? 'Экспорт CSV' : 'Export CSV'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleExportSheets} className="whitespace-nowrap">
+                          {language === 'es' ? 'Exportar a Sheets' : language === 'ru' ? 'Экспорт в Sheets' : 'Export to Sheets'}
                         </Button>
                       </div>
                     </div>
