@@ -10,14 +10,14 @@ Deno.serve(async (req) => {
     
     const ZENROWS_API_KEY = Deno.env.get('ZENROWS_API_KEY');
 
-    // DEMO FALLBACK if no API key - paginate ALL with filter()
+    // If no API key, return existing DB data (not demo) and only demo if DB is empty
     if (!ZENROWS_API_KEY) {
-      console.log('ZenRows API key not set, loading all apartments from DB');
+      console.log('ZenRows API key not set, returning existing DB data if available');
       const allApartments = [];
       let cursor = 0;
       const batchSize = 1000;
       let hasMore = true;
-      
+
       while (hasMore) {
         const batch = await base44.asServiceRole.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
         if (batch.length === 0) break;
@@ -26,12 +26,20 @@ Deno.serve(async (req) => {
         cursor += batch.length;
         if (cursor > 100000) break;
       }
-      
-      console.log(`[DEMO MODE] Loaded ${allApartments.length} apartments from DB`);
+
+      console.log(`[NO API KEY] DB contains ${allApartments.length} apartments`);
+      if (allApartments.length > 0) {
+        return Response.json({ 
+          success: true,
+          source: 'db',
+          count: allApartments.length,
+          apartments: allApartments
+        });
+      }
       return Response.json({ 
         success: false,
-        error: 'DEMO_MODE',
-        apartments: allApartments
+        error: 'DEMO_MODE_DB_EMPTY',
+        apartments: []
       });
     }
 
@@ -89,14 +97,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If no listings fetched from any endpoint, return demo mode - paginate ALL with filter()
+    // If no listings fetched from any endpoint, return DB data if present; demo only if empty
     if (allListings.length === 0) {
       console.error('[ZenRows] No listings fetched, loading all from DB');
       const allApartments = [];
       let cursor = 0;
       const batchSize = 1000;
       let hasMore = true;
-      
+
       while (hasMore) {
         const batch = await base44.asServiceRole.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
         if (batch.length === 0) break;
@@ -105,12 +113,20 @@ Deno.serve(async (req) => {
         cursor += batch.length;
         if (cursor > 100000) break;
       }
-      
-      console.log(`[DEMO FALLBACK] Loaded ${allApartments.length} apartments from DB`);
+
+      console.log(`[FALLBACK] DB has ${allApartments.length} apartments`);
+      if (allApartments.length > 0) {
+        return Response.json({ 
+          success: true,
+          source: 'db',
+          count: allApartments.length,
+          apartments: allApartments
+        });
+      }
       return Response.json({ 
         success: false, 
-        error: 'DEMO_MODE',
-        apartments: allApartments
+        error: 'DEMO_MODE_DB_EMPTY',
+        apartments: []
       });
     }
 
@@ -231,15 +247,15 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('fetchListingsZenrows error:', error);
-    
-    // DEMO FALLBACK on any error - paginate ALL with filter()
+
+    // On error: return DB data if present; demo only if empty
     try {
       const base44 = createClientFromRequest(req);
       const allApartments = [];
       let cursor = 0;
       const batchSize = 1000;
       let hasMore = true;
-      
+
       while (hasMore) {
         const batch = await base44.asServiceRole.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
         if (batch.length === 0) break;
@@ -248,12 +264,20 @@ Deno.serve(async (req) => {
         cursor += batch.length;
         if (cursor > 100000) break;
       }
-      
-      console.log(`[ERROR FALLBACK] Loaded ${allApartments.length} apartments from DB`);
+
+      console.log(`[ERROR FALLBACK] DB has ${allApartments.length} apartments`);
+      if (allApartments.length > 0) {
+        return Response.json({ 
+          success: true,
+          source: 'db',
+          count: allApartments.length,
+          apartments: allApartments
+        });
+      }
       return Response.json({ 
         success: false, 
-        error: 'DEMO_MODE',
-        apartments: allApartments
+        error: 'DEMO_MODE_DB_EMPTY',
+        apartments: []
       });
     } catch {
       return Response.json({ 

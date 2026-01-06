@@ -10,84 +10,42 @@ Deno.serve(async (req) => {
     
     const startTime = Date.now();
     const allApartments = [];
-    let skip = 0;
     let batchCount = 0;
-    let hasMore = true;
-    
-    // CRITICAL: Base44 SDK might limit filter() to 20 items by default
-    // Solution: Keep fetching with increasing skip until we get 0 results
-    while (hasMore) {
+
+    // Always fetch in micro-batches of 20 to bypass any hidden limits
+    for (let i = 0; i < 5000; i++) { // up to 100,000 records (5000 * 20)
       batchCount++;
-      console.log(`📄 [BATCH ${batchCount}] Fetching skip=${skip}, limit=1000`);
-      
-      // Fetch batch - if SDK limits to 20, we'll detect it
+      const skip = i * 20;
+      console.log(`📄 [MICRO-BATCH ${batchCount}] Fetching skip=${skip}, limit=20`);
+
       const batch = await base44.asServiceRole.entities.Apartment.filter(
-        {}, 
-        '-updated_date', 
-        1000,
+        {},
+        '-updated_date',
+        20,
         skip
       );
-      
-      console.log(`📄 [BATCH ${batchCount}] Received ${batch.length} apartments`);
-      
+
+      console.log(`📄 [MICRO-BATCH ${batchCount}] Received ${batch.length}`);
+
       if (batch.length === 0) {
-        console.log(`✓ [BATCH ${batchCount}] Empty batch, stopping`);
+        console.log(`✓ [MICRO-BATCH ${batchCount}] Empty, stopping`);
         break;
       }
-      
-      // CRITICAL CHECK: If first batch is exactly 20, SDK is limiting us
-      if (batchCount === 1 && batch.length === 20) {
-        console.error('🚨🚨🚨 SDK RETURNED EXACTLY 20 - TRYING WORKAROUND 🚨🚨🚨');
-        
-        // Workaround: Fetch multiple times with skip increments of 20
-        for (let i = 0; i < 500; i++) { // Max 10,000 apartments (500 * 20)
-          const microBatch = await base44.asServiceRole.entities.Apartment.filter(
-            {},
-            '-updated_date',
-            1000,
-            i * 20
-          );
-          
-          if (microBatch.length === 0) {
-            console.log(`✓ Micro-fetch complete at iteration ${i}`);
-            break;
-          }
-          
-          // Add only unique apartments
-          microBatch.forEach(apt => {
-            if (!allApartments.find(a => a.id === apt.id)) {
-              allApartments.push(apt);
-            }
-          });
-          
-          if (microBatch.length < 20) {
-            console.log(`✓ Last micro-batch had ${microBatch.length} items`);
-            break;
-          }
-          
-          if (i % 10 === 0) {
-            console.log(`→ Micro-fetch progress: ${allApartments.length} unique apartments`);
-          }
+
+      // Aggregate unique
+      batch.forEach(apt => {
+        if (!allApartments.find(a => a.id === apt.id)) {
+          allApartments.push(apt);
         }
-        
-        hasMore = false;
+      });
+
+      if (batch.length < 20) {
+        console.log(`✓ [MICRO-BATCH ${batchCount}] Last batch (<20)`);
         break;
       }
-      
-      // Normal pagination
-      allApartments.push(...batch);
-      
-      if (batch.length < 1000) {
-        console.log(`✓ [BATCH ${batchCount}] Last batch`);
-        hasMore = false;
-      } else {
-        skip += batch.length;
-        console.log(`→ [BATCH ${batchCount}] Moving skip to ${skip}`);
-      }
-      
-      if (batchCount > 100) {
-        console.error('🚨 Safety limit: 100 batches');
-        break;
+
+      if (batchCount % 50 === 0) {
+        console.log(`→ Progress: ${allApartments.length} unique apartments so far`);
       }
     }
     

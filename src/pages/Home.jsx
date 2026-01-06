@@ -367,11 +367,14 @@ export default function Home() {
           query: content,
           language,
           totalCount: sorted.length,
-          sampleApartments: sorted.slice(0, 10).map(apt => ({
+          apartmentsSummary: sorted.map(apt => ({
             price: apt.price,
             rooms: apt.rooms,
+            size: apt.size,
             neighborhood: apt.neighborhood,
-            size: apt.size
+            city: apt.city,
+            listing_type: apt.listing_type,
+            riskScore: apt.riskScore
           }))
         })
       );

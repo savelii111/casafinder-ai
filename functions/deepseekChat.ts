@@ -4,13 +4,13 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { query, language = 'en', totalCount = 0, sampleApartments = [] } = body;
+    const { query, language = 'en', totalCount = 0, apartmentsSummary = [] } = body;
     
     console.log('═══════════════════════════════════════════════════════');
     console.log('🤖 [DEEPSEEK AI] Request received');
     console.log(`   Query: "${query}"`);
     console.log(`   Total apartments to process: ${totalCount}`);
-    console.log(`   Sample size: ${sampleApartments.length}`);
+    console.log(`   Summary entries received: ${apartmentsSummary.length}`);
     console.log(`   Language: ${language}`);
     console.log('═══════════════════════════════════════════════════════');
     
@@ -33,12 +33,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build context from sample apartments data
-    const apartmentsContext = sampleApartments.length > 0 
-      ? sampleApartments.map((apt, i) => 
-          `${i + 1}. €${apt.price}/mo - ${apt.rooms} rooms, ${apt.size}m² in ${apt.neighborhood || 'Madrid'}`
+    // Build context from the FULL apartments summary (no slicing)
+    const apartmentsContext = apartmentsSummary.length > 0 
+      ? apartmentsSummary.map((apt, i) => 
+          `${i + 1}. €${apt.price}${apt.listing_type === 'rent' ? '/mo' : ''} - ${apt.rooms} rooms, ${apt.size}m² in ${apt.neighborhood || apt.city || 'Madrid'} (risk ${apt.riskScore ?? 'n/a'})`
         ).join('\n')
-      : 'Sample data not provided';
+      : 'No apartments summary provided';
 
     const systemPrompt = language === 'es' 
       ? `Eres un asistente experto en bienes raíces en España. Ayudas a usuarios a encontrar el apartamento perfecto en Madrid. Sé amigable, útil y conciso. Responde SIEMPRE en español.`
@@ -48,22 +48,21 @@ Deno.serve(async (req) => {
 
     const userPrompt = `User query: "${query}"
 
-    🔢 TOTAL PROPERTIES IN DATABASE: ${totalCount}
+    🔢 TOTAL PROPERTIES MATCHING: ${totalCount}
 
-    Sample properties (first 10 out of ${totalCount} total):
+    ALL PROPERTIES SUMMARY (no truncation):
     ${apartmentsContext}
 
-    YOUR CRITICAL TASK:
-    1. Start with EXACT count: "I found exactly ${totalCount} properties in Madrid"
-    2. Give 2-3 insights about the samples (price range, popular neighborhoods)
-    3. End with: "All ${totalCount} properties are displayed on the map and sortable list below - scroll through all of them!"
-    4. Keep under 120 words
+    YOUR TASK:
+    - Start with EXACT count: "I found exactly ${totalCount} properties"
+    - Provide concise insights (price ranges, neighborhoods, mix of rent/sale, notable risk patterns)
+    - Confirm: "All ${totalCount} properties are shown on the map and list below; browse them all."
+    - Keep under 150 words, natural and agent-like (no lists of 1000 items).
 
-    ⚠️ ABSOLUTE REQUIREMENTS:
-    - NEVER say "top N" or "best X" or "here are some"
-    - ALWAYS state EXACT total: ${totalCount}
-    - EMPHASIZE: ALL ${totalCount} are visible, not just a subset
-    - User can see EVERY SINGLE ONE of the ${totalCount} properties`;
+    STRICT REQUIREMENTS:
+    - Do NOT mention "top N" / "best X" / "some". Use the full count.
+    - Do NOT imply truncation. Emphasize that ALL ${totalCount} are visible.
+    - Be helpful and realistic.`;
 
     console.log('[DeepSeek] Calling API...');
 
