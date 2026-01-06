@@ -6,7 +6,22 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { query, language = 'en', totalCount = 0, sampleApartments = [] } = body;
     
-    console.log('🤖 [DEEPSEEK] Input totalCount:', totalCount);
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🤖 [DEEPSEEK AI] Request received');
+    console.log(`   Query: "${query}"`);
+    console.log(`   Total apartments to process: ${totalCount}`);
+    console.log(`   Sample size: ${sampleApartments.length}`);
+    console.log(`   Language: ${language}`);
+    console.log('═══════════════════════════════════════════════════════');
+    
+    // CRITICAL VALIDATION
+    if (totalCount === 20) {
+      console.error('🚨 DEEPSEEK: Received EXACTLY 20 apartments - upstream truncation!');
+    } else if (totalCount === 0) {
+      console.error('🚨 DEEPSEEK: No apartments provided!');
+    } else {
+      console.log(`✅ DEEPSEEK: Processing full dataset (${totalCount} apartments)`);
+    }
     
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
 
@@ -81,7 +96,12 @@ Deno.serve(async (req) => {
     const data = await response.json();
     const aiResponse = data.choices?.[0]?.message?.content || `Found ${totalCount} properties. All are shown on the map!`;
 
-    console.log('[DeepSeek] Response generated:', aiResponse.substring(0, 100));
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('✅ [DEEPSEEK AI] Response generated');
+    console.log(`   Response length: ${aiResponse.length} chars`);
+    console.log(`   Mentioned count: ${totalCount}`);
+    console.log(`   Preview: ${aiResponse.substring(0, 100)}...`);
+    console.log('═══════════════════════════════════════════════════════');
 
     return Response.json({
       response: aiResponse,
