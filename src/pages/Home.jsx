@@ -592,6 +592,31 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3">
+              {/* Sync Idealista Button */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={async () => {
+                  try {
+                    console.log('🔄 Syncing from Idealista...');
+                    const result = await base44.functions.invoke('fetchListingsZenrows', {
+                      city: 'Madrid',
+                      listing_type: 'both'
+                    });
+                    console.log('✅ Sync complete:', result.data);
+                    queryClient.invalidateQueries({ queryKey: ['apartments'] });
+                    alert(`✅ Синхронизировано ${result.data?.count || 0} объектов с Idealista`);
+                  } catch (error) {
+                    console.error('Sync error:', error);
+                    alert('❌ Ошибка синхронизации');
+                  }
+                }}
+                className="gap-2 hidden lg:flex"
+              >
+                <Search className="h-4 w-4" />
+                {language === 'es' ? 'Sincronizar Idealista' : language === 'ru' ? 'Загрузить с Idealista' : 'Sync Idealista'}
+              </Button>
+
               {/* Upgrade Plan Button - Desktop */}
               <Link to={createPageUrl('Subscription')} className="hidden lg:block">
                 <Button 
