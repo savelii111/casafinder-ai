@@ -75,7 +75,7 @@ export default function ApartmentMap({
     console.log('═══════════════════════════════════════════════════════');
     
     if (apartments.length === 20) {
-      console.error('🚨 MAP: Received exactly 20 apartments - possible upstream truncation!');
+      console.error('🚨 MAP: Received exactly 20 apartments - possible upstream truncation! (Sheets source)');
     }
   }, [apartments]);
   const labels = {

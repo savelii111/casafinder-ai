@@ -52,7 +52,7 @@ export default function ApartmentList({
 
   const sortedApartments = React.useMemo(() => {
     console.log('═══════════════════════════════════════════════════════');
-    console.log('📋 [APARTMENT LIST] Sorting');
+    console.log('📋 [APARTMENT LIST] Sorting (Sheets source)');
     console.log(`   Input: ${apartments?.length || 0} apartments`);
     console.log(`   Sort by: ${sortBy}`);
 

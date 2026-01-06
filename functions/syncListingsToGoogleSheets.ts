@@ -20,56 +20,59 @@ Deno.serve(async (req) => {
     console.log(`   Target sheet: ${sheetName}`);
     console.log(`   Spreadsheet ID provided: ${!!spreadsheetId}`);
 
-    // 1) Fetch ALL apartments using micro-batch pagination (no 20 limit)
+    // 1) Fetch ALL listings from ZenRows/API (no 20 limit)
     const rows = [];
     const header = [
-      'id','title','price','listing_type','address','rooms','size','lat','lng','city','neighborhood','riskScore','marketPriceDiff','listing_status','property_type','floor','hasElevator','furnished','pets_allowed','available_from','source','source_url','external_id','created_date','updated_date'
+      'id','title','price','currency','type','city','neighborhood','address','lat','lng','rooms','size','floor','furnished','pets_allowed','photos','source','updated_at'
     ];
     rows.push(header);
 
-    let total = 0;
-    for (let i = 0; i < 5000; i++) { // up to 100,000 records (5000 * 20)
-      const skip = i * 20;
-      const batch = await base44.asServiceRole.entities.Apartment.filter({}, '-updated_date', 20, skip);
-      if (batch.length === 0) break;
+    // Call existing ZenRows fetcher (rent + sale)
+    const syncRes = await base44.functions.invoke('fetchListingsZenrows', { city, listing_type: 'both' });
+    const apiApts = syncRes?.data?.apartments || [];
 
-      for (const a of batch) {
-        rows.push([
-          a.id,
-          a.title || '',
-          a.price ?? '',
-          a.listing_type || '',
-          a.address || '',
-          a.rooms ?? '',
-          a.size ?? '',
-          a.lat ?? '',
-          a.lng ?? '',
-          a.city || '',
-          a.neighborhood || '',
-          a.riskScore ?? '',
-          a.marketPriceDiff ?? '',
-          a.listing_status || '',
-          a.property_type || '',
-          a.floor ?? '',
-          a.hasElevator ?? '',
-          a.furnished ?? '',
-          a.pets_allowed ?? '',
-          a.available_from || '',
-          a.source || '',
-          a.source_url || '',
-          a.external_id || '',
-          a.created_date || '',
-          a.updated_date || ''
-        ]);
-      }
-      total += batch.length;
-      if (batch.length < 20) break;
+    // Deduplicate by id + source
+    const seen = new Set();
+    let fetchedCount = 0;
+    let writtenCount = 0;
+
+    for (const a of apiApts) {
+      fetchedCount++;
+      const src = a.source || 'idealista';
+      const plainId = a.external_id || a.id || `${(a.title || '').slice(0,20)}-${a.lat}-${a.lng}`;
+      const key = `${src}:${plainId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const photos = (a.photos || []).join(',');
+      const currency = 'EUR';
+      const updatedAt = a.last_sync_date || new Date().toISOString();
+
+      rows.push([
+        plainId,
+        a.title || '',
+        a.price ?? '',
+        currency,
+        a.listing_type || 'rent',
+        a.city || city,
+        a.neighborhood || '',
+        a.address || '',
+        a.lat ?? '',
+        a.lng ?? '',
+        a.rooms ?? '',
+        a.size ?? '',
+        a.floor ?? '',
+        a.furnished ?? false,
+        a.pets_allowed ?? false,
+        photos,
+        src,
+        updatedAt
+      ]);
+      writtenCount++;
     }
 
-    console.log(`   ✓ Loaded ${total} apartments for sync`);
-    if (total === 20) {
-      console.error('🚨 Exactly 20 fetched - potential truncation upstream');
-    }
+    console.log(`   Fetched from API: ${fetchedCount}`);
+    console.log(`   Prepared for Sheet (deduped): ${writtenCount}`);
 
     // 2) Get Google Sheets access token (App Connector)
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlesheets');
@@ -154,6 +157,17 @@ Deno.serve(async (req) => {
     }
 
     console.log('   ✓ Wrote rows:', rows.length);
+    console.log(`   Written to Sheet: ${rows.length - 1}`);
+
+    // Check total rows in sheet
+    const metaRes2 = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(sheetName + '!A1:ZZ')}`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    if (metaRes2.ok) {
+      const metaVals = await metaRes2.json();
+      const totalRows = (metaVals.values || []).length - 1;
+      console.log(`   Sheet total rows: ${Math.max(totalRows, 0)}`);
+    }
     console.log('═══════════════════════════════════════════════════════');
 
     const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${targetSpreadsheetId}`;

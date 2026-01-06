@@ -112,48 +112,48 @@ export default function Home() {
 
   // BACKEND FUNCTION - Bypass SDK 20-item limit via service role
   const { data: dbApartments = [] } = useQuery({
-    queryKey: ['apartments'],
-    queryFn: async () => {
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('🔷 [BACKEND FETCH] Calling backend function');
-      console.log('═══════════════════════════════════════════════════════');
-      
-      const startTime = Date.now();
-      
-      try {
-        const result = await base44.functions.invoke('fetchAllApartments');
+      queryKey: ['apartmentsFromSheets'],
+      queryFn: async () => {
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('🟦 [SHEETS FETCH] Reading Google Sheet (Source of Truth)');
+        console.log('═══════════════════════════════════════════════════════');
 
-        const totalFetched = result.data.apartments.length;
-        const stats = {
-          method: 'Backend Cursor Pagination',
-          totalFetched,
-          duration: Date.now() - startTime,
-          backendDuration: result.data.duration,
-          batches: result.data.batches
-        };
+        const startTime = Date.now();
+
+        try {
+          const spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
+          if (!spreadsheetId) {
+            console.warn('[SHEETS FETCH] No spreadsheetId in localStorage (rentai_spreadsheet_id)');
+            return [];
+          }
+          const result = await base44.functions.invoke('getListingsFromGoogleSheets', { spreadsheetId, sheetName: 'Listings' });
+
+          const totalFetched = result.data.count || (result.data.listings?.length || 0);
+          const stats = {
+            method: 'Google Sheets Source',
+            totalFetched,
+            duration: Date.now() - startTime
+          };
 
         console.log('═══════════════════════════════════════════════════════');
-        console.log(`✅ [STAGE 1: BACKEND FETCH] Complete`);
-        console.log(`   Method: Service Role + Cursor Pagination`);
-        console.log(`   Batches fetched: ${stats.batches}`);
+        console.log(`✅ [STAGE 1: SHEETS FETCH] Complete`);
+        console.log(`   Method: Google Sheets`);
         console.log(`   Total apartments: ${totalFetched}`);
-        console.log(`   With coordinates: ${result.data.apartments.filter(a => a.lat && a.lng).length}`);
+        console.log(`   With coordinates: ${(result.data.listings || []).filter(a => a.lat && a.lng).length}`);
         console.log(`   Frontend duration: ${stats.duration}ms`);
-        console.log(`   Backend duration: ${stats.backendDuration}ms`);
         console.log('═══════════════════════════════════════════════════════');
 
         // CRITICAL VALIDATION
         if (totalFetched === 20) {
-          console.error('🚨🚨🚨 FAILURE: BACKEND STILL LIMITED TO 20 🚨🚨🚨');
-          console.error('This indicates pagination is not working');
+          console.error('🚨🚨🚨 FAILURE: SHEETS STILL EXACTLY 20 🚨🚨🚨');
         } else if (totalFetched > 20) {
-          console.log(`✅✅✅ SUCCESS: Loaded ${totalFetched} apartments (bypassed 20-item limit) ✅✅✅`);
-        } else {
-          console.warn(`⚠️ WARNING: Only ${totalFetched} apartments in database`);
+          console.log(`✅✅✅ SUCCESS: Loaded ${totalFetched} from Sheets (no limit) ✅✅✅`);
+        } else if (totalFetched > 0) {
+          console.warn(`⚠️ WARNING: Only ${totalFetched} rows in sheet`);
         }
 
         setPaginationStats(stats);
-        return result.data.apartments;
+        return result.data.listings || [];
 
       } catch (error) {
         console.error('[BACKEND FETCH] Error:', error);
@@ -550,10 +550,14 @@ export default function Home() {
 
   const handleExportSheets = async () => {
     const { data } = await base44.functions.invoke('syncListingsToGoogleSheets', {
-      // Provide spreadsheetId or sheetName here if you want to write to an existing file
-      // spreadsheetId: '...',
-      // sheetName: 'Listings'
+      // spreadsheetId: localStorage.getItem('rentai_spreadsheet_id') || undefined,
+      sheetName: 'Listings',
+      city: 'Madrid'
     });
+    if (data?.spreadsheetId) {
+      localStorage.setItem('rentai_spreadsheet_id', data.spreadsheetId);
+      queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
+    }
     alert(`Exported ${data.rows - 1} listings to Google Sheets.\n\nOpen: ${data.spreadsheetUrl}`);
     if (data.spreadsheetUrl) {
       window.open(data.spreadsheetUrl, '_blank');
@@ -640,29 +644,28 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3">
-              {/* Sync Idealista Button */}
+              {/* Sync to Google Sheets Button */}
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={async () => {
                   try {
-                    console.log('🔄 Syncing from Idealista...');
-                    const result = await base44.functions.invoke('fetchListingsZenrows', {
-                      city: 'Madrid',
-                      listing_type: 'both'
-                    });
-                    console.log('✅ Sync complete:', result.data);
-                    queryClient.invalidateQueries({ queryKey: ['apartments'] });
-                    alert(`✅ Синхронизировано ${result.data?.count || 0} объектов с Idealista`);
+                    console.log('🔄 Syncing ALL listings to Google Sheets...');
+                    const res = await base44.functions.invoke('syncListingsToGoogleSheets', { sheetName: 'Listings', city: 'Madrid' });
+                    if (res?.data?.spreadsheetId) {
+                      localStorage.setItem('rentai_spreadsheet_id', res.data.spreadsheetId);
+                      queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
+                    }
+                    alert(`✅ Exported ${Math.max((res.data?.rows || 1) - 1, 0)} rows to Sheets`);
                   } catch (error) {
-                    console.error('Sync error:', error);
-                    alert('❌ Ошибка синхронизации');
+                    console.error('Sheets sync error:', error);
+                    alert('❌ Ошибка экспорта в Sheets');
                   }
                 }}
                 className="gap-2 hidden lg:flex"
               >
                 <Search className="h-4 w-4" />
-                {language === 'es' ? 'Sincronizar Idealista' : language === 'ru' ? 'Загрузить с Idealista' : 'Sync Idealista'}
+                {language === 'es' ? 'Exportar a Sheets' : language === 'ru' ? 'Экспорт в Sheets' : 'Export to Sheets'}
               </Button>
 
               {/* Upgrade Plan Button - Desktop */}
