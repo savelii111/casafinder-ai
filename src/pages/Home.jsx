@@ -48,6 +48,7 @@ import PriceChart from '@/components/analytics/PriceChart';
 import GoogleAnalytics, { trackPropertySearch, trackUpgradeClick } from '@/components/analytics/GoogleAnalytics';
 import PipelineValidator from '@/components/utils/pipelineValidator';
 import PipelineDebugger from '@/components/debug/PipelineDebugger';
+import { toast } from 'sonner';
 
 // Sample apartments are now loaded from database
 
@@ -145,7 +146,7 @@ export default function Home() {
 
         // CRITICAL VALIDATION
         if (totalFetched === 20) {
-          console.error('🚨🚨🚨 FAILURE: SHEETS STILL EXACTLY 20 🚨🚨🚨');
+          throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
         } else if (totalFetched > 20) {
           console.log(`✅✅✅ SUCCESS: Loaded ${totalFetched} from Sheets (no limit) ✅✅✅`);
         } else if (totalFetched > 0) {
@@ -362,20 +363,25 @@ export default function Home() {
       console.log(`   Sending sample of first 10 for context`);
       console.log('═══════════════════════════════════════════════════════');
 
+      const prices = sorted.map(a => a.price).filter(p => Number.isFinite(p));
+      const priceMin = prices.length ? Math.min(...prices) : null;
+      const priceMax = prices.length ? Math.max(...prices) : null;
+      const neighborhoodCounts = {};
+      sorted.forEach(a => {
+        const key = a.neighborhood || a.city || 'Unknown';
+        neighborhoodCounts[key] = (neighborhoodCounts[key] || 0) + 1;
+      });
+      const topNeighborhoods = Object.entries(neighborhoodCounts)
+        .sort((a,b) => b[1]-a[1])
+        .slice(0,5)
+        .map(([name, count]) => ({ name, count }));
+
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
           language,
           totalCount: sorted.length,
-          apartmentsSummary: sorted.map(apt => ({
-            price: apt.price,
-            rooms: apt.rooms,
-            size: apt.size,
-            neighborhood: apt.neighborhood,
-            city: apt.city,
-            listing_type: apt.listing_type,
-            riskScore: apt.riskScore
-          }))
+          aggregatedSummary: { priceMin, priceMax, topNeighborhoods }
         })
       );
 
@@ -402,8 +408,7 @@ export default function Home() {
       console.log(`   To map: ${sorted.length}`);
 
       if (sorted.length === 20) {
-        console.error('🚨🚨🚨 CRITICAL: Pipeline output is EXACTLY 20 🚨🚨🚨');
-        console.error('Check all stages for hidden limits!');
+        throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
       } else {
         console.log(`✅ Pipeline integrity: ${sorted.length} apartments (not limited to 20)`);
       }
@@ -558,7 +563,7 @@ export default function Home() {
       localStorage.setItem('rentai_spreadsheet_id', data.spreadsheetId);
       queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
     }
-    alert(`Exported ${data.rows - 1} listings to Google Sheets.\n\nOpen: ${data.spreadsheetUrl}`);
+    toast.success(`Exported ${Math.max((data?.rows || 1) - 1, 0)} listings to Google Sheets`);
     if (data.spreadsheetUrl) {
       window.open(data.spreadsheetUrl, '_blank');
     }
@@ -656,7 +661,7 @@ export default function Home() {
                       localStorage.setItem('rentai_spreadsheet_id', res.data.spreadsheetId);
                       queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
                     }
-                    alert(`✅ Exported ${Math.max((res.data?.rows || 1) - 1, 0)} rows to Sheets`);
+                    toast.success(`Exported ${Math.max((res.data?.rows || 1) - 1, 0)} listings to Google Sheets`);
                   } catch (error) {
                     console.error('Sheets sync error:', error);
                     alert('❌ Ошибка экспорта в Sheets');

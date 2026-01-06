@@ -79,6 +79,9 @@ Deno.serve(async (req) => {
       };
     });
 
+    if (listings.length === 20) {
+      throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
+    }
     return Response.json({ listings, count: listings.length });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

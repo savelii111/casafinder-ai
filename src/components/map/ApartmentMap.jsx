@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
+
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import 'leaflet/dist/leaflet.css';
@@ -112,7 +112,7 @@ export default function ApartmentMap({
       {/* Properties Counter */}
       <div className="absolute top-4 left-4 z-[1000] bg-white dark:bg-gray-800 px-4 py-2 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-          {apartments.length} {apartments.length === 1 ? t.property : t.properties}
+          Loaded from Google Sheets: {apartments.length} listings
         </p>
       </div>
 
@@ -144,7 +144,7 @@ export default function ApartmentMap({
           console.log('═══════════════════════════════════════════════════════');
           
           if (markersToRender.length === 20 && apartments.length > 20) {
-            console.error('🚨 MAP MARKERS: Rendering exactly 20 despite more input!');
+            throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
           }
 
           return markersToRender.map((apt) => {

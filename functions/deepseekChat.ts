@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { query, language = 'en', totalCount = 0, apartmentsSummary = [] } = body;
+    const { query, language = 'en', totalCount = 0, apartmentsSummary = [], aggregatedSummary } = body;
     
     console.log('═══════════════════════════════════════════════════════');
     console.log('🤖 [DEEPSEEK AI] Request received');
@@ -33,12 +33,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build context from the FULL apartments summary (no slicing)
-    const apartmentsContext = apartmentsSummary.length > 0 
-      ? apartmentsSummary.map((apt, i) => 
-          `${i + 1}. €${apt.price}${apt.listing_type === 'rent' ? '/mo' : ''} - ${apt.rooms} rooms, ${apt.size}m² in ${apt.neighborhood || apt.city || 'Madrid'} (risk ${apt.riskScore ?? 'n/a'})`
-        ).join('\n')
-      : 'No apartments summary provided';
+    // Build context from aggregated summary (no raw objects)
+    const summaryText = (() => {
+      if (aggregatedSummary) {
+        const prMin = aggregatedSummary.priceMin ?? 'n/a';
+        const prMax = aggregatedSummary.priceMax ?? 'n/a';
+        const top = (aggregatedSummary.topNeighborhoods || []).map(n => `${n.name}: ${n.count}`).join(', ');
+        return `Price range: ${prMin}–${prMax}€; Top neighborhoods: ${top || 'n/a'}`;
+      }
+      if (apartmentsSummary?.length > 0) {
+        const prices = apartmentsSummary.map(a => a.price).filter(p => Number.isFinite(p));
+        const prMin = prices.length ? Math.min(...prices) : 'n/a';
+        const prMax = prices.length ? Math.max(...prices) : 'n/a';
+        return `Price sample range: ${prMin}–${prMax}€ (sample)`;
+      }
+      return 'No summary provided';
+    })();
 
     const systemPrompt = language === 'es' 
       ? `Eres un asistente experto en bienes raíces en España. Ayudas a usuarios a encontrar el apartamento perfecto en Madrid. Sé amigable, útil y conciso. Responde SIEMPRE en español.`
@@ -50,8 +60,8 @@ Deno.serve(async (req) => {
 
     🔢 TOTAL PROPERTIES MATCHING: ${totalCount}
 
-    ALL PROPERTIES SUMMARY (no truncation):
-    ${apartmentsContext}
+    AGGREGATED SUMMARY (no truncation):
+    ${summaryText}
 
     YOUR TASK:
     - Start with EXACT count: "I found exactly ${totalCount} properties"
