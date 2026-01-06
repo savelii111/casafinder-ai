@@ -595,6 +595,53 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Cursor Pagination Stats Display */}
+      {paginationStats && (
+        <div className="fixed top-20 left-4 z-[60] bg-blue-50 dark:bg-blue-900/95 border-2 border-blue-400 dark:border-blue-600 rounded-xl shadow-2xl max-w-sm backdrop-blur-sm">
+          <div className="px-4 py-3">
+            <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+              🔄 Cursor Pagination
+            </h3>
+            <div className="space-y-1 text-xs font-mono text-blue-800 dark:text-blue-200">
+              <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
+                <span>Total batches:</span>
+                <strong>{paginationStats.batches.length}</strong>
+              </div>
+              {paginationStats.batches.map((b, i) => (
+                <div key={i} className="flex justify-between text-blue-600 dark:text-blue-300 pl-2">
+                  <span>Batch {b.batchNumber}:</span>
+                  <span className="font-semibold">{b.count} items</span>
+                </div>
+              ))}
+              <div className="border-t-2 border-green-400 dark:border-green-600 pt-2 mt-2">
+                <div className="flex justify-between font-bold">
+                  <span>TOTAL FETCHED:</span>
+                  <span className="text-green-700 dark:text-green-400">{paginationStats.totalFetched}</span>
+                </div>
+              </div>
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Duration:</span>
+                <span>{paginationStats.duration}ms</span>
+              </div>
+            </div>
+          </div>
+          {orchestratorResults.length > 0 && (
+            <div className="bg-green-100 dark:bg-green-900/60 border-t-2 border-green-400 dark:border-green-600 px-4 py-2 rounded-b-xl">
+              <div className="space-y-1 text-xs font-mono font-bold">
+                <div className="flex justify-between text-green-900 dark:text-green-100">
+                  <span>→ Passed to chat:</span>
+                  <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{propertiesFoundCount}</span>
+                </div>
+                <div className="flex justify-between text-green-900 dark:text-green-100">
+                  <span>→ Passed to map:</span>
+                  <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{orchestratorResults.length}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Desktop: Split Layout | Mobile: Stacked Layout */}
       <main className="relative">
         {/* Mobile Layout */}
