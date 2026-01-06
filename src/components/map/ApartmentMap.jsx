@@ -75,7 +75,7 @@ export default function ApartmentMap({
     console.log('═══════════════════════════════════════════════════════');
     
     if (apartments.length === 20) {
-      console.error('🚨 MAP: Received exactly 20 apartments - possible upstream truncation! (Sheets source)');
+      throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
     }
   }, [apartments]);
   const labels = {
@@ -128,7 +128,7 @@ export default function ApartmentMap({
         />
         <MapUpdater center={center} zoom={zoom} />
 
-        {/* Direct marker rendering - NO CLUSTERING, NO LIMITS */}
+        {/* Direct marker rendering - NO CLUSTERING, NO LIMITS, NO SLICING */}
         {(() => {
           const markersToRender = apartments.filter(apt => {
             const hasValidLat = apt.lat !== undefined && apt.lat !== null && !isNaN(parseFloat(apt.lat));

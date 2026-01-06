@@ -893,7 +893,7 @@ export default function Home() {
 
               {/* Mobile Apartment List */}
               <ApartmentList
-                apartments={orchestratorResults.length > 0 ? orchestratorResults : filteredApartments}
+                apartments={orchestratorResults}
                 onApartmentClick={handleApartmentClick}
                 selectedId={selectedApartment?.id}
                 sortBy={sortBy}

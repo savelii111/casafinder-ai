@@ -1,4 +1,5 @@
 import React from 'react';
+import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 import { LanguageProvider } from './components/context/LanguageContext';
 
@@ -140,6 +141,7 @@ export default function Layout({ children }) {
           }
           `}</style>
           {children}
+          <Toaster richColors position="top-right" />
           </div>
           </LanguageProvider>
           </ThemeProvider>
