@@ -194,7 +194,7 @@ export default function Home() {
 
       // CRITICAL: Validate no truncation
       if (dbApartments.length === 20) {
-        console.error('🚨 STATE UPDATE: Received exactly 20 apartments - possible truncation');
+        throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
       }
     }
   }, [dbApartments]);
@@ -620,8 +620,7 @@ export default function Home() {
 
     // CRITICAL VALIDATION
     if (result.length === 20 && apartments.length > 20) {
-      console.error('🚨🚨🚨 FILTERED_APARTMENTS TRUNCATED TO 20 🚨🚨🚨');
-      console.error('Check filter logic for hidden limits!');
+      throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
     }
 
     return result;
