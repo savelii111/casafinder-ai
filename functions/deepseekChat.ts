@@ -6,11 +6,25 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { query, language = 'en', totalCount = 0, apartments = [] } = body;
     
-    console.log('🤖 [DEEPSEEK FUNCTION] Received request:');
-    console.log('🤖 totalCount param:', totalCount);
-    console.log('🤖 apartments.length:', apartments.length);
+    // CRITICAL VALIDATION - DeepSeek input
+    console.log('🤖 [DEEPSEEK] Validation:');
+    console.log('   totalCount parameter:', totalCount);
+    console.log('   apartments.length:', apartments.length);
+    
+    // ASSERTION: Detect data mismatch
     if (apartments.length === 20 && totalCount > 20) {
-      console.error('❌❌❌ DEEPSEEK RECEIVED 20 BUT TOTALCOUNT IS', totalCount, '❌❌❌');
+      console.error('🚨🚨🚨 DEEPSEEK DATA MISMATCH 🚨🚨🚨');
+      console.error('   Expected:', totalCount);
+      console.error('   Received:', apartments.length);
+      console.error('   This indicates the frontend is truncating before sending to DeepSeek');
+      
+      // Return fallback that states EXACT count
+      return Response.json({
+        response: `I found ${totalCount} properties matching your search. All ${totalCount} are displayed on the interactive map and scrollable list below.`,
+        error: 'DATA_TRUNCATION_DETECTED',
+        receivedCount: apartments.length,
+        expectedCount: totalCount
+      });
     }
     
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');

@@ -170,18 +170,21 @@ Deno.serve(async (req) => {
         console.log('═══════════════════════════════════════════════════════');
 
         console.log('═══════════════════════════════════════════════════════');
-        console.log(`[STAGE 3 - FINAL] RETURNING TO CLIENT`);
-        console.log(`Total Raw Listings Fetched: ${allListings.length}`);
-        console.log(`Successfully Processed & Saved: ${apartments.length}`);
-        console.log(`Rent Listings: ${apartments.filter(a => a.listing_type === 'rent').length}`);
-        console.log(`Sale Listings: ${apartments.filter(a => a.listing_type === 'sale').length}`);
-        console.log(`With Valid Coordinates: ${apartments.filter(a => a.lat && a.lng).length}`);
+        console.log(`[ZENROWS FINAL] Pipeline Complete`);
+        console.log(`  Raw Listings: ${allListings.length}`);
+        console.log(`  Processed: ${apartments.length}`);
+        console.log(`  Rent: ${apartments.filter(a => a.listing_type === 'rent').length}`);
+        console.log(`  Sale: ${apartments.filter(a => a.listing_type === 'sale').length}`);
+        console.log(`  Valid Coords: ${apartments.filter(a => a.lat && a.lng).length}`);
 
+        // CRITICAL ASSERTION
         if (apartments.length === 20) {
-          console.error('❌❌❌ DETECTED EXACTLY 20 APARTMENTS - LIMIT FOUND HERE! ❌❌❌');
+          console.error('🚨🚨🚨 ZENROWS TRUNCATION DETECTED 🚨🚨🚨');
+          console.error('Output is EXACTLY 20 apartments - this should not happen');
+          console.error('Check: ZenRows pagination, DB entity create limits, or filter logic');
         }
 
-        console.log(`Synced At: ${now}`);
+        console.log(`  Synced At: ${now}`);
         console.log('═══════════════════════════════════════════════════════');
 
         return Response.json({

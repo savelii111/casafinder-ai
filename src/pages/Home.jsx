@@ -46,6 +46,7 @@ import { createPageUrl } from '@/utils';
 import SavedSearches from '@/components/search/SavedSearches';
 import PriceChart from '@/components/analytics/PriceChart';
 import GoogleAnalytics, { trackPropertySearch, trackUpgradeClick } from '@/components/analytics/GoogleAnalytics';
+import PipelineValidator from '@/components/utils/pipelineValidator';
 
 // Sample apartments are now loaded from database
 
@@ -237,8 +238,7 @@ export default function Home() {
 
       // STEP 1: Get ALL apartments from database (NO LIMIT)
       const allDbApartments = await base44.entities.Apartment.list('-updated_date', 99999);
-      console.log('📊 [STEP 1] RAW DB FETCH:', allDbApartments.length);
-      if (allDbApartments.length === 20) console.error('❌❌❌ STEP 1 TRUNCATED TO 20 ❌❌❌');
+      PipelineValidator.validateNoTruncation(allDbApartments, 'DB FETCH');
 
       // STEP 2: Filter based on user query and filters
       const filtered = allDbApartments.filter(apt => {
@@ -251,8 +251,7 @@ export default function Home() {
         }
         return true;
       });
-      console.log('🔍 [STEP 2] AFTER FILTERING:', filtered.length);
-      if (filtered.length === 20) console.error('❌❌❌ STEP 2 TRUNCATED TO 20 ❌❌❌');
+      PipelineValidator.logPipelineStage('FILTERING', allDbApartments.length, filtered.length);
 
       // STEP 3: Sort by AI score (ALL results, NO SLICE)
       const sorted = [...filtered].sort((a, b) => {
@@ -260,21 +259,24 @@ export default function Home() {
         const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
         return scoreB - scoreA;
       });
-      console.log('⚡ [STEP 3] AFTER SORTING:', sorted.length);
-      if (sorted.length === 20) console.error('❌❌❌ STEP 3 TRUNCATED TO 20 ❌❌❌');
+      PipelineValidator.logPipelineStage('SORTING', filtered.length, sorted.length, 'AI score ranking');
 
       // STEP 4: Set orchestrator results (ALL, NO LIMIT)
       console.log('💾 [STEP 4] SETTING orchestratorResults:', sorted.length);
+      
+      // CRITICAL ASSERTION - Detect implicit 20-item limit
+      if (sorted.length === 20 && allDbApartments.length > 20) {
+        console.error('🚨🚨🚨 CRITICAL: Implicit 20-item limit detected! 🚨🚨🚨');
+        console.error('DB has', allDbApartments.length, 'but sorted =', sorted.length);
+        throw new Error('SYSTEM FAILURE: Apartments truncated to exactly 20 - implicit limit detected');
+      }
+      
       setOrchestratorResults(sorted);
       setPropertiesFoundCount(sorted.length);
       setApartments(allDbApartments);
 
       console.log('✅ [STEP 4 COMPLETE] orchestratorResults NOW:', sorted.length);
       console.log('✅ Valid coordinates:', sorted.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).length);
-
-      if (sorted.length === 20) {
-        console.error('❌❌❌ ORCHESTRATOR RESULTS TRUNCATED TO 20 ❌❌❌');
-      }
 
       console.log('═══════════════════════════════════════════════════════');
 

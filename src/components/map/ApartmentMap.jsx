@@ -67,28 +67,25 @@ export default function ApartmentMap({
   selectedId,
   language = 'en'
 }) {
-  // CRITICAL DEBUG - LOG EVERYTHING
-  console.log('🗺️🗺️🗺️ [APARTMENTMAP RENDER] 🗺️🗺️🗺️');
-  console.log('📍 Total apartments received:', apartments.length);
-  
-  if (apartments.length === 20) {
-    console.error('❌❌❌ MAP RECEIVED EXACTLY 20 APARTMENTS - TRUNCATION DETECTED ❌❌❌');
-  }
-  
-  const validCoords = apartments.filter(a => {
-    const hasLat = a.lat !== undefined && a.lat !== null && !isNaN(a.lat);
-    const hasLng = a.lng !== undefined && a.lng !== null && !isNaN(a.lng);
-    return hasLat && hasLng;
-  });
-  
-  console.log('✅ Valid coordinates:', validCoords.length);
-  console.log('📊 Sample (first 3):', apartments.slice(0, 3).map(a => ({
-    id: a.id,
-    lat: a.lat,
-    lng: a.lng,
-    price: a.price
-  })));
-  console.log('═══════════════════════════════════');
+  // CRITICAL ASSERTION - Detect 20-item limit in map
+  React.useEffect(() => {
+    console.log('🗺️ [APARTMENTMAP] Received apartments:', apartments.length);
+    
+    if (apartments.length === 20) {
+      console.error('🚨🚨🚨 CRITICAL MAP ASSERTION FAILED 🚨🚨🚨');
+      console.error('Map received EXACTLY 20 apartments - implicit limit suspected');
+      console.error('Stack trace:', new Error().stack);
+    }
+    
+    const validCoords = apartments.filter(a => {
+      const hasLat = a.lat !== undefined && a.lat !== null && !isNaN(a.lat);
+      const hasLng = a.lng !== undefined && a.lng !== null && !isNaN(a.lng);
+      return hasLat && hasLng;
+    });
+    
+    console.log('🗺️ [APARTMENTMAP] Valid coordinates:', validCoords.length);
+    console.log('🗺️ [APARTMENTMAP] Will render', validCoords.length, 'markers');
+  }, [apartments]);
   const labels = {
     en: {
       properties: 'properties',
@@ -139,15 +136,21 @@ export default function ApartmentMap({
         />
         <MapUpdater center={center} zoom={zoom} />
 
-        {/* CLUSTERING TEMPORARILY DISABLED - DIRECT RENDER */}
+        {/* CLUSTERING DISABLED - DIRECT MARKER RENDER (NO LIMITS) */}
         {(() => {
-          console.log('🗺️ [DIRECT RENDER] About to render', apartments.length, 'markers');
           const markersToRender = apartments.filter(apt => {
             const hasValidLat = apt.lat !== undefined && apt.lat !== null && !isNaN(parseFloat(apt.lat));
             const hasValidLng = apt.lng !== undefined && apt.lng !== null && !isNaN(parseFloat(apt.lng));
             return hasValidLat && hasValidLng;
           });
-          console.log('🗺️ [DIRECT RENDER] Valid markers:', markersToRender.length);
+
+          console.log('🗺️ [MARKER RENDER] Input:', apartments.length, '→ Valid:', markersToRender.length);
+
+          // CRITICAL ASSERTION
+          if (markersToRender.length === 20 && apartments.length === 20) {
+            console.error('🚨 CRITICAL: Rendering exactly 20 markers from exactly 20 apartments');
+            console.error('🚨 This indicates upstream truncation in the data pipeline');
+          }
 
           return markersToRender.map((apt) => {
             return (
