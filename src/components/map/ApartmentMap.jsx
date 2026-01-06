@@ -110,9 +110,9 @@ export default function ApartmentMap({
 
 
       {/* Properties Counter */}
-      <div className="absolute top-4 left-4 z-[1000] bg-white dark:bg-gray-800 px-4 py-2 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-          Showing {apartments.length} properties from Google Sheets
+      <div className="absolute top-4 left-4 z-[1000] bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/90 dark:to-cyan-900/90 px-4 py-2 rounded-xl shadow-lg border-2 border-blue-300 dark:border-blue-600">
+        <p className="text-sm font-bold text-blue-900 dark:text-blue-100">
+          📍 {apartments.length} properties from Google Sheets
         </p>
       </div>
 

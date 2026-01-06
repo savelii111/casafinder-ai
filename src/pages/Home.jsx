@@ -111,12 +111,12 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // BACKEND FUNCTION - Bypass SDK 20-item limit via service role
+  // BACKEND FUNCTION - Google Sheets as ONLY source
   const { data: dbApartments = [] } = useQuery({
       queryKey: ['apartmentsFromSheets'],
       queryFn: async () => {
         console.log('═══════════════════════════════════════════════════════');
-        console.log('🟦 [SHEETS FETCH] Reading Google Sheet (Source of Truth)');
+        console.log('🟦 [SHEETS FETCH] Reading Google Sheet (ONLY SOURCE)');
         console.log('═══════════════════════════════════════════════════════');
 
         const startTime = Date.now();
@@ -124,28 +124,59 @@ export default function Home() {
         try {
           const spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
           if (!spreadsheetId) {
-            console.warn('[SHEETS FETCH] No spreadsheetId in localStorage (rentai_spreadsheet_id)');
+            console.error('❌ [SHEETS FETCH] NO SPREADSHEET ID IN LOCALSTORAGE');
+            console.error('   Key: rentai_spreadsheet_id');
+            console.error('   Please export to Sheets first using the button');
+            setPaginationStats({
+              method: 'Google Sheets Source',
+              totalFetched: 0,
+              rawCount: 0,
+              duration: Date.now() - startTime,
+              error: 'NO_SPREADSHEET_ID'
+            });
             return [];
           }
-          const result = await base44.functions.invoke('getListingsFromGoogleSheets', { spreadsheetId, sheetName: 'Listings' });
+          
+          console.log(`📊 [SHEETS FETCH] Using spreadsheetId: ${spreadsheetId}`);
+          
+          const result = await base44.functions.invoke('getListingsFromGoogleSheets', { 
+            spreadsheetId, 
+            sheetName: 'Listings' 
+          });
 
+          const rawCount = result.data.rawCount || 0;
           const totalFetched = result.data.count || (result.data.listings?.length || 0);
+          const withCoords = result.data.withCoords || (result.data.listings || []).filter(a => a.lat && a.lng).length;
+          
           const stats = {
             method: 'Google Sheets Source',
+            rawCount,
             totalFetched,
+            withCoords,
             duration: Date.now() - startTime
           };
 
         console.log('═══════════════════════════════════════════════════════');
         console.log(`✅ [STAGE 1: SHEETS FETCH] Complete`);
         console.log(`   Method: Google Sheets`);
-        console.log(`   Total apartments: ${totalFetched}`);
-        console.log(`   With coordinates: ${(result.data.listings || []).filter(a => a.lat && a.lng).length}`);
+        console.log(`   RAW rows from Sheets: ${rawCount}`);
+        console.log(`   After normalization: ${totalFetched}`);
+        console.log(`   With valid coordinates: ${withCoords}`);
         console.log(`   Frontend duration: ${stats.duration}ms`);
         console.log('═══════════════════════════════════════════════════════');
 
-        // CRITICAL VALIDATION
-        if (totalFetched === 20) {
+        // CRITICAL DIAGNOSTICS
+        if (rawCount === 0) {
+          console.error('🚨 CRITICAL: Google Sheets returned ZERO rows');
+          console.error('   Check:');
+          console.error('   1. Sheet name is "Listings" (exact match)');
+          console.error('   2. Spreadsheet ID is correct');
+          console.error('   3. Sheet has data rows (not just header)');
+        } else if (rawCount > 0 && totalFetched === 0) {
+          console.error('🚨 CRITICAL: Raw rows exist but ALL filtered out');
+          console.error(`   Raw: ${rawCount}, Normalized: ${totalFetched}`);
+          console.error('   Check normalization logic');
+        } else if (totalFetched === 20) {
           throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
         } else if (totalFetched > 20) {
           console.log(`✅✅✅ SUCCESS: Loaded ${totalFetched} from Sheets (no limit) ✅✅✅`);
@@ -159,8 +190,9 @@ export default function Home() {
       } catch (error) {
         console.error('[BACKEND FETCH] Error:', error);
         setPaginationStats({
-          method: 'Backend Service Role',
+          method: 'Google Sheets Source',
           totalFetched: 0,
+          rawCount: 0,
           duration: Date.now() - startTime,
           error: error.message
         });
@@ -722,60 +754,74 @@ export default function Home() {
 
       {/* Cursor Pagination Stats Display */}
       {paginationStats && (
-        <div className="fixed top-20 left-4 z-[60] bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/95 dark:to-blue-900/95 border-2 border-purple-400 dark:border-purple-600 rounded-xl shadow-2xl max-w-md backdrop-blur-sm">
+        <div className="fixed top-20 left-4 z-[60] bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/95 dark:to-cyan-900/95 border-2 border-blue-400 dark:border-blue-600 rounded-xl shadow-2xl max-w-md backdrop-blur-sm">
           <div className="px-4 py-3">
-            <h3 className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
-              🚀 Cursor Pagination
+            <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+              📊 Google Sheets Pipeline
             </h3>
-            <div className="space-y-1 text-xs font-mono text-purple-800 dark:text-purple-200">
-              <div className="flex justify-between border-b border-purple-200 dark:border-purple-700 pb-1">
-                <span>Batches:</span>
-                <strong>{paginationStats.batches || 'N/A'}</strong>
+            <div className="space-y-1 text-xs font-mono text-blue-800 dark:text-blue-200">
+              <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
+                <span>Raw Rows from Sheets:</span>
+                <strong className={paginationStats.rawCount === 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>
+                  {paginationStats.rawCount || 0}
+                </strong>
               </div>
-              <div className="border-t-2 border-green-400 dark:border-green-600 pt-2 mt-2">
-                <div className="flex justify-between font-bold">
-                  <span>TOTAL FETCHED:</span>
-                  <span className={paginationStats.totalFetched === 20 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>
-                    {paginationStats.totalFetched}
-                  </span>
+              <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
+                <span>After Normalization:</span>
+                <strong className={paginationStats.totalFetched === 0 ? 'text-red-600 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}>
+                  {paginationStats.totalFetched || 0}
+                </strong>
+              </div>
+              <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
+                <span>With Coordinates:</span>
+                <strong className="text-blue-700 dark:text-blue-400">
+                  {paginationStats.withCoords || 0}
+                </strong>
+              </div>
+              
+              {paginationStats.rawCount === 0 && (
+                <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
+                  <p className="text-red-800 dark:text-red-200 font-bold">🚨 ZERO rows from Sheets!</p>
+                  <p className="text-xs mt-1">Check sheet name & ID</p>
                 </div>
-              </div>
+              )}
+              
+              {paginationStats.rawCount > 0 && paginationStats.totalFetched === 0 && (
+                <div className="bg-orange-100 dark:bg-orange-900/50 border border-orange-300 dark:border-orange-700 rounded px-2 py-1 mt-1">
+                  <p className="text-orange-800 dark:text-orange-200 font-bold">⚠️ All rows filtered out!</p>
+                  <p className="text-xs mt-1">Raw: {paginationStats.rawCount}, Normalized: 0</p>
+                </div>
+              )}
+              
               {paginationStats.totalFetched === 20 && (
                 <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
-                  <p className="text-red-800 dark:text-red-200 font-bold">⚠️ Всё ещё лимит 20!</p>
+                  <p className="text-red-800 dark:text-red-200 font-bold">⚠️ Exactly 20 - limit detected!</p>
                 </div>
               )}
+              
               {paginationStats.totalFetched > 20 && (
                 <div className="bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700 rounded px-2 py-1 mt-1">
-                  <p className="text-green-800 dark:text-green-200 font-bold">✅ Лимит снят!</p>
+                  <p className="text-green-800 dark:text-green-200 font-bold">✅ No limits active!</p>
                 </div>
               )}
+              
               {paginationStats.error && (
                 <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
-                  <p className="text-red-800 dark:text-red-200 text-xs">❌ {paginationStats.error}</p>
+                  <p className="text-red-800 dark:text-red-200 text-xs font-bold">❌ {paginationStats.error}</p>
                 </div>
               )}
-              <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                <span>Frontend:</span>
+              
+              <div className="flex justify-between text-gray-600 dark:text-gray-400 pt-1 border-t border-blue-200 dark:border-blue-700">
+                <span>Duration:</span>
                 <span>{paginationStats.duration}ms</span>
               </div>
-              {paginationStats.backendDuration && (
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Backend:</span>
-                  <span>{paginationStats.backendDuration}ms</span>
-                </div>
-              )}
             </div>
           </div>
           {orchestratorResults.length > 0 && (
             <div className="bg-green-100 dark:bg-green-900/60 border-t-2 border-green-400 dark:border-green-600 px-4 py-2 rounded-b-xl">
               <div className="space-y-1 text-xs font-mono font-bold">
                 <div className="flex justify-between text-green-900 dark:text-green-100">
-                  <span>→ Чат:</span>
-                  <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{propertiesFoundCount}</span>
-                </div>
-                <div className="flex justify-between text-green-900 dark:text-green-100">
-                  <span>→ Карта:</span>
+                  <span>→ Map markers:</span>
                   <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{orchestratorResults.length}</span>
                 </div>
               </div>
