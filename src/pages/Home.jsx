@@ -779,9 +779,9 @@ export default function Home() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {propertiesFoundCount || filteredApartments.length} {language === 'es' ? 'propiedades encontradas' : language === 'ru' ? 'объектов найдено' : 'properties found'}
                 </p>
-                <p className="text-xs font-mono text-gray-500">
-                  Map: {orchestratorResults.length} markers
-                </p>
+                <Badge className={orchestratorResults.length === 20 ? "bg-red-500" : "bg-green-500"}>
+                  {orchestratorResults.length} на карте
+                </Badge>
               </div>
 
               {/* Mobile Apartment List */}
@@ -873,6 +873,11 @@ export default function Home() {
                         onUpgradeClick={() => setShowUpgradeModal(true)}
                       />
                     </div>
+                    
+                    {/* Map Markers Counter Badge */}
+                    <Badge className={`text-lg px-4 py-2 ${orchestratorResults.length === 20 ? 'bg-red-500' : 'bg-green-500'} text-white font-bold shadow-xl`}>
+                      🗺️ {orchestratorResults.length} маркеров
+                    </Badge>
                   </div>
 
                   {/* Demo Mode Banner */}
@@ -911,11 +916,16 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-6">
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-2">
-                      <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {language === 'es' ? `🏠 Todas las Propiedades Encontradas (${orchestratorResults.length})` : 
-                         language === 'ru' ? `🏠 Все Найденные Объекты (${orchestratorResults.length})` : 
-                         `🏠 All Properties Found (${orchestratorResults.length})`}
-                      </h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                          {language === 'es' ? `🏠 Todas las Propiedades Encontradas` : 
+                           language === 'ru' ? `🏠 Все Найденные Объекты` : 
+                           `🏠 All Properties Found`}
+                        </h2>
+                        <Badge className={`text-xl px-4 py-2 ${orchestratorResults.length === 20 ? 'bg-red-500' : 'bg-green-500'} text-white font-bold`}>
+                          {orchestratorResults.length}
+                        </Badge>
+                      </div>
                       <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
                         {language === 'es' ? 'IA Ordenado' : language === 'ru' ? 'Сортировано ИИ' : 'AI Sorted'}
                       </Badge>
