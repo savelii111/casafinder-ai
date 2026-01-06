@@ -122,31 +122,39 @@ export default function Home() {
       
       try {
         const result = await base44.functions.invoke('fetchAllApartments');
-        
+
+        const totalFetched = result.data.apartments.length;
         const stats = {
           method: 'Backend Service Role',
-          totalFetched: result.data.apartments.length,
+          totalFetched,
           duration: Date.now() - startTime,
-          backendDuration: result.data.duration
+          backendDuration: result.data.duration,
+          pages: result.data.pages
         };
-        
+
         console.log('═══════════════════════════════════════════════════════');
-        console.log(`✅ [BACKEND FETCH] Complete`);
-        console.log(`   Total apartments: ${stats.totalFetched}`);
+        console.log(`✅ [STAGE 1: BACKEND FETCH] Complete`);
+        console.log(`   Method: Service Role with Pagination`);
+        console.log(`   Pages fetched: ${stats.pages}`);
+        console.log(`   Total apartments: ${totalFetched}`);
+        console.log(`   With coordinates: ${result.data.apartments.filter(a => a.lat && a.lng).length}`);
         console.log(`   Frontend duration: ${stats.duration}ms`);
         console.log(`   Backend duration: ${stats.backendDuration}ms`);
         console.log('═══════════════════════════════════════════════════════');
-        
+
         // CRITICAL VALIDATION
-        if (stats.totalFetched === 20) {
-          console.error('🚨🚨🚨 BACKEND STILL LIMITED TO 20 🚨🚨🚨');
-        } else if (stats.totalFetched > 20) {
-          console.log('✅✅✅ SUCCESS: Backend bypassed 20-item limit ✅✅✅');
+        if (totalFetched === 20) {
+          console.error('🚨🚨🚨 FAILURE: BACKEND STILL LIMITED TO 20 🚨🚨🚨');
+          console.error('This indicates pagination is not working');
+        } else if (totalFetched > 20) {
+          console.log(`✅✅✅ SUCCESS: Loaded ${totalFetched} apartments (bypassed 20-item limit) ✅✅✅`);
+        } else {
+          console.warn(`⚠️ WARNING: Only ${totalFetched} apartments in database`);
         }
-        
+
         setPaginationStats(stats);
         return result.data.apartments;
-        
+
       } catch (error) {
         console.error('[BACKEND FETCH] Error:', error);
         setPaginationStats({
@@ -176,8 +184,17 @@ export default function Home() {
 
   useEffect(() => {
     if (dbApartments.length > 0) {
-      console.log('🔵 [STATE UPDATE] Setting apartments state:', dbApartments.length);
+      console.log('═══════════════════════════════════════════════════════');
+      console.log(`🔵 [STAGE 2: STATE UPDATE] Setting apartments state`);
+      console.log(`   Total: ${dbApartments.length}`);
+      console.log(`   With valid coords: ${dbApartments.filter(a => a.lat && a.lng).length}`);
+      console.log('═══════════════════════════════════════════════════════');
       setApartments(dbApartments);
+
+      // CRITICAL: Validate no truncation
+      if (dbApartments.length === 20) {
+        console.error('🚨 STATE UPDATE: Received exactly 20 apartments - possible truncation');
+      }
     }
   }, [dbApartments]);
 
@@ -275,18 +292,23 @@ export default function Home() {
       trackSearch(content, 0);
       updateAIRequestsMutation.mutate();
 
-      console.log('🚀🚀🚀 NEW SEARCH PIPELINE START 🚀🚀🚀');
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🚀 [STAGE 3: SEARCH ORCHESTRATOR] START');
       console.log('═══════════════════════════════════════════════════════');
 
-      // STEP 1: Use pre-fetched aggregated apartments from useQuery
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('🔍 [SEARCH PIPELINE] Using aggregated apartments from cache');
+      // STEP 1: Source data validation
       const allDbApartments = apartments;
-      console.log(`📊 [STEP 1] Total apartments available: ${allDbApartments.length}`);
-      console.log('═══════════════════════════════════════════════════════');
+      console.log(`📊 [STEP 1: SOURCE] Total apartments: ${allDbApartments.length}`);
 
-      // STEP 2: Filter AFTER full aggregation
-      console.log('🔍 [STEP 2] Applying filters to FULL dataset');
+      if (allDbApartments.length === 20) {
+        console.error('🚨 CRITICAL: Source has exactly 20 apartments - upstream truncation!');
+      }
+      if (allDbApartments.length === 0) {
+        console.error('🚨 CRITICAL: No apartments in source data!');
+      }
+
+      // STEP 2: Apply user filters (NO LIMITS)
+      console.log(`🔍 [STEP 2: FILTER] Applying filters to ALL ${allDbApartments.length} apartments`);
       const filtered = allDbApartments.filter(apt => {
         if (filters.priceMin && apt.price < filters.priceMin) return false;
         if (filters.priceMax && apt.price > filters.priceMax) return false;
@@ -297,34 +319,49 @@ export default function Home() {
         }
         return true;
       });
-      console.log(`📊 [STEP 2] Filtered: ${allDbApartments.length} → ${filtered.length}`);
+      console.log(`✓ [STEP 2: FILTER] Result: ${filtered.length} apartments`);
 
-      // STEP 3: Sort by AI score
-      console.log('⚡ [STEP 3] Sorting by AI score');
+      if (filtered.length === 20) {
+        console.error('🚨 CRITICAL: Filter output exactly 20 - check filter logic!');
+      }
+
+      // STEP 3: Sort by AI score (NO LIMITS)
+      console.log(`⚡ [STEP 3: SORT] Sorting ALL ${filtered.length} apartments by AI score`);
       const sorted = [...filtered].sort((a, b) => {
         const scoreA = (10 - (a.riskScore || 5)) + (a.marketPriceDiff < 0 ? 5 : 0);
         const scoreB = (10 - (b.riskScore || 5)) + (b.marketPriceDiff < 0 ? 5 : 0);
         return scoreB - scoreA;
       });
-      console.log(`📊 [STEP 3] Sorted: ${sorted.length} items`);
+      console.log(`✓ [STEP 3: SORT] Result: ${sorted.length} apartments sorted`);
 
-      // STEP 4: Set orchestrator results
-      console.log('💾 [STEP 4] Setting orchestratorResults');
+      if (sorted.length === 20) {
+        console.error('🚨 CRITICAL: Sort output exactly 20 - possible hidden limit!');
+      }
+
+      // STEP 4: Set orchestrator results (NO TRUNCATION)
+      console.log(`💾 [STEP 4: OUTPUT] Setting orchestratorResults with ALL ${sorted.length} apartments`);
       setOrchestratorResults(sorted);
       setPropertiesFoundCount(sorted.length);
 
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('✅ [PIPELINE COMPLETE]');
-      console.log(`   Source: ${allDbApartments.length} apartments`);
-      console.log(`   After filters: ${filtered.length}`);
-      console.log(`   Final sorted: ${sorted.length}`);
-      console.log(`   Valid coords: ${sorted.filter(a => a.lat && a.lng).length}`);
-      console.log('═══════════════════════════════════════════════════════');
+      const withCoords = sorted.filter(a => a.lat && a.lng).length;
+      console.log(`   └─ With valid coordinates: ${withCoords}`);
+      console.log(`   └─ Will render on map: ${withCoords}`);
 
       console.log('═══════════════════════════════════════════════════════');
+      console.log('✅ [STAGE 3: ORCHESTRATOR] COMPLETE');
+      console.log(`   Input: ${allDbApartments.length} apartments`);
+      console.log(`   Filtered: ${filtered.length} apartments`);
+      console.log(`   Sorted: ${sorted.length} apartments`);
+      console.log(`   Coordinates: ${withCoords} apartments`);
+      console.log('═══════════════════════════════════════════════════════');
 
-      // STEP 5: Call DeepSeek - pass totalCount only
-      console.log('🤖 [STEP 5] Calling DeepSeek with totalCount:', sorted.length);
+      // STEP 5: Call DeepSeek AI with FULL count
+      console.log('═══════════════════════════════════════════════════════');
+      console.log(`🤖 [STAGE 4: AI ANALYSIS] Calling DeepSeek`);
+      console.log(`   Total apartments to analyze: ${sorted.length}`);
+      console.log(`   Sending sample of first 10 for context`);
+      console.log('═══════════════════════════════════════════════════════');
+
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
@@ -341,10 +378,15 @@ export default function Home() {
 
       const assistantMessage = { 
         role: 'assistant', 
-        content: deepseekResult.data?.response || `Found exactly ${sorted.length} properties. All ${sorted.length} are shown on the map and list below.`
+        content: deepseekResult.data?.response || `Found exactly ${sorted.length} properties in Madrid. All ${sorted.length} are shown on the map and list below - scroll to see them all!`
       };
 
-      console.log('💬 [STEP 5] AI Response generated. Count mentioned:', sorted.length);
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('✅ [STAGE 4: AI ANALYSIS] Complete');
+      console.log(`   AI mentioned count: ${sorted.length}`);
+      console.log(`   Response length: ${assistantMessage.content.length} chars`);
+      console.log('═══════════════════════════════════════════════════════');
+
       setMessages(prev => [...prev, assistantMessage]);
 
       // Save search to history
@@ -484,6 +526,8 @@ export default function Home() {
   };
 
   const filteredApartments = React.useMemo(() => {
+    console.log(`🔄 [FILTERED_APARTMENTS] Filtering ${apartments.length} apartments...`);
+
     const result = apartments.filter(apt => {
       // Price filters
       if (filters.priceMin && apt.price < filters.priceMin) return false;
@@ -517,10 +561,15 @@ export default function Home() {
 
       return true;
     });
-    
-    console.log('🔄 [FILTERED_APARTMENTS MEMO] Input:', apartments.length, '→ Output:', result.length);
-    if (result.length === 20) console.error('❌❌❌ FILTERED_APARTMENTS TRUNCATED TO 20 ❌❌❌');
-    
+
+    console.log(`✓ [FILTERED_APARTMENTS] Result: ${result.length} apartments (${apartments.length} → ${result.length})`);
+
+    // CRITICAL VALIDATION
+    if (result.length === 20 && apartments.length > 20) {
+      console.error('🚨🚨🚨 FILTERED_APARTMENTS TRUNCATED TO 20 🚨🚨🚨');
+      console.error('Check filter logic for hidden limits!');
+    }
+
     return result;
   }, [apartments, filters, userPlan]);
 

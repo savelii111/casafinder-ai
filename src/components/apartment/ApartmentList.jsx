@@ -51,24 +51,43 @@ export default function ApartmentList({
   const t = labels[language] || labels.en;
 
   const sortedApartments = React.useMemo(() => {
-    console.log('📋 [APARTMENTLIST] Input apartments:', apartments?.length || 0);
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('📋 [APARTMENT LIST] Sorting');
+    console.log(`   Input: ${apartments?.length || 0} apartments`);
+    console.log(`   Sort by: ${sortBy}`);
+
     if (!apartments) return [];
     const sorted = [...apartments];
-    
+
+    let result;
     switch (sortBy) {
       case 'price-asc':
-        return sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+        result = sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
       case 'price-desc':
-        return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+        result = sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
       case 'rooms':
-        return sorted.sort((a, b) => (b.rooms || 0) - (a.rooms || 0));
+        result = sorted.sort((a, b) => (b.rooms || 0) - (a.rooms || 0));
+        break;
       case 'risk-asc':
-        return sorted.sort((a, b) => (a.riskScore || 5) - (b.riskScore || 5));
+        result = sorted.sort((a, b) => (a.riskScore || 5) - (b.riskScore || 5));
+        break;
       case 'risk-desc':
-        return sorted.sort((a, b) => (b.riskScore || 5) - (a.riskScore || 5));
+        result = sorted.sort((a, b) => (b.riskScore || 5) - (a.riskScore || 5));
+        break;
       default:
-        return sorted;
+        result = sorted;
     }
+
+    console.log(`   Output: ${result.length} apartments`);
+    console.log('═══════════════════════════════════════════════════════');
+
+    if (result.length === 20 && apartments.length > 20) {
+      console.error('🚨 APARTMENT LIST: Output truncated to 20!');
+    }
+
+    return result;
   }, [apartments, sortBy]);
 
   return (
@@ -110,10 +129,14 @@ export default function ApartmentList({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {(() => {
-            console.log('📋 [APARTMENTLIST] Rendering', sortedApartments.length, 'cards');
+            console.log('═══════════════════════════════════════════════════════');
+            console.log(`📋 [APARTMENT CARDS] Rendering ${sortedApartments.length} cards`);
+            console.log('═══════════════════════════════════════════════════════');
+
             if (sortedApartments.length === 20) {
-              console.error('❌❌❌ APARTMENTLIST RENDERING EXACTLY 20 ❌❌❌');
+              console.error('🚨 APARTMENT CARDS: Rendering exactly 20 - possible truncation!');
             }
+
             return sortedApartments.map((apt, index) => (
             <motion.div
               key={apt.id}

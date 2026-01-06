@@ -68,7 +68,15 @@ export default function ApartmentMap({
   language = 'en'
 }) {
   React.useEffect(() => {
-    console.log('🗺️ [MAP] Received apartments:', apartments.length);
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🗺️ [STAGE 5: MAP RENDER] Received data');
+    console.log(`   Total apartments: ${apartments.length}`);
+    console.log(`   With coordinates: ${apartments.filter(a => a.lat && a.lng).length}`);
+    console.log('═══════════════════════════════════════════════════════');
+    
+    if (apartments.length === 20) {
+      console.error('🚨 MAP: Received exactly 20 apartments - possible upstream truncation!');
+    }
   }, [apartments]);
   const labels = {
     en: {
@@ -120,7 +128,7 @@ export default function ApartmentMap({
         />
         <MapUpdater center={center} zoom={zoom} />
 
-        {/* Direct marker rendering - no clustering, no limits */}
+        {/* Direct marker rendering - NO CLUSTERING, NO LIMITS */}
         {(() => {
           const markersToRender = apartments.filter(apt => {
             const hasValidLat = apt.lat !== undefined && apt.lat !== null && !isNaN(parseFloat(apt.lat));
@@ -128,7 +136,16 @@ export default function ApartmentMap({
             return hasValidLat && hasValidLng;
           });
 
-          console.log('🗺️ [MAP RENDER]', markersToRender.length, 'markers');
+          console.log('═══════════════════════════════════════════════════════');
+          console.log(`🗺️ [STAGE 6: MAP MARKERS] Rendering`);
+          console.log(`   Total input: ${apartments.length}`);
+          console.log(`   Valid coordinates: ${markersToRender.length}`);
+          console.log(`   Will render ${markersToRender.length} markers`);
+          console.log('═══════════════════════════════════════════════════════');
+          
+          if (markersToRender.length === 20 && apartments.length > 20) {
+            console.error('🚨 MAP MARKERS: Rendering exactly 20 despite more input!');
+          }
 
           return markersToRender.map((apt) => {
             return (
