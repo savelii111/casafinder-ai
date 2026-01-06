@@ -109,13 +109,36 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // Load apartments from database - ABSOLUTELY NO LIMIT
+  // Load apartments from database - CURSOR-BASED PAGINATION (bypasses 20-item limit)
   const { data: dbApartments = [] } = useQuery({
     queryKey: ['apartments'],
     queryFn: async () => {
-      const result = await base44.entities.Apartment.list('-updated_date', 99999);
-      console.log('🔵 [DB QUERY] Fetched from database:', result.length);
-      return result;
+      console.log('🔵 [PAGINATION] Starting cursor-based fetch...');
+      let allApartments = [];
+      let hasMore = true;
+      let skip = 0;
+      const batchSize = 20;
+      
+      while (hasMore) {
+        const batch = await base44.entities.Apartment.list('-updated_date', batchSize, skip);
+        console.log(`🔵 [BATCH ${Math.floor(skip / batchSize) + 1}] Fetched ${batch.length} items (skip=${skip})`);
+        
+        if (batch.length === 0) {
+          hasMore = false;
+        } else {
+          allApartments = [...allApartments, ...batch];
+          skip += batchSize;
+          
+          // Safety: stop after 1000 items to prevent infinite loop
+          if (allApartments.length >= 1000) {
+            console.warn('⚠️ [PAGINATION] Stopped at 1000 items (safety limit)');
+            hasMore = false;
+          }
+        }
+      }
+      
+      console.log('✅ [PAGINATION] Complete. Total fetched:', allApartments.length);
+      return allApartments;
     },
   });
 
@@ -237,9 +260,26 @@ export default function Home() {
       console.log('🚀🚀🚀 NEW SEARCH PIPELINE START 🚀🚀🚀');
       console.log('═══════════════════════════════════════════════════════');
 
-      // STEP 1: Get ALL apartments from database (NO LIMIT)
-      const allDbApartments = await base44.entities.Apartment.list('-updated_date', 99999);
-      PipelineValidator.validateNoTruncation(allDbApartments, 'DB FETCH');
+      // STEP 1: Fetch ALL apartments using cursor pagination
+      console.log('🔵 [SEARCH] Fetching all apartments via cursor pagination...');
+      let allDbApartments = [];
+      let hasMore = true;
+      let skip = 0;
+      const batchSize = 20;
+
+      while (hasMore) {
+        const batch = await base44.entities.Apartment.list('-updated_date', batchSize, skip);
+        if (batch.length === 0) {
+          hasMore = false;
+        } else {
+          allDbApartments = [...allDbApartments, ...batch];
+          skip += batchSize;
+          if (allDbApartments.length >= 1000) break; // safety limit
+        }
+      }
+
+      console.log('✅ [SEARCH] Cursor pagination complete:', allDbApartments.length);
+      PipelineValidator.validateNoTruncation(allDbApartments, 'CURSOR FETCH');
 
       // STEP 2: Filter based on user query and filters
       const filtered = allDbApartments.filter(apt => {
