@@ -5,65 +5,78 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     
     console.log('═══════════════════════════════════════════════════════');
-    console.log('🔵 [BACKEND FETCH] Starting pagination loop');
+    console.log('🔵 [BACKEND FETCH] Starting cursor-based pagination');
     console.log('═══════════════════════════════════════════════════════');
     
     const startTime = Date.now();
     const allApartments = [];
-    let page = 0;
-    const pageSize = 1000;
+    let cursor = 0;
+    const batchSize = 1000;
+    let batchCount = 0;
     let hasMore = true;
     
-    // Paginated fetch loop - bypass ANY limit
+    // Cursor-based pagination - fetch ALL records
     while (hasMore) {
-      console.log(`📄 [PAGE ${page + 1}] Fetching batch (skip: ${page * pageSize}, limit: ${pageSize})`);
+      batchCount++;
+      console.log(`📄 [BATCH ${batchCount}] Fetching from cursor ${cursor}, limit ${batchSize}`);
       
-      const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', pageSize, page * pageSize);
+      const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', batchSize, cursor);
       
-      console.log(`📄 [PAGE ${page + 1}] Received ${batch.length} items`);
+      console.log(`📄 [BATCH ${batchCount}] Received ${batch.length} apartments`);
       
       if (batch.length === 0) {
+        console.log(`✓ [BATCH ${batchCount}] No more data, stopping`);
         hasMore = false;
         break;
       }
       
       allApartments.push(...batch);
       
-      // If we got less than pageSize, we've reached the end
-      if (batch.length < pageSize) {
+      // If we got less than batchSize, we've reached the end
+      if (batch.length < batchSize) {
+        console.log(`✓ [BATCH ${batchCount}] Received ${batch.length} < ${batchSize}, last batch`);
         hasMore = false;
+      } else {
+        // Move cursor forward
+        cursor += batch.length;
+        console.log(`→ [BATCH ${batchCount}] Moving cursor to ${cursor}`);
       }
       
-      page++;
-      
-      // Safety limit to prevent infinite loops
-      if (page > 100) {
-        console.error('🚨 Safety limit reached - stopping at 100 pages');
+      // Safety limit to prevent infinite loops (100k apartments max)
+      if (batchCount > 100) {
+        console.error('🚨 Safety limit reached - stopping at 100 batches');
         break;
       }
     }
     
     const duration = Date.now() - startTime;
+    const withCoords = allApartments.filter(a => a.lat && a.lng).length;
     
     console.log('═══════════════════════════════════════════════════════');
     console.log(`✅ [BACKEND FETCH] Complete`);
-    console.log(`   Total pages fetched: ${page}`);
+    console.log(`   Method: Cursor-based pagination`);
+    console.log(`   Batches fetched: ${batchCount}`);
     console.log(`   Total apartments: ${allApartments.length}`);
+    console.log(`   With coordinates: ${withCoords}`);
     console.log(`   Duration: ${duration}ms`);
     console.log('═══════════════════════════════════════════════════════');
     
     // CRITICAL VALIDATION
     if (allApartments.length === 20) {
-      console.error('🚨🚨🚨 STILL EXACTLY 20 - PAGINATION FAILED 🚨🚨🚨');
+      console.error('🚨🚨🚨 FAILURE: STILL EXACTLY 20 - PAGINATION NOT WORKING 🚨🚨🚨');
     } else if (allApartments.length > 20) {
-      console.log('✅✅✅ SUCCESS: Loaded ' + allApartments.length + ' apartments ✅✅✅');
+      console.log(`✅✅✅ SUCCESS: Bypassed 20-item limit (${allApartments.length} total) ✅✅✅`);
+    } else if (allApartments.length > 0) {
+      console.log(`⚠️ WARNING: Database has only ${allApartments.length} apartments`);
+    } else {
+      console.error('🚨 ERROR: No apartments found in database');
     }
     
     return Response.json({
       success: true,
       apartments: allApartments,
       count: allApartments.length,
-      pages: page,
+      batches: batchCount,
       duration,
       timestamp: new Date().toISOString()
     });

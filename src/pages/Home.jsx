@@ -125,17 +125,17 @@ export default function Home() {
 
         const totalFetched = result.data.apartments.length;
         const stats = {
-          method: 'Backend Service Role',
+          method: 'Backend Cursor Pagination',
           totalFetched,
           duration: Date.now() - startTime,
           backendDuration: result.data.duration,
-          pages: result.data.pages
+          batches: result.data.batches
         };
 
         console.log('═══════════════════════════════════════════════════════');
         console.log(`✅ [STAGE 1: BACKEND FETCH] Complete`);
-        console.log(`   Method: Service Role with Pagination`);
-        console.log(`   Pages fetched: ${stats.pages}`);
+        console.log(`   Method: Service Role + Cursor Pagination`);
+        console.log(`   Batches fetched: ${stats.batches}`);
         console.log(`   Total apartments: ${totalFetched}`);
         console.log(`   With coordinates: ${result.data.apartments.filter(a => a.lat && a.lng).length}`);
         console.log(`   Frontend duration: ${stats.duration}ms`);
@@ -660,12 +660,12 @@ export default function Home() {
         <div className="fixed top-20 left-4 z-[60] bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/95 dark:to-blue-900/95 border-2 border-purple-400 dark:border-purple-600 rounded-xl shadow-2xl max-w-md backdrop-blur-sm">
           <div className="px-4 py-3">
             <h3 className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
-              🚀 Backend Service Role
+              🚀 Cursor Pagination
             </h3>
             <div className="space-y-1 text-xs font-mono text-purple-800 dark:text-purple-200">
               <div className="flex justify-between border-b border-purple-200 dark:border-purple-700 pb-1">
-                <span>Method:</span>
-                <strong>{paginationStats.method}</strong>
+                <span>Batches:</span>
+                <strong>{paginationStats.batches || 'N/A'}</strong>
               </div>
               <div className="border-t-2 border-green-400 dark:border-green-600 pt-2 mt-2">
                 <div className="flex justify-between font-bold">
