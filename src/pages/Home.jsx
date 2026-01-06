@@ -84,6 +84,7 @@ export default function Home() {
   const [propertiesFoundCount, setPropertiesFoundCount] = useState(0);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [orchestratorResults, setOrchestratorResults] = useState([]);
+  const [paginationStats, setPaginationStats] = useState(null);
   
   const chatContainerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -117,6 +118,12 @@ export default function Home() {
       console.log('🔵 [CURSOR PAGINATION] START');
       console.log('═══════════════════════════════════════════════════════');
       
+      const stats = {
+        batches: [],
+        totalFetched: 0,
+        startTime: Date.now()
+      };
+      
       let allApartments = [];
       let batchNumber = 1;
       let skip = 0;
@@ -128,6 +135,7 @@ export default function Home() {
         const batch = await base44.entities.Apartment.list('-updated_date', limit, skip);
         
         console.log(`📦 [BATCH ${batchNumber}] Received: ${batch.length} items`);
+        stats.batches.push({ batchNumber, count: batch.length, skip });
         
         if (batch.length === 0) {
           console.log(`🛑 [BATCH ${batchNumber}] Empty batch - stopping pagination`);
@@ -151,12 +159,17 @@ export default function Home() {
         }
       }
       
+      stats.totalFetched = allApartments.length;
+      stats.duration = Date.now() - stats.startTime;
+      
       console.log('═══════════════════════════════════════════════════════');
       console.log(`✅ [CURSOR PAGINATION] COMPLETE`);
       console.log(`   Total batches: ${batchNumber}`);
       console.log(`   Total apartments: ${allApartments.length}`);
+      console.log(`   Duration: ${stats.duration}ms`);
       console.log('═══════════════════════════════════════════════════════');
       
+      setPaginationStats(stats);
       return allApartments;
     },
   });
