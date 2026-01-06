@@ -47,6 +47,7 @@ import SavedSearches from '@/components/search/SavedSearches';
 import PriceChart from '@/components/analytics/PriceChart';
 import GoogleAnalytics, { trackPropertySearch, trackUpgradeClick } from '@/components/analytics/GoogleAnalytics';
 import PipelineValidator from '@/components/utils/pipelineValidator';
+import PipelineDebugger from '@/components/debug/PipelineDebugger';
 
 // Sample apartments are now loaded from database
 
@@ -491,6 +492,13 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <GoogleAnalytics />
       {/* Header */}
+      {/* DEBUG MODE - Remove after fixing */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 z-[9999] max-w-md">
+          <PipelineDebugger />
+        </div>
+      )}
+
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-white/20 dark:border-gray-700/20">
         <div className="w-full px-4 py-3 lg:py-4">
           <div className="flex items-center justify-between">
