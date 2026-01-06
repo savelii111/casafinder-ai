@@ -278,18 +278,24 @@ export default function Home() {
 
       console.log('═══════════════════════════════════════════════════════');
 
-      // STEP 5: Call DeepSeek with EXACT count
+      // STEP 5: Call DeepSeek with ALL apartments (NO SLICE)
       console.log('🤖 [STEP 5] CALLING DEEPSEEK with totalCount:', sorted.length);
+      console.log('🤖 [STEP 5] Passing FULL array to DeepSeek:', sorted.length);
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
           query: content,
           language,
           totalCount: sorted.length,
-          apartments: sorted.slice(0, 10).map(apt => ({
+          apartments: sorted.map(apt => ({
             price: apt.price,
             rooms: apt.rooms,
             neighborhood: apt.neighborhood,
-            size: apt.size
+            size: apt.size,
+            riskScore: apt.riskScore,
+            floor: apt.floor,
+            hasElevator: apt.hasElevator,
+            furnished: apt.furnished,
+            pets_allowed: apt.pets_allowed
           }))
         })
       );
@@ -308,12 +314,12 @@ export default function Home() {
           user_email: user.email,
           query: content,
           filters: filters,
-          results_count: sortedByScore.length
+          results_count: sorted.length
         });
       }
 
       // Track in Google Analytics
-      trackPropertySearch(content, sortedByScore.length);
+      trackPropertySearch(content, sorted.length);
 
     } catch (error) {
       console.error('AI Error:', error);

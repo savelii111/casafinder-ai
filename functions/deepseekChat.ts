@@ -6,7 +6,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { query, language = 'en', totalCount = 0, apartments = [] } = body;
     
-    console.log('[DeepSeek] Chat request:', { query, language, totalCount, apartmentsCount: apartments.length });
+    console.log('🤖 [DEEPSEEK FUNCTION] Received request:');
+    console.log('🤖 totalCount param:', totalCount);
+    console.log('🤖 apartments.length:', apartments.length);
+    if (apartments.length === 20 && totalCount > 20) {
+      console.error('❌❌❌ DEEPSEEK RECEIVED 20 BUT TOTALCOUNT IS', totalCount, '❌❌❌');
+    }
     
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
 
@@ -31,19 +36,19 @@ Deno.serve(async (req) => {
 
     const userPrompt = `User query: "${query}"
 
-🔍 TOTAL PROPERTIES AVAILABLE: ${totalCount} (ALL shown on map + full list below)
+🔍 CRITICAL: ${totalCount} PROPERTIES TOTAL - ALL VISIBLE ON MAP & LIST
 
-Sample properties for context (${apartments.length} shown here, but user has access to ALL ${totalCount}):
+Properties data (${apartments.length} items):
 ${apartmentsContext}
 
-YOUR TASK:
-1. Acknowledge that ${totalCount} properties match the search
-2. Highlight the best 3-5 options from the sample above
-3. Give helpful advice about neighborhoods, prices, and what makes these properties valuable
-4. Remind user they can see ALL ${totalCount} properties on the interactive map and scrollable list
-5. Keep response natural, conversational, and under 200 words
+YOUR RESPONSE MUST:
+1. Start with: "I found ${totalCount} properties matching your search"
+2. Describe characteristics of the full dataset
+3. Highlight 3-5 best options with specific details
+4. Remind: "All ${totalCount} properties are visible on the interactive map and scrollable list below"
+5. Keep under 200 words, friendly tone
 
-IMPORTANT: User sees FULL dataset (${totalCount}), not just these samples.`;
+ABSOLUTE RULE: State exact count ${totalCount}, NOT "top 20" or any other number.`;
 
     console.log('[DeepSeek] Calling API...');
 
