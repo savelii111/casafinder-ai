@@ -147,18 +147,27 @@ export default function Home() {
           const rawCount = result.data.rawCount || 0;
           const totalFetched = result.data.count || (result.data.listings?.length || 0);
           const withCoords = result.data.withCoords || (result.data.listings || []).filter(a => a.lat && a.lng).length;
+          const documentTitle = result.data.documentTitle || 'Unknown';
+          const sheetName = result.data.sheetName || 'Unknown';
+          const availableSheets = result.data.availableSheets || [];
           
           const stats = {
             method: 'Google Sheets Source',
             rawCount,
             totalFetched,
             withCoords,
+            documentTitle,
+            sheetName,
+            availableSheets,
             duration: Date.now() - startTime
           };
 
         console.log('═══════════════════════════════════════════════════════');
         console.log(`✅ [STAGE 1: SHEETS FETCH] Complete`);
         console.log(`   Method: Google Sheets`);
+        console.log(`   Document: "${documentTitle}"`);
+        console.log(`   Sheet: "${sheetName}"`);
+        console.log(`   Available Sheets: ${availableSheets.join(', ')}`);
         console.log(`   RAW rows from Sheets: ${rawCount}`);
         console.log(`   After normalization: ${totalFetched}`);
         console.log(`   With valid coordinates: ${withCoords}`);
@@ -760,6 +769,18 @@ export default function Home() {
               📊 Google Sheets Pipeline
             </h3>
             <div className="space-y-1 text-xs font-mono text-blue-800 dark:text-blue-200">
+              {paginationStats.documentTitle && (
+                <div className="border-b border-blue-200 dark:border-blue-700 pb-1">
+                  <span className="text-xs opacity-75">Document:</span>
+                  <div className="font-semibold">{paginationStats.documentTitle}</div>
+                </div>
+              )}
+              {paginationStats.sheetName && (
+                <div className="border-b border-blue-200 dark:border-blue-700 pb-1">
+                  <span className="text-xs opacity-75">Sheet:</span>
+                  <div className="font-semibold">{paginationStats.sheetName}</div>
+                </div>
+              )}
               <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
                 <span>Raw Rows from Sheets:</span>
                 <strong className={paginationStats.rawCount === 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>
