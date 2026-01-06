@@ -110,99 +110,53 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // PRICE-BASED SHARDING - Bypass SDK 20-item limit with independent queries
+  // BACKEND FUNCTION - Bypass SDK 20-item limit via service role
   const { data: dbApartments = [] } = useQuery({
     queryKey: ['apartments'],
     queryFn: async () => {
       console.log('═══════════════════════════════════════════════════════');
-      console.log('🔷 [PRICE SHARDING] START - Bypassing SDK 20-item limit');
+      console.log('🔷 [BACKEND FETCH] Calling backend function');
       console.log('═══════════════════════════════════════════════════════');
       
-      const stats = {
-        shards: [],
-        totalFetched: 0,
-        startTime: Date.now()
-      };
+      const startTime = Date.now();
       
-      // Define price shards - each gets independent query
-      const priceShards = [
-        { min: 0, max: 500, label: '0-500€' },
-        { min: 500, max: 1000, label: '500-1000€' },
-        { min: 1000, max: 1500, label: '1000-1500€' },
-        { min: 1500, max: 2000, label: '1500-2000€' },
-        { min: 2000, max: 2500, label: '2000-2500€' },
-        { min: 2500, max: 3000, label: '2500-3000€' },
-        { min: 3000, max: 4000, label: '3000-4000€' },
-        { min: 4000, max: 5000, label: '4000-5000€' },
-        { min: 5000, max: 10000, label: '5000-10000€' },
-        { min: 10000, max: 999999, label: '10000+€' }
-      ];
-      
-      const allApartments = [];
-      const seenIds = new Set();
-      
-      console.log(`🔷 [SHARDING] Querying ${priceShards.length} price ranges independently`);
-      
-      for (const shard of priceShards) {
-        console.log(`📦 [SHARD] Fetching ${shard.label}...`);
+      try {
+        const result = await base44.functions.invoke('fetchAllApartments');
         
-        try {
-          // Independent filter query per shard
-          const shardResults = await base44.entities.Apartment.filter({
-            price: { $gte: shard.min, $lt: shard.max }
-          });
-          
-          console.log(`📦 [SHARD] ${shard.label}: ${shardResults.length} items`);
-          
-          // Deduplicate by ID
-          let newItems = 0;
-          for (const apt of shardResults) {
-            if (!seenIds.has(apt.id)) {
-              seenIds.add(apt.id);
-              allApartments.push(apt);
-              newItems++;
-            }
-          }
-          
-          console.log(`✓ [SHARD] ${shard.label}: Added ${newItems} unique items`);
-          
-          stats.shards.push({
-            label: shard.label,
-            fetched: shardResults.length,
-            unique: newItems
-          });
-        } catch (error) {
-          console.error(`❌ [SHARD] ${shard.label} failed:`, error.message);
-          stats.shards.push({
-            label: shard.label,
-            fetched: 0,
-            unique: 0,
-            error: error.message
-          });
+        const stats = {
+          method: 'Backend Service Role',
+          totalFetched: result.data.apartments.length,
+          duration: Date.now() - startTime,
+          backendDuration: result.data.duration
+        };
+        
+        console.log('═══════════════════════════════════════════════════════');
+        console.log(`✅ [BACKEND FETCH] Complete`);
+        console.log(`   Total apartments: ${stats.totalFetched}`);
+        console.log(`   Frontend duration: ${stats.duration}ms`);
+        console.log(`   Backend duration: ${stats.backendDuration}ms`);
+        console.log('═══════════════════════════════════════════════════════');
+        
+        // CRITICAL VALIDATION
+        if (stats.totalFetched === 20) {
+          console.error('🚨🚨🚨 BACKEND STILL LIMITED TO 20 🚨🚨🚨');
+        } else if (stats.totalFetched > 20) {
+          console.log('✅✅✅ SUCCESS: Backend bypassed 20-item limit ✅✅✅');
         }
+        
+        setPaginationStats(stats);
+        return result.data.apartments;
+        
+      } catch (error) {
+        console.error('[BACKEND FETCH] Error:', error);
+        setPaginationStats({
+          method: 'Backend Service Role',
+          totalFetched: 0,
+          duration: Date.now() - startTime,
+          error: error.message
+        });
+        return [];
       }
-      
-      stats.totalFetched = allApartments.length;
-      stats.duration = Date.now() - stats.startTime;
-      
-      console.log('═══════════════════════════════════════════════════════');
-      console.log(`✅ [PRICE SHARDING] COMPLETE`);
-      console.log(`   Total shards queried: ${priceShards.length}`);
-      console.log(`   Total apartments fetched: ${stats.totalFetched}`);
-      console.log(`   Unique IDs: ${seenIds.size}`);
-      console.log(`   Duration: ${stats.duration}ms`);
-      console.log('═══════════════════════════════════════════════════════');
-      
-      // CRITICAL VALIDATION
-      if (stats.totalFetched === 20) {
-        console.error('🚨🚨🚨 SYSTEM FAILURE: Still getting exactly 20 items 🚨🚨🚨');
-        console.error('Price sharding did NOT bypass SDK limit');
-      } else if (stats.totalFetched > 20) {
-        console.log('✅✅✅ SUCCESS: Bypassed 20-item limit via sharding ✅✅✅');
-      }
-      
-      setPaginationStats(stats);
-      return allApartments;
     },
   });
 
@@ -654,27 +608,19 @@ export default function Home() {
 
       {/* Cursor Pagination Stats Display */}
       {paginationStats && (
-        <div className="fixed top-20 left-4 z-[60] bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/95 dark:to-purple-900/95 border-2 border-blue-400 dark:border-blue-600 rounded-xl shadow-2xl max-w-md backdrop-blur-sm">
+        <div className="fixed top-20 left-4 z-[60] bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/95 dark:to-blue-900/95 border-2 border-purple-400 dark:border-purple-600 rounded-xl shadow-2xl max-w-md backdrop-blur-sm">
           <div className="px-4 py-3">
-            <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-              🔷 Price Sharding Strategy
+            <h3 className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+              🚀 Backend Service Role
             </h3>
-            <div className="space-y-1 text-xs font-mono text-blue-800 dark:text-blue-200 max-h-48 overflow-y-auto">
-              <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
-                <span>Total shards:</span>
-                <strong>{paginationStats.shards?.length || 0}</strong>
+            <div className="space-y-1 text-xs font-mono text-purple-800 dark:text-purple-200">
+              <div className="flex justify-between border-b border-purple-200 dark:border-purple-700 pb-1">
+                <span>Method:</span>
+                <strong>{paginationStats.method}</strong>
               </div>
-              {paginationStats.shards?.map((s, i) => (
-                <div key={i} className="flex justify-between text-blue-600 dark:text-blue-300 pl-2">
-                  <span className="truncate">{s.label}:</span>
-                  <span className="font-semibold ml-2">
-                    {s.error ? '❌' : `${s.unique}/${s.fetched}`}
-                  </span>
-                </div>
-              ))}
               <div className="border-t-2 border-green-400 dark:border-green-600 pt-2 mt-2">
                 <div className="flex justify-between font-bold">
-                  <span>TOTAL AGGREGATED:</span>
+                  <span>TOTAL FETCHED:</span>
                   <span className={paginationStats.totalFetched === 20 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>
                     {paginationStats.totalFetched}
                   </span>
@@ -682,29 +628,40 @@ export default function Home() {
               </div>
               {paginationStats.totalFetched === 20 && (
                 <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
-                  <p className="text-red-800 dark:text-red-200 font-bold">⚠️ Still limited to 20!</p>
+                  <p className="text-red-800 dark:text-red-200 font-bold">⚠️ Всё ещё лимит 20!</p>
                 </div>
               )}
               {paginationStats.totalFetched > 20 && (
                 <div className="bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700 rounded px-2 py-1 mt-1">
-                  <p className="text-green-800 dark:text-green-200 font-bold">✅ Bypassed 20-item limit!</p>
+                  <p className="text-green-800 dark:text-green-200 font-bold">✅ Лимит снят!</p>
+                </div>
+              )}
+              {paginationStats.error && (
+                <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
+                  <p className="text-red-800 dark:text-red-200 text-xs">❌ {paginationStats.error}</p>
                 </div>
               )}
               <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                <span>Duration:</span>
+                <span>Frontend:</span>
                 <span>{paginationStats.duration}ms</span>
               </div>
+              {paginationStats.backendDuration && (
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>Backend:</span>
+                  <span>{paginationStats.backendDuration}ms</span>
+                </div>
+              )}
             </div>
           </div>
           {orchestratorResults.length > 0 && (
             <div className="bg-green-100 dark:bg-green-900/60 border-t-2 border-green-400 dark:border-green-600 px-4 py-2 rounded-b-xl">
               <div className="space-y-1 text-xs font-mono font-bold">
                 <div className="flex justify-between text-green-900 dark:text-green-100">
-                  <span>→ Chat received:</span>
+                  <span>→ Чат:</span>
                   <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{propertiesFoundCount}</span>
                 </div>
                 <div className="flex justify-between text-green-900 dark:text-green-100">
-                  <span>→ Map markers:</span>
+                  <span>→ Карта:</span>
                   <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{orchestratorResults.length}</span>
                 </div>
               </div>
