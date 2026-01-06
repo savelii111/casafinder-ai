@@ -110,52 +110,75 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // CURSOR PAGINATION - Fetch ALL apartments bypassing 20-item SDK limit
+  // PRICE-BASED SHARDING - Bypass SDK 20-item limit with independent queries
   const { data: dbApartments = [] } = useQuery({
     queryKey: ['apartments'],
     queryFn: async () => {
       console.log('═══════════════════════════════════════════════════════');
-      console.log('🔵 [CURSOR PAGINATION] START');
+      console.log('🔷 [PRICE SHARDING] START - Bypassing SDK 20-item limit');
       console.log('═══════════════════════════════════════════════════════');
       
       const stats = {
-        batches: [],
+        shards: [],
         totalFetched: 0,
         startTime: Date.now()
       };
       
-      let allApartments = [];
-      let batchNumber = 1;
-      let skip = 0;
-      const limit = 20;
+      // Define price shards - each gets independent query
+      const priceShards = [
+        { min: 0, max: 500, label: '0-500€' },
+        { min: 500, max: 1000, label: '500-1000€' },
+        { min: 1000, max: 1500, label: '1000-1500€' },
+        { min: 1500, max: 2000, label: '1500-2000€' },
+        { min: 2000, max: 2500, label: '2000-2500€' },
+        { min: 2500, max: 3000, label: '2500-3000€' },
+        { min: 3000, max: 4000, label: '3000-4000€' },
+        { min: 4000, max: 5000, label: '4000-5000€' },
+        { min: 5000, max: 10000, label: '5000-10000€' },
+        { min: 10000, max: 999999, label: '10000+€' }
+      ];
       
-      while (true) {
-        console.log(`📦 [BATCH ${batchNumber}] Fetching with skip=${skip}, limit=${limit}`);
+      const allApartments = [];
+      const seenIds = new Set();
+      
+      console.log(`🔷 [SHARDING] Querying ${priceShards.length} price ranges independently`);
+      
+      for (const shard of priceShards) {
+        console.log(`📦 [SHARD] Fetching ${shard.label}...`);
         
-        const batch = await base44.entities.Apartment.list('-updated_date', limit, skip);
-        
-        console.log(`📦 [BATCH ${batchNumber}] Received: ${batch.length} items`);
-        stats.batches.push({ batchNumber, count: batch.length, skip });
-        
-        if (batch.length === 0) {
-          console.log(`🛑 [BATCH ${batchNumber}] Empty batch - stopping pagination`);
-          break;
-        }
-        
-        allApartments = [...allApartments, ...batch];
-        console.log(`📊 [AGGREGATED] Total so far: ${allApartments.length}`);
-        
-        if (batch.length < limit) {
-          console.log(`🛑 [BATCH ${batchNumber}] Partial batch (${batch.length}/${limit}) - no more data`);
-          break;
-        }
-        
-        skip += limit;
-        batchNumber++;
-        
-        if (allApartments.length >= 1000) {
-          console.warn(`⚠️ [SAFETY] Reached 1000 items - stopping`);
-          break;
+        try {
+          // Independent filter query per shard
+          const shardResults = await base44.entities.Apartment.filter({
+            price: { $gte: shard.min, $lt: shard.max }
+          });
+          
+          console.log(`📦 [SHARD] ${shard.label}: ${shardResults.length} items`);
+          
+          // Deduplicate by ID
+          let newItems = 0;
+          for (const apt of shardResults) {
+            if (!seenIds.has(apt.id)) {
+              seenIds.add(apt.id);
+              allApartments.push(apt);
+              newItems++;
+            }
+          }
+          
+          console.log(`✓ [SHARD] ${shard.label}: Added ${newItems} unique items`);
+          
+          stats.shards.push({
+            label: shard.label,
+            fetched: shardResults.length,
+            unique: newItems
+          });
+        } catch (error) {
+          console.error(`❌ [SHARD] ${shard.label} failed:`, error.message);
+          stats.shards.push({
+            label: shard.label,
+            fetched: 0,
+            unique: 0,
+            error: error.message
+          });
         }
       }
       
@@ -163,11 +186,20 @@ export default function Home() {
       stats.duration = Date.now() - stats.startTime;
       
       console.log('═══════════════════════════════════════════════════════');
-      console.log(`✅ [CURSOR PAGINATION] COMPLETE`);
-      console.log(`   Total batches: ${batchNumber}`);
-      console.log(`   Total apartments: ${allApartments.length}`);
+      console.log(`✅ [PRICE SHARDING] COMPLETE`);
+      console.log(`   Total shards queried: ${priceShards.length}`);
+      console.log(`   Total apartments fetched: ${stats.totalFetched}`);
+      console.log(`   Unique IDs: ${seenIds.size}`);
       console.log(`   Duration: ${stats.duration}ms`);
       console.log('═══════════════════════════════════════════════════════');
+      
+      // CRITICAL VALIDATION
+      if (stats.totalFetched === 20) {
+        console.error('🚨🚨🚨 SYSTEM FAILURE: Still getting exactly 20 items 🚨🚨🚨');
+        console.error('Price sharding did NOT bypass SDK limit');
+      } else if (stats.totalFetched > 20) {
+        console.log('✅✅✅ SUCCESS: Bypassed 20-item limit via sharding ✅✅✅');
+      }
       
       setPaginationStats(stats);
       return allApartments;
@@ -597,28 +629,42 @@ export default function Home() {
 
       {/* Cursor Pagination Stats Display */}
       {paginationStats && (
-        <div className="fixed top-20 left-4 z-[60] bg-blue-50 dark:bg-blue-900/95 border-2 border-blue-400 dark:border-blue-600 rounded-xl shadow-2xl max-w-sm backdrop-blur-sm">
+        <div className="fixed top-20 left-4 z-[60] bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/95 dark:to-purple-900/95 border-2 border-blue-400 dark:border-blue-600 rounded-xl shadow-2xl max-w-md backdrop-blur-sm">
           <div className="px-4 py-3">
             <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-              🔄 Cursor Pagination
+              🔷 Price Sharding Strategy
             </h3>
-            <div className="space-y-1 text-xs font-mono text-blue-800 dark:text-blue-200">
+            <div className="space-y-1 text-xs font-mono text-blue-800 dark:text-blue-200 max-h-48 overflow-y-auto">
               <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
-                <span>Total batches:</span>
-                <strong>{paginationStats.batches.length}</strong>
+                <span>Total shards:</span>
+                <strong>{paginationStats.shards?.length || 0}</strong>
               </div>
-              {paginationStats.batches.map((b, i) => (
+              {paginationStats.shards?.map((s, i) => (
                 <div key={i} className="flex justify-between text-blue-600 dark:text-blue-300 pl-2">
-                  <span>Batch {b.batchNumber}:</span>
-                  <span className="font-semibold">{b.count} items</span>
+                  <span className="truncate">{s.label}:</span>
+                  <span className="font-semibold ml-2">
+                    {s.error ? '❌' : `${s.unique}/${s.fetched}`}
+                  </span>
                 </div>
               ))}
               <div className="border-t-2 border-green-400 dark:border-green-600 pt-2 mt-2">
                 <div className="flex justify-between font-bold">
-                  <span>TOTAL FETCHED:</span>
-                  <span className="text-green-700 dark:text-green-400">{paginationStats.totalFetched}</span>
+                  <span>TOTAL AGGREGATED:</span>
+                  <span className={paginationStats.totalFetched === 20 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>
+                    {paginationStats.totalFetched}
+                  </span>
                 </div>
               </div>
+              {paginationStats.totalFetched === 20 && (
+                <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
+                  <p className="text-red-800 dark:text-red-200 font-bold">⚠️ Still limited to 20!</p>
+                </div>
+              )}
+              {paginationStats.totalFetched > 20 && (
+                <div className="bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700 rounded px-2 py-1 mt-1">
+                  <p className="text-green-800 dark:text-green-200 font-bold">✅ Bypassed 20-item limit!</p>
+                </div>
+              )}
               <div className="flex justify-between text-gray-600 dark:text-gray-400">
                 <span>Duration:</span>
                 <span>{paginationStats.duration}ms</span>
@@ -629,11 +675,11 @@ export default function Home() {
             <div className="bg-green-100 dark:bg-green-900/60 border-t-2 border-green-400 dark:border-green-600 px-4 py-2 rounded-b-xl">
               <div className="space-y-1 text-xs font-mono font-bold">
                 <div className="flex justify-between text-green-900 dark:text-green-100">
-                  <span>→ Passed to chat:</span>
+                  <span>→ Chat received:</span>
                   <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{propertiesFoundCount}</span>
                 </div>
                 <div className="flex justify-between text-green-900 dark:text-green-100">
-                  <span>→ Passed to map:</span>
+                  <span>→ Map markers:</span>
                   <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{orchestratorResults.length}</span>
                 </div>
               </div>
