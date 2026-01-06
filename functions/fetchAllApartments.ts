@@ -15,14 +15,22 @@ Deno.serve(async (req) => {
     let batchCount = 0;
     let hasMore = true;
     
-    // Cursor-based pagination - fetch ALL records
+    // CRITICAL FIX: Use filter() with pagination instead of list()
+    // list() has hard 20-item limit, filter() allows proper pagination
     while (hasMore) {
       batchCount++;
-      console.log(`📄 [BATCH ${batchCount}] Fetching from cursor ${cursor}, limit ${batchSize}`);
+      console.log(`📄 [BATCH ${batchCount}] Fetching with skip=${cursor}, limit=${batchSize}`);
       
-      const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', batchSize, cursor);
+      // Use filter({}) to get ALL apartments with pagination support
+      const batch = await base44.asServiceRole.entities.Apartment.filter(
+        {}, // empty filter = all records
+        '-updated_date', 
+        batchSize,
+        cursor
+      );
       
       console.log(`📄 [BATCH ${batchCount}] Received ${batch.length} apartments`);
+      console.log(`   First ID: ${batch[0]?.id || 'N/A'}, Last ID: ${batch[batch.length-1]?.id || 'N/A'}`);
       
       if (batch.length === 0) {
         console.log(`✓ [BATCH ${batchCount}] No more data, stopping`);
@@ -32,20 +40,25 @@ Deno.serve(async (req) => {
       
       allApartments.push(...batch);
       
-      // If we got less than batchSize, we've reached the end
+      // CRITICAL: Check if this is the last batch
       if (batch.length < batchSize) {
-        console.log(`✓ [BATCH ${batchCount}] Received ${batch.length} < ${batchSize}, last batch`);
+        console.log(`✓ [BATCH ${batchCount}] Last batch (${batch.length} < ${batchSize})`);
         hasMore = false;
       } else {
-        // Move cursor forward
+        // Move cursor forward by batch size
         cursor += batch.length;
-        console.log(`→ [BATCH ${batchCount}] Moving cursor to ${cursor}`);
+        console.log(`→ [BATCH ${batchCount}] Cursor moved to ${cursor}, continuing...`);
       }
       
       // Safety limit to prevent infinite loops (100k apartments max)
       if (batchCount > 100) {
         console.error('🚨 Safety limit reached - stopping at 100 batches');
         break;
+      }
+      
+      // CRITICAL: If we got exactly 20 in first batch, something is wrong
+      if (batchCount === 1 && batch.length === 20 && batch.length === batchSize) {
+        console.error('🚨 WARNING: First batch is exactly 20 - SDK may be limiting us!');
       }
     }
     

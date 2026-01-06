@@ -33,22 +33,22 @@ Deno.serve(async (req) => {
 
     const userPrompt = `User query: "${query}"
 
-TOTAL PROPERTIES AVAILABLE: ${totalCount}
+    🔢 TOTAL PROPERTIES IN DATABASE: ${totalCount}
 
-Sample properties (first 10 for context):
-${apartmentsContext}
+    Sample properties (first 10 out of ${totalCount} total):
+    ${apartmentsContext}
 
-YOUR TASK:
-1. Start: "I found exactly ${totalCount} properties matching your search in Madrid"
-2. Analyze the samples and give 2-3 helpful insights about price ranges, neighborhoods, or features
-3. End: "All ${totalCount} properties are visible on the map above and in the sorted list below. Scroll to see them all."
-4. Keep response under 120 words
-5. Be encouraging and helpful
+    YOUR CRITICAL TASK:
+    1. Start with EXACT count: "I found exactly ${totalCount} properties in Madrid"
+    2. Give 2-3 insights about the samples (price range, popular neighborhoods)
+    3. End with: "All ${totalCount} properties are displayed on the map and sortable list below - scroll through all of them!"
+    4. Keep under 120 words
 
-CRITICAL: 
-- NO "top N" or "best X" language
-- State the EXACT total: ${totalCount}
-- Make clear ALL ${totalCount} are available to view`;
+    ⚠️ ABSOLUTE REQUIREMENTS:
+    - NEVER say "top N" or "best X" or "here are some"
+    - ALWAYS state EXACT total: ${totalCount}
+    - EMPHASIZE: ALL ${totalCount} are visible, not just a subset
+    - User can see EVERY SINGLE ONE of the ${totalCount} properties`;
 
     console.log('[DeepSeek] Calling API...');
 
