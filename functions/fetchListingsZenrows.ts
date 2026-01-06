@@ -10,21 +10,21 @@ Deno.serve(async (req) => {
     
     const ZENROWS_API_KEY = Deno.env.get('ZENROWS_API_KEY');
 
-    // DEMO FALLBACK if no API key - paginate ALL
+    // DEMO FALLBACK if no API key - paginate ALL with filter()
     if (!ZENROWS_API_KEY) {
       console.log('ZenRows API key not set, loading all apartments from DB');
       const allApartments = [];
-      let page = 0;
-      const pageSize = 1000;
+      let cursor = 0;
+      const batchSize = 1000;
       let hasMore = true;
       
       while (hasMore) {
-        const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', pageSize, page * pageSize);
+        const batch = await base44.asServiceRole.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
         if (batch.length === 0) break;
         allApartments.push(...batch);
-        if (batch.length < pageSize) break;
-        page++;
-        if (page > 100) break;
+        if (batch.length < batchSize) break;
+        cursor += batch.length;
+        if (cursor > 100000) break;
       }
       
       console.log(`[DEMO MODE] Loaded ${allApartments.length} apartments from DB`);
@@ -89,21 +89,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If no listings fetched from any endpoint, return demo mode - paginate ALL
+    // If no listings fetched from any endpoint, return demo mode - paginate ALL with filter()
     if (allListings.length === 0) {
       console.error('[ZenRows] No listings fetched, loading all from DB');
       const allApartments = [];
-      let page = 0;
-      const pageSize = 1000;
+      let cursor = 0;
+      const batchSize = 1000;
       let hasMore = true;
       
       while (hasMore) {
-        const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', pageSize, page * pageSize);
+        const batch = await base44.asServiceRole.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
         if (batch.length === 0) break;
         allApartments.push(...batch);
-        if (batch.length < pageSize) break;
-        page++;
-        if (page > 100) break;
+        if (batch.length < batchSize) break;
+        cursor += batch.length;
+        if (cursor > 100000) break;
       }
       
       console.log(`[DEMO FALLBACK] Loaded ${allApartments.length} apartments from DB`);
@@ -232,21 +232,21 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('fetchListingsZenrows error:', error);
     
-    // DEMO FALLBACK on any error - paginate ALL
+    // DEMO FALLBACK on any error - paginate ALL with filter()
     try {
       const base44 = createClientFromRequest(req);
       const allApartments = [];
-      let page = 0;
-      const pageSize = 1000;
+      let cursor = 0;
+      const batchSize = 1000;
       let hasMore = true;
       
       while (hasMore) {
-        const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', pageSize, page * pageSize);
+        const batch = await base44.asServiceRole.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
         if (batch.length === 0) break;
         allApartments.push(...batch);
-        if (batch.length < pageSize) break;
-        page++;
-        if (page > 100) break;
+        if (batch.length < batchSize) break;
+        cursor += batch.length;
+        if (cursor > 100000) break;
       }
       
       console.log(`[ERROR FALLBACK] Loaded ${allApartments.length} apartments from DB`);
