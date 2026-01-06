@@ -10,14 +10,28 @@ Deno.serve(async (req) => {
     
     const ZENROWS_API_KEY = Deno.env.get('ZENROWS_API_KEY');
 
-    // DEMO FALLBACK if no API key
+    // DEMO FALLBACK if no API key - paginate ALL
     if (!ZENROWS_API_KEY) {
-      console.log('ZenRows API key not set, using demo mode');
-      const apartments = await base44.asServiceRole.entities.Apartment.list('-updated_date', 99999);
+      console.log('ZenRows API key not set, loading all apartments from DB');
+      const allApartments = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', pageSize, page * pageSize);
+        if (batch.length === 0) break;
+        allApartments.push(...batch);
+        if (batch.length < pageSize) break;
+        page++;
+        if (page > 100) break;
+      }
+      
+      console.log(`[DEMO MODE] Loaded ${allApartments.length} apartments from DB`);
       return Response.json({ 
         success: false,
         error: 'DEMO_MODE',
-        apartments 
+        apartments: allApartments
       });
     }
 
@@ -75,14 +89,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If no listings fetched from any endpoint, return demo mode
+    // If no listings fetched from any endpoint, return demo mode - paginate ALL
     if (allListings.length === 0) {
-      console.error('[ZenRows] No listings fetched, activating demo mode');
-      const apartments = await base44.asServiceRole.entities.Apartment.list('-updated_date', 99999);
+      console.error('[ZenRows] No listings fetched, loading all from DB');
+      const allApartments = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', pageSize, page * pageSize);
+        if (batch.length === 0) break;
+        allApartments.push(...batch);
+        if (batch.length < pageSize) break;
+        page++;
+        if (page > 100) break;
+      }
+      
+      console.log(`[DEMO FALLBACK] Loaded ${allApartments.length} apartments from DB`);
       return Response.json({ 
         success: false, 
         error: 'DEMO_MODE',
-        apartments 
+        apartments: allApartments
       });
     }
 
@@ -204,14 +232,28 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('fetchListingsZenrows error:', error);
     
-    // DEMO FALLBACK on any error
+    // DEMO FALLBACK on any error - paginate ALL
     try {
       const base44 = createClientFromRequest(req);
-      const apartments = await base44.asServiceRole.entities.Apartment.list('-updated_date', 99999);
+      const allApartments = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const batch = await base44.asServiceRole.entities.Apartment.list('-updated_date', pageSize, page * pageSize);
+        if (batch.length === 0) break;
+        allApartments.push(...batch);
+        if (batch.length < pageSize) break;
+        page++;
+        if (page > 100) break;
+      }
+      
+      console.log(`[ERROR FALLBACK] Loaded ${allApartments.length} apartments from DB`);
       return Response.json({ 
         success: false, 
         error: 'DEMO_MODE',
-        apartments 
+        apartments: allApartments
       });
     } catch {
       return Response.json({ 

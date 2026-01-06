@@ -18,10 +18,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build context from apartments data
-    const apartmentsContext = apartments.map((apt, i) => 
-      `${i + 1}. €${apt.price}/mo - ${apt.rooms} rooms, ${apt.size}m² in ${apt.neighborhood}${apt.floor ? `, floor ${apt.floor}` : ''}${apt.hasElevator ? ' (elevator)' : ''}${apt.furnished ? ' (furnished)' : ''}${apt.pets_allowed ? ' (pets OK)' : ''} - Risk Score: ${apt.riskScore || 'N/A'}`
-    ).join('\n');
+    // Build context from sample apartments data
+    const apartmentsContext = sampleApartments.length > 0 
+      ? sampleApartments.map((apt, i) => 
+          `${i + 1}. €${apt.price}/mo - ${apt.rooms} rooms, ${apt.size}m² in ${apt.neighborhood || 'Madrid'}`
+        ).join('\n')
+      : 'Sample data not provided';
 
     const systemPrompt = language === 'es' 
       ? `Eres un asistente experto en bienes raíces en España. Ayudas a usuarios a encontrar el apartamento perfecto en Madrid. Sé amigable, útil y conciso. Responde SIEMPRE en español.`
@@ -31,18 +33,22 @@ Deno.serve(async (req) => {
 
     const userPrompt = `User query: "${query}"
 
-TOTAL PROPERTIES: ${totalCount}
+TOTAL PROPERTIES AVAILABLE: ${totalCount}
 
-Sample properties (top 10):
+Sample properties (first 10 for context):
 ${apartmentsContext}
 
 YOUR TASK:
-1. Start: "I found ${totalCount} properties matching your search"
-2. Analyze the sample and give helpful insights
-3. Remind: "All ${totalCount} are visible on the map and list below"
-4. Keep under 150 words
+1. Start: "I found exactly ${totalCount} properties matching your search in Madrid"
+2. Analyze the samples and give 2-3 helpful insights about price ranges, neighborhoods, or features
+3. End: "All ${totalCount} properties are visible on the map above and in the sorted list below. Scroll to see them all."
+4. Keep response under 120 words
+5. Be encouraging and helpful
 
-CRITICAL: State exact number ${totalCount}.`;
+CRITICAL: 
+- NO "top N" or "best X" language
+- State the EXACT total: ${totalCount}
+- Make clear ALL ${totalCount} are available to view`;
 
     console.log('[DeepSeek] Calling API...');
 
