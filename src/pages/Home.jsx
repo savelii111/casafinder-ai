@@ -389,6 +389,23 @@ export default function Home() {
 
       setMessages(prev => [...prev, assistantMessage]);
 
+      // FINAL VALIDATION
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔍 [FINAL VALIDATION]');
+      console.log(`   Backend fetched: ${apartments.length}`);
+      console.log(`   After filters: ${filtered.length}`);
+      console.log(`   After sort: ${sorted.length}`);
+      console.log(`   To AI: ${sorted.length}`);
+      console.log(`   To map: ${sorted.length}`);
+
+      if (sorted.length === 20) {
+        console.error('🚨🚨🚨 CRITICAL: Pipeline output is EXACTLY 20 🚨🚨🚨');
+        console.error('Check all stages for hidden limits!');
+      } else {
+        console.log(`✅ Pipeline integrity: ${sorted.length} apartments (not limited to 20)`);
+      }
+      console.log('═══════════════════════════════════════════════════════');
+
       // Save search to history
       if (user?.email) {
         await base44.entities.SearchHistory.create({
@@ -828,9 +845,14 @@ export default function Home() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {propertiesFoundCount || filteredApartments.length} {language === 'es' ? 'propiedades encontradas' : language === 'ru' ? 'объектов найдено' : 'properties found'}
                 </p>
-                <Badge className={orchestratorResults.length === 20 ? "bg-red-500" : "bg-green-500"}>
-                  {orchestratorResults.length} на карте
-                </Badge>
+                <div className="flex gap-2">
+                  <Badge className={orchestratorResults.length === 20 ? "bg-red-500" : "bg-green-500"}>
+                    🗺️ {orchestratorResults.length}
+                  </Badge>
+                  {orchestratorResults.length === 20 && (
+                    <Badge variant="destructive">⚠️ Limit?</Badge>
+                  )}
+                </div>
               </div>
 
               {/* Mobile Apartment List */}
@@ -985,6 +1007,14 @@ export default function Home() {
                        'Sorted by best AI score, price and location. All shown on map above.'}
                     </p>
                   </div>
+
+                  {orchestratorResults.length === 20 && (
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-xl">
+                      <p className="text-red-800 dark:text-red-200 font-bold">
+                        ⚠️ WARNING: Exactly 20 results - possible upstream truncation detected!
+                      </p>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {orchestratorResults.map((apt, index) => (
