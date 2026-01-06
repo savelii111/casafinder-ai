@@ -783,7 +783,7 @@ export default function Home() {
                 isLoading={isLoading}
                 language={language}
               />
-              <FeaturedProperties language={language} />
+              {isDemoMode && <FeaturedProperties language={language} />}
             </div>
           ) : (
             /* Search Results View */
