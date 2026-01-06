@@ -46,12 +46,22 @@ Deno.serve(async (req) => {
     // Fetch ALL pages - no limits
     const urls = [];
     const operations = listing_type === 'both' ? ['rent', 'sale'] : [listing_type];
-    
+
+    // Map supported cities to Idealista locationUri
+    const cityMap = {
+      'madrid': 'madrid-madrid',
+      'barcelona': 'barcelona-barcelona',
+      'valencia': 'valencia-valencia',
+      'seville': 'sevilla-sevilla',
+      'sevilla': 'sevilla-sevilla'
+    };
+    const locationUri = cityMap[(city || 'madrid').toLowerCase()] || 'madrid-madrid';
+
     for (const operation of operations) {
       // Fetch first 50 pages (up to 10,000 listings per operation)
       for (let page = 1; page <= 50; page++) {
         urls.push(
-          `https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=madrid-madrid&typology=flat&operation=${operation}&numPage=${page}&maxItems=200&order=publicationDate&language=en`
+          `https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=${locationUri}&typology=flat&operation=${operation}&numPage=${page}&maxItems=200&order=publicationDate&language=en`
         );
       }
     }

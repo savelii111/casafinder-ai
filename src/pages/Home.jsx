@@ -535,6 +535,19 @@ export default function Home() {
     setShowLeadModal(true);
   };
 
+  const handleExportCsv = async () => {
+    const { data } = await base44.functions.invoke('exportApartmentsCsv');
+    const blob = new Blob([data], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `apartments_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+  };
+
   const handleSelectPlan = (planId) => {
     if (planId === 'free') {
       setShowUpgradeModal(false);
@@ -1000,9 +1013,14 @@ export default function Home() {
                           {orchestratorResults.length}
                         </Badge>
                       </div>
-                      <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
-                        {language === 'es' ? 'IA Ordenado' : language === 'ru' ? 'Сортировано ИИ' : 'AI Sorted'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
+                          {language === 'es' ? 'IA Ordenado' : language === 'ru' ? 'Сортировано ИИ' : 'AI Sorted'}
+                        </Badge>
+                        <Button variant="outline" size="sm" onClick={handleExportCsv} className="whitespace-nowrap">
+                          {language === 'es' ? 'Exportar CSV' : language === 'ru' ? 'Экспорт CSV' : 'Export CSV'}
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-base text-gray-600 dark:text-gray-400">
                       {language === 'es' ? 'Ordenadas por mejor puntuación IA, precio y ubicación. Todas están en el mapa arriba.' : 

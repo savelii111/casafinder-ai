@@ -181,7 +181,11 @@ export default function ApartmentMap({
                         </>
                       )}
                     </div>
-                    <div className="flex gap-1 mb-2">
+                    <div className="flex gap-1 mb-2 flex-wrap">
+                      {/* Risk score badge */}
+                      <span className={`px-2 py-0.5 rounded text-xs ${apt.riskScore <= 3 ? 'bg-green-100 text-green-800' : apt.riskScore <= 6 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+                        Risk {apt.riskScore ?? '—'}
+                      </span>
                       {apt.hasElevator && (
                         <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">Elevator</span>
                       )}
