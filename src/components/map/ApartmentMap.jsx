@@ -112,7 +112,7 @@ export default function ApartmentMap({
       {/* Properties Counter */}
       <div className="absolute top-4 left-4 z-[1000] bg-white dark:bg-gray-800 px-4 py-2 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-          Loaded from Google Sheets: {apartments.length} listings
+          Showing {apartments.length} properties from Google Sheets
         </p>
       </div>
 

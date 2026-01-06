@@ -28,24 +28,19 @@ Deno.serve(async (req) => {
     if (!DEEPSEEK_API_KEY) {
       console.error('[DeepSeek] API key not set');
       return Response.json({ 
-        response: `I found ${totalCount} properties matching your search. All results are displayed on the map and sorted by AI below.`,
+        response: `Your matching properties are shown on the map and sorted list below.`,
         error: 'API_KEY_MISSING'
       });
     }
 
-    // Build context from aggregated summary (no raw objects)
+    // Build context from aggregated summary (no raw objects, no exact numbers in text)
     const summaryText = (() => {
       if (aggregatedSummary) {
-        const prMin = aggregatedSummary.priceMin ?? 'n/a';
-        const prMax = aggregatedSummary.priceMax ?? 'n/a';
-        const top = (aggregatedSummary.topNeighborhoods || []).map(n => `${n.name}: ${n.count}`).join(', ');
-        return `Price range: ${prMin}–${prMax}€; Top neighborhoods: ${top || 'n/a'}`;
+        const topNames = (aggregatedSummary.topNeighborhoods || []).map(n => (typeof n === 'string' ? n : n.name)).join(', ');
+        return `Price trends present; neighborhoods include: ${topNames || 'n/a'}`;
       }
       if (apartmentsSummary?.length > 0) {
-        const prices = apartmentsSummary.map(a => a.price).filter(p => Number.isFinite(p));
-        const prMin = prices.length ? Math.min(...prices) : 'n/a';
-        const prMax = prices.length ? Math.max(...prices) : 'n/a';
-        return `Price sample range: ${prMin}–${prMax}€ (sample)`;
+        return 'Price trends present based on sample.';
       }
       return 'No summary provided';
     })();
@@ -58,21 +53,16 @@ Deno.serve(async (req) => {
 
     const userPrompt = `User query: "${query}"
 
-    🔢 TOTAL PROPERTIES MATCHING: ${totalCount}
+CONTEXT (aggregated, no raw rows):
+${summaryText}
 
-    AGGREGATED SUMMARY (no truncation):
-    ${summaryText}
-
-    YOUR TASK:
-    - Start with EXACT count: "I found exactly ${totalCount} properties"
-    - Provide concise insights (price ranges, neighborhoods, mix of rent/sale, notable risk patterns)
-    - Confirm: "All ${totalCount} properties are shown on the map and list below; browse them all."
-    - Keep under 150 words, natural and agent-like (no lists of 1000 items).
-
-    STRICT REQUIREMENTS:
-    - Do NOT mention "top N" / "best X" / "some". Use the full count.
-    - Do NOT imply truncation. Emphasize that ALL ${totalCount} are visible.
-    - Be helpful and realistic.`;
+TASK:
+- Give a concise, helpful overview of the market and neighborhoods.
+- DO NOT include any exact numbers (no counts, prices, ranges, sizes).
+- Use qualitative phrasing only (e.g., "a wide range of prices", "several neighborhoods are popular").
+- Confirm all results are visible on the map and list below, without specifying a number.
+- Keep under 120 words, natural and agent-like.
+- Language: follow the system prompt language.`;
 
     console.log('[DeepSeek] Calling API...');
 
@@ -97,13 +87,13 @@ Deno.serve(async (req) => {
       const errorText = await response.text();
       console.error('[DeepSeek] API error:', response.status, errorText);
       return Response.json({ 
-        response: `Found ${totalCount} properties in Madrid. Check out the results on the map and sorted list below!`,
+        response: `Your results are visible on the map and list below.`,
         error: 'API_ERROR'
       });
     }
 
     const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content || `Found ${totalCount} properties. All are shown on the map!`;
+    const aiResponse = data.choices?.[0]?.message?.content || `All results are shown on the map and list below.`;
 
     console.log('═══════════════════════════════════════════════════════');
     console.log('✅ [DEEPSEEK AI] Response generated');

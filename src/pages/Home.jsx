@@ -185,19 +185,33 @@ export default function Home() {
 
   useEffect(() => {
     if (dbApartments.length > 0) {
+      const normalized = dbApartments.map(a => ({
+        ...a,
+        price: a.price !== undefined && a.price !== null ? Number(a.price) : a.price,
+        rooms: a.rooms !== undefined && a.rooms !== null ? Number(a.rooms) : a.rooms,
+        size: a.size !== undefined && a.size !== null ? Number(a.size) : a.size,
+        lat: a.lat !== undefined && a.lat !== null ? Number(a.lat) : a.lat,
+        lng: a.lng !== undefined && a.lng !== null ? Number(a.lng) : a.lng,
+      }));
+
       console.log('═══════════════════════════════════════════════════════');
-      console.log(`🔵 [STAGE 2: STATE UPDATE] Setting apartments state`);
-      console.log(`   Total: ${dbApartments.length}`);
-      console.log(`   With valid coords: ${dbApartments.filter(a => a.lat && a.lng).length}`);
+      console.log(`🔵 [STAGE 2: STATE UPDATE] Setting apartments state (normalized)`);
+      console.log(`   Total: ${normalized.length}`);
+      console.log(`   With valid coords: ${normalized.filter(a => a.lat && a.lng).length}`);
       console.log('═══════════════════════════════════════════════════════');
-      setApartments(dbApartments);
+
+      setApartments(normalized);
+      if (!hasSearched) {
+        setOrchestratorResults(normalized);
+        setPropertiesFoundCount(normalized.length);
+      }
 
       // CRITICAL: Validate no truncation
-      if (dbApartments.length === 20) {
+      if (normalized.length === 20) {
         throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
       }
     }
-  }, [dbApartments]);
+  }, [dbApartments, hasSearched]);
 
   // Update AI requests tracking
   const updateAIRequestsMutation = useMutation({
@@ -360,7 +374,7 @@ export default function Home() {
       console.log('═══════════════════════════════════════════════════════');
       console.log(`🤖 [STAGE 4: AI ANALYSIS] Calling DeepSeek`);
       console.log(`   Total apartments to analyze: ${sorted.length}`);
-      console.log(`   Sending sample of first 10 for context`);
+      console.log(`   Sending aggregated summary only`);
       console.log('═══════════════════════════════════════════════════════');
 
       const prices = sorted.map(a => a.price).filter(p => Number.isFinite(p));
@@ -373,8 +387,7 @@ export default function Home() {
       });
       const topNeighborhoods = Object.entries(neighborhoodCounts)
         .sort((a,b) => b[1]-a[1])
-        .slice(0,5)
-        .map(([name, count]) => ({ name, count }));
+        .map(([name]) => ({ name }));
 
       const deepseekResult = await fetchWithRetry(() =>
         base44.functions.invoke('deepseekChat', {
@@ -387,7 +400,7 @@ export default function Home() {
 
       const assistantMessage = { 
         role: 'assistant', 
-        content: deepseekResult.data?.response || `Found exactly ${sorted.length} properties in Madrid. All ${sorted.length} are shown on the map and list below - scroll to see them all!`
+        content: deepseekResult.data?.response || `Here are the matching properties. All results are visible on the map and list below.`
       };
 
       console.log('═══════════════════════════════════════════════════════');
