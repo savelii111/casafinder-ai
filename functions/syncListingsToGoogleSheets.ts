@@ -145,27 +145,31 @@ Deno.serve(async (req) => {
     }
 
     // 4) Clear target sheet
-    const clearRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(sheetName + '!A:ZZ')}:clear`, {
+    const clearRange = `${sheetName}!A:ZZ`;
+    const clearRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(clearRange)}:clear`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${accessToken}` }
+      headers: { 
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
     });
     if (!clearRes.ok) {
       const t = await clearRes.text();
       console.error('[GSheets] Clear error:', t);
     }
 
-    // 5) Write values (single batch)
+    // 5) Write values
     const rowsCount = rows.length;
     const dataSize = JSON.stringify(rows).length;
     console.log(`   Writing ${rowsCount} rows (${(dataSize / 1024).toFixed(2)} KB)`);
     
     if (dataSize > 10_000_000) {
-      console.error('   ❌ Data too large (>10MB), need batching');
-      return Response.json({ error: 'Data too large, contact support' }, { status: 500 });
+      console.error('   ❌ Data too large (>10MB)');
+      return Response.json({ error: 'Data too large' }, { status: 500 });
     }
     
     const range = `${sheetName}!A1`;
-    const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {
+    const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
