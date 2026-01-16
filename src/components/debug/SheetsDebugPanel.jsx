@@ -7,6 +7,7 @@ import { AlertCircle, CheckCircle, Loader2, FileSpreadsheet } from 'lucide-react
 export default function SheetsDebugPanel({ language = 'ru' }) {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [logs, setLogs] = useState([]);
 
   const checkStatus = async () => {
     setLoading(true);
@@ -48,40 +49,54 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
 
   const createSheet = async () => {
     setLoading(true);
+    setLogs([]);
+    const addLog = (msg) => setLogs(prev => [...prev, msg]);
+    
     setStatus({
       type: 'warning',
       message: '⏳ Создаём Google Sheets...',
-      details: 'Парсим данные с Idealista через ZenRows'
     });
     
     try {
-      console.log('🔧 Creating Google Sheet via syncListingsToGoogleSheets...');
-      console.log('Request params:', { sheetName: 'Listings', city: 'Madrid' });
+      addLog('1️⃣ Вызываем syncListingsToGoogleSheets...');
       
       const result = await base44.functions.invoke('syncListingsToGoogleSheets', {
         sheetName: 'Listings',
         city: 'Madrid'
       });
 
-      console.log('✅ Sync result:', result);
-      console.log('Result data:', result.data);
-      console.log('Result status:', result.status);
+      addLog(`2️⃣ Получен ответ: ${result.status}`);
+      addLog(`3️⃣ Данные: ${JSON.stringify(result.data).substring(0, 200)}`);
+
+      if (result.data?.error) {
+        addLog(`❌ ОШИБКА: ${result.data.error}`);
+        if (result.data.stack) addLog(`Stack: ${result.data.stack.substring(0, 300)}`);
+        
+        setStatus({
+          type: 'error',
+          message: '❌ Ошибка от сервера',
+          error: result.data.error,
+          details: result.data.details || ''
+        });
+        setLoading(false);
+        return;
+      }
 
       if (result.data.spreadsheetId) {
         localStorage.setItem('rentai_spreadsheet_id', result.data.spreadsheetId);
+        addLog(`✅ ID сохранён: ${result.data.spreadsheetId}`);
+        
         setStatus({
           type: 'success',
-          message: '✅ Google Sheets создан и заполнен!',
-          details: `Строк записано: ${result.data.rows || 0}`,
+          message: '✅ Google Sheets создан!',
+          details: `Строк: ${result.data.rows || 0}`,
           spreadsheetId: result.data.spreadsheetId,
           url: result.data.spreadsheetUrl
         });
         
-        // Reload page after 2 seconds
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        setTimeout(() => window.location.reload(), 2000);
       } else {
+        addLog('❌ spreadsheetId не найден в ответе');
         setStatus({
           type: 'error',
           message: '❌ Не получен spreadsheetId',
@@ -89,17 +104,16 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
         });
       }
     } catch (error) {
-      console.error('❌ Error creating sheet:', error);
-      console.error('Error stack:', error.stack);
-      console.error('Error response:', error.response?.data);
-      
-      const errorMsg = error.response?.data?.error || error.message || String(error);
+      addLog(`❌ КРИТИЧЕСКАЯ ОШИБКА: ${error.message}`);
+      if (error.response?.data) {
+        addLog(`Response: ${JSON.stringify(error.response.data)}`);
+      }
       
       setStatus({
         type: 'error',
-        message: '❌ Ошибка создания Google Sheets',
-        error: errorMsg,
-        details: 'Проверьте консоль браузера (F12) для деталей'
+        message: '❌ Ошибка выполнения',
+        error: error.message,
+        details: error.response?.data?.error || ''
       });
     }
     setLoading(false);
@@ -132,6 +146,14 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
           Создать/Обновить Google Sheet
         </Button>
 
+        {logs.length > 0 && (
+          <div className="bg-gray-900 text-green-400 p-2 rounded text-xs font-mono mt-2 max-h-32 overflow-y-auto">
+            {logs.map((log, i) => (
+              <div key={i}>{log}</div>
+            ))}
+          </div>
+        )}
+
         {status && (
           <div className={`p-3 rounded-lg mt-3 ${
             status.type === 'success' ? 'bg-green-100 border border-green-300' :
@@ -142,26 +164,24 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
               {status.type === 'success' ? <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" /> : 
                status.type === 'warning' ? <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" /> :
                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />}
-              <div className="flex-1">
-                <p className="font-semibold text-sm">{status.message}</p>
-                {status.details && <p className="text-xs mt-1">{status.details}</p>}
-                {status.rows && <p className="text-xs">{status.rows}</p>}
-                {status.action && <p className="text-xs mt-1">{status.action}</p>}
+              <div className="flex-1 text-xs break-words">
+                <p className="font-semibold">{status.message}</p>
+                {status.details && <p className="mt-1">{status.details}</p>}
+                {status.error && (
+                  <p className="mt-1 text-red-700 whitespace-pre-wrap">{status.error}</p>
+                )}
                 {status.spreadsheetId && (
-                  <p className="text-xs mt-1 font-mono">ID: {status.spreadsheetId.slice(0, 20)}...</p>
+                  <p className="mt-1 font-mono break-all">ID: {status.spreadsheetId}</p>
                 )}
                 {status.url && (
                   <a 
                     href={status.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 underline mt-1 block"
+                    className="text-blue-600 underline mt-1 block"
                   >
                     Открыть таблицу →
                   </a>
-                )}
-                {status.error && (
-                  <p className="text-xs mt-1 text-red-700">{status.error}</p>
                 )}
               </div>
             </div>
