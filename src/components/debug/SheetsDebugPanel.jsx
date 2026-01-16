@@ -70,6 +70,9 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
 
       if (result.data?.error) {
         addLog(`❌ ОШИБКА: ${result.data.error}`);
+        if (result.data.details) addLog(`Детали: ${result.data.details}`);
+        if (result.data.rowsCount) addLog(`Строк: ${result.data.rowsCount}`);
+        if (result.data.dataSize) addLog(`Размер: ${(result.data.dataSize / 1024).toFixed(2)} KB`);
         if (result.data.stack) addLog(`Stack: ${result.data.stack.substring(0, 300)}`);
         
         setStatus({
