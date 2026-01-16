@@ -56,13 +56,16 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
     
     try {
       console.log('🔧 Creating Google Sheet via syncListingsToGoogleSheets...');
+      console.log('Request params:', { sheetName: 'Listings', city: 'Madrid' });
       
       const result = await base44.functions.invoke('syncListingsToGoogleSheets', {
         sheetName: 'Listings',
         city: 'Madrid'
       });
 
-      console.log('✅ Sync result:', result.data);
+      console.log('✅ Sync result:', result);
+      console.log('Result data:', result.data);
+      console.log('Result status:', result.status);
 
       if (result.data.spreadsheetId) {
         localStorage.setItem('rentai_spreadsheet_id', result.data.spreadsheetId);
@@ -87,10 +90,16 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
       }
     } catch (error) {
       console.error('❌ Error creating sheet:', error);
+      console.error('Error stack:', error.stack);
+      console.error('Error response:', error.response?.data);
+      
+      const errorMsg = error.response?.data?.error || error.message || String(error);
+      
       setStatus({
         type: 'error',
         message: '❌ Ошибка создания Google Sheets',
-        error: error.message || String(error)
+        error: errorMsg,
+        details: 'Проверьте консоль браузера (F12) для деталей'
       });
     }
     setLoading(false);

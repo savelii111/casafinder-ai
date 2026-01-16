@@ -28,7 +28,16 @@ Deno.serve(async (req) => {
     rows.push(header);
 
     // Call existing ZenRows fetcher (rent + sale)
-    const syncRes = await base44.functions.invoke('fetchListingsZenrows', { city, listing_type: 'both' });
+    console.log('   Calling fetchListingsZenrows...');
+    let syncRes;
+    try {
+      syncRes = await base44.functions.invoke('fetchListingsZenrows', { city, listing_type: 'both' });
+      console.log(`   ZenRows fetch result: ${syncRes?.data?.apartments?.length || 0} apartments`);
+    } catch (fetchError) {
+      console.error('   ❌ ZenRows fetch failed:', fetchError.message);
+      // Continue with empty array
+      syncRes = { data: { apartments: [] } };
+    }
     const apiApts = syncRes?.data?.apartments || [];
 
     // Deduplicate by id + source
@@ -75,7 +84,9 @@ Deno.serve(async (req) => {
     console.log(`   Prepared for Sheet (deduped): ${writtenCount}`);
 
     // 2) Get Google Sheets access token (App Connector)
+    console.log('   Getting Google Sheets access token...');
     const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlesheets');
+    console.log(`   Token received: ${accessToken ? 'YES' : 'NO'}`);
 
     // 3) Create spreadsheet if not provided
     let targetSpreadsheetId = spreadsheetId;
@@ -179,6 +190,11 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('[GSHEETS SYNC] Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[GSHEETS SYNC] Stack:', error.stack);
+    return Response.json({ 
+      error: error.message,
+      stack: error.stack,
+      details: 'Check server logs for full error'
+    }, { status: 500 });
   }
 });
