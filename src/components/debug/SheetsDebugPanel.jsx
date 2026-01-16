@@ -48,26 +48,49 @@ export default function SheetsDebugPanel({ language = 'ru' }) {
 
   const createSheet = async () => {
     setLoading(true);
+    setStatus({
+      type: 'warning',
+      message: '⏳ Создаём Google Sheets...',
+      details: 'Парсим данные с Idealista через ZenRows'
+    });
+    
     try {
+      console.log('🔧 Creating Google Sheet via syncListingsToGoogleSheets...');
+      
       const result = await base44.functions.invoke('syncListingsToGoogleSheets', {
         sheetName: 'Listings',
         city: 'Madrid'
       });
 
+      console.log('✅ Sync result:', result.data);
+
       if (result.data.spreadsheetId) {
         localStorage.setItem('rentai_spreadsheet_id', result.data.spreadsheetId);
         setStatus({
           type: 'success',
-          message: '✅ Google Sheets создан!',
+          message: '✅ Google Sheets создан и заполнен!',
+          details: `Строк записано: ${result.data.rows || 0}`,
           spreadsheetId: result.data.spreadsheetId,
           url: result.data.spreadsheetUrl
         });
+        
+        // Reload page after 2 seconds
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        setStatus({
+          type: 'error',
+          message: '❌ Не получен spreadsheetId',
+          error: JSON.stringify(result.data)
+        });
       }
     } catch (error) {
+      console.error('❌ Error creating sheet:', error);
       setStatus({
         type: 'error',
         message: '❌ Ошибка создания Google Sheets',
-        error: error.message
+        error: error.message || String(error)
       });
     }
     setLoading(false);
