@@ -123,19 +123,34 @@ export default function Home() {
         const startTime = Date.now();
 
         try {
-          const spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
+          let spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
+
+          // AUTO-CREATE Google Sheet if not exists
           if (!spreadsheetId) {
-            console.error('❌ [SHEETS FETCH] NO SPREADSHEET ID IN LOCALSTORAGE');
-            console.error('   Key: rentai_spreadsheet_id');
-            console.error('   Please export to Sheets first using the button');
-            setPaginationStats({
-              method: 'Google Sheets Source',
-              totalFetched: 0,
-              rawCount: 0,
-              duration: Date.now() - startTime,
-              error: 'NO_SPREADSHEET_ID'
-            });
-            return [];
+            console.log('🔧 [AUTO-SETUP] Google Sheet не найден, создаём...');
+            try {
+              const createResult = await base44.functions.invoke('syncListingsToGoogleSheets', {
+                sheetName: 'Listings',
+                city: 'Madrid'
+              });
+
+              if (createResult.data.spreadsheetId) {
+                spreadsheetId = createResult.data.spreadsheetId;
+                localStorage.setItem('rentai_spreadsheet_id', spreadsheetId);
+                console.log(`✅ [AUTO-SETUP] Google Sheet создан: ${spreadsheetId}`);
+                toast.success('Google Sheet создан и синхронизирован!');
+              }
+            } catch (createError) {
+              console.error('❌ [AUTO-SETUP] Ошибка создания:', createError);
+              setPaginationStats({
+                method: 'Google Sheets Source',
+                totalFetched: 0,
+                rawCount: 0,
+                duration: Date.now() - startTime,
+                error: 'FAILED_TO_CREATE_SHEET'
+              });
+              return [];
+            }
           }
           
           console.log(`📊 [SHEETS FETCH] Using spreadsheetId: ${spreadsheetId}`);
