@@ -1,0 +1,141 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { AlertCircle, CheckCircle, Loader2, FileSpreadsheet } from 'lucide-react';
+
+export default function SheetsDebugPanel({ language = 'ru' }) {
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const checkStatus = async () => {
+    setLoading(true);
+    try {
+      const spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
+      
+      if (!spreadsheetId) {
+        setStatus({
+          type: 'warning',
+          message: 'Google Sheets не настроен',
+          action: 'Нажмите "Создать Google Sheet"'
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Проверяем доступ к таблице
+      const result = await base44.functions.invoke('getListingsFromGoogleSheets', { 
+        spreadsheetId 
+      });
+
+      setStatus({
+        type: 'success',
+        message: `✅ Google Sheets работает`,
+        details: `Документ: ${result.data.documentTitle || 'Unknown'}`,
+        rows: `Строк: ${result.data.rawCount || 0}`,
+        spreadsheetId: spreadsheetId
+      });
+
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: '❌ Ошибка доступа к Google Sheets',
+        error: error.message
+      });
+    }
+    setLoading(false);
+  };
+
+  const createSheet = async () => {
+    setLoading(true);
+    try {
+      const result = await base44.functions.invoke('syncListingsToGoogleSheets', {
+        sheetName: 'Listings',
+        city: 'Madrid'
+      });
+
+      if (result.data.spreadsheetId) {
+        localStorage.setItem('rentai_spreadsheet_id', result.data.spreadsheetId);
+        setStatus({
+          type: 'success',
+          message: '✅ Google Sheets создан!',
+          spreadsheetId: result.data.spreadsheetId,
+          url: result.data.spreadsheetUrl
+        });
+      }
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        message: '❌ Ошибка создания Google Sheets',
+        error: error.message
+      });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Card className="p-4 bg-blue-50 border-blue-200">
+      <div className="flex items-center gap-2 mb-3">
+        <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+        <h3 className="font-bold text-blue-900">Google Sheets Диагностика</h3>
+      </div>
+
+      <div className="space-y-2">
+        <Button 
+          onClick={checkStatus} 
+          disabled={loading}
+          variant="outline"
+          className="w-full"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          Проверить статус
+        </Button>
+
+        <Button 
+          onClick={createSheet}
+          disabled={loading}
+          className="w-full bg-green-600 hover:bg-green-700"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          Создать/Обновить Google Sheet
+        </Button>
+
+        {status && (
+          <div className={`p-3 rounded-lg mt-3 ${
+            status.type === 'success' ? 'bg-green-100 border border-green-300' :
+            status.type === 'warning' ? 'bg-yellow-100 border border-yellow-300' :
+            'bg-red-100 border border-red-300'
+          }`}>
+            <div className="flex items-start gap-2">
+              {status.type === 'success' ? <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" /> : 
+               status.type === 'warning' ? <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" /> :
+               <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />}
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{status.message}</p>
+                {status.details && <p className="text-xs mt-1">{status.details}</p>}
+                {status.rows && <p className="text-xs">{status.rows}</p>}
+                {status.action && <p className="text-xs mt-1">{status.action}</p>}
+                {status.spreadsheetId && (
+                  <p className="text-xs mt-1 font-mono">ID: {status.spreadsheetId.slice(0, 20)}...</p>
+                )}
+                {status.url && (
+                  <a 
+                    href={status.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-600 underline mt-1 block"
+                  >
+                    Открыть таблицу →
+                  </a>
+                )}
+                {status.error && (
+                  <p className="text-xs mt-1 text-red-700">{status.error}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}

@@ -48,6 +48,7 @@ import PriceChart from '@/components/analytics/PriceChart';
 import GoogleAnalytics, { trackPropertySearch, trackUpgradeClick } from '@/components/analytics/GoogleAnalytics';
 import PipelineValidator from '@/components/utils/pipelineValidator';
 import PipelineDebugger from '@/components/debug/PipelineDebugger';
+import SheetsDebugPanel from '@/components/debug/SheetsDebugPanel';
 import { toast } from 'sonner';
 
 // Sample apartments are now loaded from database
@@ -685,11 +686,10 @@ export default function Home() {
       <GoogleAnalytics />
       {/* Header */}
       {/* DEBUG MODE - Remove after fixing */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 z-[9999] max-w-md">
-          <PipelineDebugger />
-        </div>
-      )}
+      <div className="fixed bottom-4 right-4 z-[9999] max-w-md space-y-2">
+        <SheetsDebugPanel language={language} />
+        {process.env.NODE_ENV === 'development' && <PipelineDebugger />}
+      </div>
 
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border-b border-white/20 dark:border-gray-700/20">
         <div className="w-full px-4 py-3 lg:py-4">
