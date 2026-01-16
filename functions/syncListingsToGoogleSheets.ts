@@ -164,7 +164,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Data too large, contact support' }, { status: 500 });
     }
     
-    const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(sheetName)}!A1:update?valueInputOption=RAW`, {
+    const range = `${sheetName}!A1`;
+    const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
