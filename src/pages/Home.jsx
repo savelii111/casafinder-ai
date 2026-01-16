@@ -702,7 +702,7 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3">
-              {/* Sync to Google Sheets Button */}
+              {/* Sync to Google Sheets Button - Desktop */}
               <Button 
                 variant="outline" 
                 size="sm"
@@ -724,6 +724,29 @@ export default function Home() {
               >
                 <Search className="h-4 w-4" />
                 {language === 'es' ? 'Exportar a Sheets' : language === 'ru' ? 'Экспорт в Sheets' : 'Export to Sheets'}
+              </Button>
+
+              {/* Sync to Google Sheets Button - Mobile */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={async () => {
+                  try {
+                    console.log('🔄 Syncing ALL listings to Google Sheets...');
+                    const res = await base44.functions.invoke('syncListingsToGoogleSheets', { sheetName: 'Listings', city: 'Madrid' });
+                    if (res?.data?.spreadsheetId) {
+                      localStorage.setItem('rentai_spreadsheet_id', res.data.spreadsheetId);
+                      queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
+                    }
+                    toast.success(`Exported ${Math.max((res.data?.rows || 1) - 1, 0)} listings to Google Sheets`);
+                  } catch (error) {
+                    console.error('Sheets sync error:', error);
+                    alert('❌ Ошибка экспорта в Sheets');
+                  }
+                }}
+                className="gap-1 lg:hidden"
+              >
+                <Search className="h-4 w-4" />
               </Button>
 
               {/* Upgrade Plan Button - Desktop */}
