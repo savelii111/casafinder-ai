@@ -53,19 +53,21 @@ Deno.serve(async (req) => {
       if (seen.has(key)) continue;
       seen.add(key);
 
-      const photos = (a.photos || []).join(',');
+      // Limit photos to first 3 to reduce data size
+      const photosList = (a.photos || []).slice(0, 3);
+      const photos = photosList.join(',');
       const currency = 'EUR';
       const updatedAt = a.last_sync_date || new Date().toISOString();
 
       rows.push([
         plainId,
-        a.title || '',
+        (a.title || '').substring(0, 200), // Limit title length
         a.price ?? '',
         currency,
         a.listing_type || 'rent',
         a.city || city,
-        a.neighborhood || '',
-        a.address || '',
+        (a.neighborhood || '').substring(0, 100),
+        (a.address || '').substring(0, 200),
         a.lat ?? '',
         a.lng ?? '',
         a.rooms ?? '',
@@ -153,6 +155,15 @@ Deno.serve(async (req) => {
     }
 
     // 5) Write values (single batch)
+    const rowsCount = rows.length;
+    const dataSize = JSON.stringify(rows).length;
+    console.log(`   Writing ${rowsCount} rows (${(dataSize / 1024).toFixed(2)} KB)`);
+    
+    if (dataSize > 10_000_000) {
+      console.error('   ❌ Data too large (>10MB), need batching');
+      return Response.json({ error: 'Data too large, contact support' }, { status: 500 });
+    }
+    
     const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(sheetName + '!A1')}:update?valueInputOption=RAW`, {
       method: 'PUT',
       headers: {
@@ -161,10 +172,18 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({ values: rows })
     });
+    
     if (!updateRes.ok) {
       const t = await updateRes.text();
-      console.error('[GSheets] Update error:', t);
-      return Response.json({ error: 'Failed to write values to sheet' }, { status: 500 });
+      console.error('[GSheets] Update error:', updateRes.status, t);
+      console.error('[GSheets] Rows count:', rowsCount);
+      console.error('[GSheets] Data size:', dataSize, 'bytes');
+      return Response.json({ 
+        error: 'Failed to write values to sheet',
+        details: `Status ${updateRes.status}: ${t.substring(0, 500)}`,
+        rowsCount,
+        dataSize
+      }, { status: 500 });
     }
 
     console.log('   ✓ Wrote rows:', rows.length);
