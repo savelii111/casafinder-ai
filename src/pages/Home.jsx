@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Map, MessageSquare, Sparkles, Crown, Menu, X,
-  ChevronDown, Home as HomeIcon, Search
+  ChevronDown, Home as HomeIcon, Search, Play
 } from "lucide-react";
 
 import ChatInput from '@/components/chat/ChatInput';
@@ -112,18 +112,18 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // DIRECT DATABASE FETCH - Load all apartments
+  // DIRECT DATABASE FETCH with Google Sheets fallback
   const { data: dbApartments = [] } = useQuery({
       queryKey: ['apartmentsFromDB'],
       queryFn: async () => {
         console.log('═══════════════════════════════════════════════════════');
-        console.log('🟦 [DB FETCH] Reading ALL apartments from database');
+        console.log('🟦 [DB FETCH] Reading apartments');
         console.log('═══════════════════════════════════════════════════════');
 
         const startTime = Date.now();
 
         try {
-          // Fetch ALL apartments with pagination
+          // Step 1: Try database first
           const allApartments = [];
           let cursor = 0;
           const batchSize = 1000;
@@ -134,31 +134,53 @@ export default function Home() {
             allApartments.push(...batch);
             if (batch.length < batchSize) break;
             cursor += batch.length;
-            if (cursor > 100000) break; // Safety limit
+            if (cursor > 100000) break;
           }
 
-          const stats = {
-            method: 'Direct Database',
+          console.log(`📊 Database has ${allApartments.length} apartments`);
+
+          // Step 2: If DB is empty, try Google Sheets
+          if (allApartments.length === 0) {
+            console.log('⚠️ Database empty, trying Google Sheets...');
+            const spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
+            
+            if (spreadsheetId) {
+              try {
+                const sheetsResult = await base44.functions.invoke('getListingsFromGoogleSheets', { 
+                  spreadsheetId, 
+                  sheetName: 'Listings' 
+                });
+                
+                const sheetsApts = sheetsResult.data.listings || [];
+                console.log(`✅ Loaded ${sheetsApts.length} from Google Sheets`);
+                
+                setPaginationStats({
+                  method: 'Google Sheets (Fallback)',
+                  totalFetched: sheetsApts.length,
+                  withCoords: sheetsApts.filter(a => a.lat && a.lng).length,
+                  duration: Date.now() - startTime
+                });
+                
+                return sheetsApts;
+              } catch (sheetsError) {
+                console.error('Sheets fallback failed:', sheetsError);
+              }
+            }
+          }
+
+          setPaginationStats({
+            method: allApartments.length > 0 ? 'Direct Database' : 'Empty',
             totalFetched: allApartments.length,
             withCoords: allApartments.filter(a => a.lat && a.lng).length,
             duration: Date.now() - startTime
-          };
+          });
 
-          console.log('═══════════════════════════════════════════════════════');
-          console.log(`✅ [STAGE 1: DB FETCH] Complete`);
-          console.log(`   Method: Direct Database`);
-          console.log(`   Total fetched: ${stats.totalFetched}`);
-          console.log(`   With valid coordinates: ${stats.withCoords}`);
-          console.log(`   Duration: ${stats.duration}ms`);
-          console.log('═══════════════════════════════════════════════════════');
-
-          setPaginationStats(stats);
           return allApartments;
 
         } catch (error) {
-          console.error('[DB FETCH] Error:', error);
+          console.error('[FETCH] Error:', error);
           setPaginationStats({
-            method: 'Direct Database',
+            method: 'Error',
             totalFetched: 0,
             duration: Date.now() - startTime,
             error: error.message
@@ -659,51 +681,65 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3">
-              {/* Sync to Google Sheets Button - Desktop */}
+              {/* Parse Listings Button - Desktop */}
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={async () => {
                   try {
-                    console.log('🔄 Syncing ALL listings to Google Sheets...');
-                    const res = await base44.functions.invoke('syncListingsToGoogleSheets', { sheetName: 'Listings', city: 'Madrid' });
-                    if (res?.data?.spreadsheetId) {
-                      localStorage.setItem('rentai_spreadsheet_id', res.data.spreadsheetId);
-                      queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
-                    }
-                    toast.success(`Exported ${Math.max((res.data?.rows || 1) - 1, 0)} listings to Google Sheets`);
+                    toast.info('Запуск парсинга...');
+                    const rentResult = await base44.functions.invoke('fetchListingsBatch', { 
+                      city: 'Madrid', 
+                      listing_type: 'rent',
+                      startPage: 1
+                    });
+                    const saleResult = await base44.functions.invoke('fetchListingsBatch', { 
+                      city: 'Madrid', 
+                      listing_type: 'sale',
+                      startPage: 1
+                    });
+                    const total = (rentResult.data.count || 0) + (saleResult.data.count || 0);
+                    queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
+                    toast.success(`✅ Парсинг: ${total} квартир`);
                   } catch (error) {
-                    console.error('Sheets sync error:', error);
-                    alert('❌ Ошибка экспорта в Sheets');
+                    console.error('Parse error:', error);
+                    toast.error('❌ Ошибка парсинга');
                   }
                 }}
                 className="gap-2 hidden lg:flex"
               >
-                <Search className="h-4 w-4" />
-                {language === 'es' ? 'Exportar a Sheets' : language === 'ru' ? 'Экспорт в Sheets' : 'Export to Sheets'}
+                <Play className="h-4 w-4" />
+                {language === 'es' ? 'Parsear' : language === 'ru' ? 'Парсить' : 'Parse'}
               </Button>
 
-              {/* Sync to Google Sheets Button - Mobile */}
+              {/* Parse Listings Button - Mobile */}
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={async () => {
                   try {
-                    console.log('🔄 Syncing ALL listings to Google Sheets...');
-                    const res = await base44.functions.invoke('syncListingsToGoogleSheets', { sheetName: 'Listings', city: 'Madrid' });
-                    if (res?.data?.spreadsheetId) {
-                      localStorage.setItem('rentai_spreadsheet_id', res.data.spreadsheetId);
-                      queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
-                    }
-                    toast.success(`Exported ${Math.max((res.data?.rows || 1) - 1, 0)} listings to Google Sheets`);
+                    toast.info('Парсинг...');
+                    const rentResult = await base44.functions.invoke('fetchListingsBatch', { 
+                      city: 'Madrid', 
+                      listing_type: 'rent',
+                      startPage: 1
+                    });
+                    const saleResult = await base44.functions.invoke('fetchListingsBatch', { 
+                      city: 'Madrid', 
+                      listing_type: 'sale',
+                      startPage: 1
+                    });
+                    const total = (rentResult.data.count || 0) + (saleResult.data.count || 0);
+                    queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
+                    toast.success(`✅ ${total} квартир`);
                   } catch (error) {
-                    console.error('Sheets sync error:', error);
-                    alert('❌ Ошибка экспорта в Sheets');
+                    console.error('Parse error:', error);
+                    toast.error('❌ Ошибка');
                   }
                 }}
                 className="gap-1 lg:hidden"
               >
-                <Search className="h-4 w-4" />
+                <Play className="h-4 w-4" />
               </Button>
 
               {/* Upgrade Plan Button - Desktop */}
