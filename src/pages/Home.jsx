@@ -111,22 +111,21 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // DIRECT DATABASE FETCH with Google Sheets fallback
+  // DIRECT DATABASE FETCH from Idealista/Fotocasa/Booking
   const { data: dbApartments = [] } = useQuery({
       queryKey: ['apartmentsFromDB'],
       queryFn: async () => {
         console.log('═══════════════════════════════════════════════════════');
-        console.log('🟦 [DB FETCH] Reading apartments');
+        console.log('🟦 [DB FETCH] Reading apartments from all sources');
         console.log('═══════════════════════════════════════════════════════');
 
         const startTime = Date.now();
 
         try {
-          // Step 1: Try database first
           const allApartments = [];
           let cursor = 0;
           const batchSize = 1000;
-          
+
           while (true) {
             const batch = await base44.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
             if (batch.length === 0) break;
@@ -138,50 +137,19 @@ export default function Home() {
 
           console.log(`📊 Database has ${allApartments.length} apartments`);
 
-          // Step 2: If DB is empty, try Google Sheets
-          if (allApartments.length === 0) {
-            console.log('⚠️ Database empty, trying Google Sheets...');
-            const spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
-            
-            if (spreadsheetId) {
-              try {
-                const sheetsResult = await base44.functions.invoke('getListingsFromGoogleSheets', { 
-                  spreadsheetId, 
-                  sheetName: 'Listings' 
-                });
-                
-                const sheetsApts = sheetsResult.data.listings || [];
-                console.log(`✅ Loaded ${sheetsApts.length} from Google Sheets`);
-                
-                setPaginationStats({
-                  method: 'Google Sheets (Fallback)',
-                  totalFetched: sheetsApts.length,
-                  withCoords: sheetsApts.filter(a => a.lat && a.lng).length,
-                  duration: Date.now() - startTime,
-                  documentTitle: sheetsResult.data.documentTitle,
-                  sheetName: sheetsResult.data.sheetName,
-                  rawCount: sheetsResult.data.rawCount
-                });
-                
-                return sheetsApts;
-              } catch (sheetsError) {
-                console.error('Sheets fallback failed:', sheetsError);
-                setPaginationStats({
-                  method: 'Sheets Error',
-                  totalFetched: 0,
-                  withCoords: 0,
-                  duration: Date.now() - startTime,
-                  error: sheetsError.message
-                });
-              }
-            }
-          }
+          // Count by source
+          const bySource = {};
+          allApartments.forEach(a => {
+            bySource[a.source] = (bySource[a.source] || 0) + 1;
+          });
+          console.log('📊 By source:', bySource);
 
           setPaginationStats({
-            method: allApartments.length > 0 ? 'Direct Database' : 'Empty',
+            method: allApartments.length > 0 ? 'Database' : 'Empty',
             totalFetched: allApartments.length,
             withCoords: allApartments.filter(a => a.lat && a.lng).length,
-            duration: Date.now() - startTime
+            duration: Date.now() - startTime,
+            bySource: bySource
           });
 
           return allApartments;
@@ -580,21 +548,7 @@ export default function Home() {
     a.remove();
   };
 
-  const handleExportSheets = async () => {
-    const { data } = await base44.functions.invoke('syncListingsToGoogleSheets', {
-      // spreadsheetId: localStorage.getItem('rentai_spreadsheet_id') || undefined,
-      sheetName: 'Listings',
-      city: 'Madrid'
-    });
-    if (data?.spreadsheetId) {
-      localStorage.setItem('rentai_spreadsheet_id', data.spreadsheetId);
-      queryClient.invalidateQueries({ queryKey: ['apartmentsFromSheets'] });
-    }
-    toast.success(`Exported ${Math.max((data?.rows || 1) - 1, 0)} listings to Google Sheets`);
-    if (data.spreadsheetUrl) {
-      window.open(data.spreadsheetUrl, '_blank');
-    }
-  };
+
 
   const handleSelectPlan = (planId) => {
     if (planId === 'free') {
@@ -673,7 +627,7 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Запуск парсинга...');
+                    toast.info('Parsing Idealista listings...');
                     const rentResult = await base44.functions.invoke('fetchListingsBatch', { 
                       city: 'Madrid', 
                       listing_type: 'rent',
@@ -686,16 +640,16 @@ export default function Home() {
                     });
                     const total = (rentResult.data.count || 0) + (saleResult.data.count || 0);
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
-                    toast.success(`✅ Парсинг: ${total} квартир`);
+                    toast.success(`✅ Parsed: ${total} listings from Idealista`);
                   } catch (error) {
                     console.error('Parse error:', error);
-                    toast.error('❌ Ошибка парсинга');
+                    toast.error('❌ Parse failed');
                   }
                 }}
                 className="gap-2 hidden lg:flex"
               >
                 <Play className="h-4 w-4" />
-                {language === 'es' ? 'Parsear' : language === 'ru' ? 'Парсить' : 'Parse'}
+                Parse Idealista
               </Button>
 
               {/* Parse Listings Button - Mobile */}
@@ -704,7 +658,7 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Парсинг...');
+                    toast.info('Parsing...');
                     const rentResult = await base44.functions.invoke('fetchListingsBatch', { 
                       city: 'Madrid', 
                       listing_type: 'rent',
@@ -717,15 +671,35 @@ export default function Home() {
                     });
                     const total = (rentResult.data.count || 0) + (saleResult.data.count || 0);
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
-                    toast.success(`✅ ${total} квартир`);
+                    toast.success(`✅ ${total} listings`);
                   } catch (error) {
                     console.error('Parse error:', error);
-                    toast.error('❌ Ошибка');
+                    toast.error('❌ Error');
                   }
                 }}
                 className="gap-1 lg:hidden"
               >
                 <Play className="h-4 w-4" />
+              </Button>
+
+              {/* Refresh Data Button - Desktop */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] })}
+                className="gap-2 hidden lg:flex"
+              >
+                🔄 Refresh
+              </Button>
+
+              {/* Refresh Data Button - Mobile (compact) */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] })}
+                className="lg:hidden gap-1"
+              >
+                🔄
               </Button>
 
               {/* Upgrade Plan Button - Desktop */}
@@ -763,35 +737,17 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Cursor Pagination Stats Display */}
+      {/* Data Source Stats Display */}
       {paginationStats && (
         <div className="fixed top-20 left-4 z-[60] bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/95 dark:to-cyan-900/95 border-2 border-blue-400 dark:border-blue-600 rounded-xl shadow-2xl max-w-md backdrop-blur-sm">
           <div className="px-4 py-3">
             <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-              📊 Google Sheets Pipeline
+              📊 Database Source
             </h3>
             <div className="space-y-1 text-xs font-mono text-blue-800 dark:text-blue-200">
-              {paginationStats.documentTitle && (
-                <div className="border-b border-blue-200 dark:border-blue-700 pb-1">
-                  <span className="text-xs opacity-75">Document:</span>
-                  <div className="font-semibold">{paginationStats.documentTitle}</div>
-                </div>
-              )}
-              {paginationStats.sheetName && (
-                <div className="border-b border-blue-200 dark:border-blue-700 pb-1">
-                  <span className="text-xs opacity-75">Sheet:</span>
-                  <div className="font-semibold">{paginationStats.sheetName}</div>
-                </div>
-              )}
               <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
-                <span>Raw Rows from Sheets:</span>
-                <strong className={paginationStats.rawCount === 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>
-                  {paginationStats.rawCount || 0}
-                </strong>
-              </div>
-              <div className="flex justify-between border-b border-blue-200 dark:border-blue-700 pb-1">
-                <span>After Normalization:</span>
-                <strong className={paginationStats.totalFetched === 0 ? 'text-red-600 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}>
+                <span>Total in Database:</span>
+                <strong className={paginationStats.totalFetched === 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>
                   {paginationStats.totalFetched || 0}
                 </strong>
               </div>
@@ -801,41 +757,29 @@ export default function Home() {
                   {paginationStats.withCoords || 0}
                 </strong>
               </div>
-              
-              {paginationStats.rawCount === 0 && (
-                <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
-                  <p className="text-red-800 dark:text-red-200 font-bold">🚨 ZERO rows from Sheets!</p>
-                  <p className="text-xs mt-1">Check sheet name & ID</p>
+
+              {paginationStats.bySource && (
+                <div className="border-t border-blue-200 dark:border-blue-700 pt-1 mt-1">
+                  <span className="text-xs opacity-75">By Source:</span>
+                  <div className="ml-2 space-y-0.5">
+                    {Object.entries(paginationStats.bySource).map(([source, count]) => (
+                      <div key={source} className="flex justify-between">
+                        <span className="capitalize">{source}:</span>
+                        <strong>{count}</strong>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-              
-              {paginationStats.rawCount > 0 && paginationStats.totalFetched === 0 && (
-                <div className="bg-orange-100 dark:bg-orange-900/50 border border-orange-300 dark:border-orange-700 rounded px-2 py-1 mt-1">
-                  <p className="text-orange-800 dark:text-orange-200 font-bold">⚠️ All rows filtered out!</p>
-                  <p className="text-xs mt-1">Raw: {paginationStats.rawCount}, Normalized: 0</p>
-                </div>
-              )}
-              
-              {paginationStats.totalFetched === 20 && (
-                <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
-                  <p className="text-red-800 dark:text-red-200 font-bold">⚠️ Exactly 20 - limit detected!</p>
-                </div>
-              )}
-              
-              {paginationStats.totalFetched > 20 && (
-                <div className="bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700 rounded px-2 py-1 mt-1">
-                  <p className="text-green-800 dark:text-green-200 font-bold">✅ No limits active!</p>
-                </div>
-              )}
-              
+
               {paginationStats.error && (
                 <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded px-2 py-1 mt-1">
                   <p className="text-red-800 dark:text-red-200 text-xs font-bold">❌ {paginationStats.error}</p>
                 </div>
               )}
-              
+
               <div className="flex justify-between text-gray-600 dark:text-gray-400 pt-1 border-t border-blue-200 dark:border-blue-700">
-                <span>Duration:</span>
+                <span>Load Time:</span>
                 <span>{paginationStats.duration}ms</span>
               </div>
             </div>
@@ -844,7 +788,7 @@ export default function Home() {
             <div className="bg-green-100 dark:bg-green-900/60 border-t-2 border-green-400 dark:border-green-600 px-4 py-2 rounded-b-xl">
               <div className="space-y-1 text-xs font-mono font-bold">
                 <div className="flex justify-between text-green-900 dark:text-green-100">
-                  <span>→ Map markers:</span>
+                  <span>→ On Map:</span>
                   <span className="bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">{orchestratorResults.length}</span>
                 </div>
               </div>
@@ -1120,9 +1064,6 @@ export default function Home() {
                         </Badge>
                         <Button variant="outline" size="sm" onClick={handleExportCsv} className="whitespace-nowrap">
                           {language === 'es' ? 'Exportar CSV' : language === 'ru' ? 'Экспорт CSV' : 'Export CSV'}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleExportSheets} className="whitespace-nowrap">
-                          {language === 'es' ? 'Exportar a Sheets' : language === 'ru' ? 'Экспорт в Sheets' : 'Export to Sheets'}
                         </Button>
                       </div>
                     </div>

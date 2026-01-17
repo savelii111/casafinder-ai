@@ -231,12 +231,7 @@ Deno.serve(async (req) => {
         console.log(`  Sale: ${apartments.filter(a => a.listing_type === 'sale').length}`);
         console.log(`  Valid Coords: ${apartments.filter(a => a.lat && a.lng).length}`);
 
-        // CRITICAL ASSERTION
-        if (apartments.length === 20) {
-          console.error('🚨🚨🚨 ZENROWS TRUNCATION DETECTED 🚨🚨🚨');
-          console.error('Output is EXACTLY 20 apartments - this should not happen');
-          console.error('Check: ZenRows pagination, DB entity create limits, or filter logic');
-        }
+
 
         console.log(`  Synced At: ${now}`);
         console.log('═══════════════════════════════════════════════════════');
