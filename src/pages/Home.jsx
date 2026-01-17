@@ -156,12 +156,22 @@ export default function Home() {
                   method: 'Google Sheets (Fallback)',
                   totalFetched: sheetsApts.length,
                   withCoords: sheetsApts.filter(a => a.lat && a.lng).length,
-                  duration: Date.now() - startTime
+                  duration: Date.now() - startTime,
+                  documentTitle: sheetsResult.data.documentTitle,
+                  sheetName: sheetsResult.data.sheetName,
+                  rawCount: sheetsResult.data.rawCount
                 });
                 
                 return sheetsApts;
               } catch (sheetsError) {
                 console.error('Sheets fallback failed:', sheetsError);
+                setPaginationStats({
+                  method: 'Sheets Error',
+                  totalFetched: 0,
+                  withCoords: 0,
+                  duration: Date.now() - startTime,
+                  error: sheetsError.message
+                });
               }
             }
           }
