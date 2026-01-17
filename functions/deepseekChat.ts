@@ -14,15 +14,6 @@ Deno.serve(async (req) => {
     console.log(`   Language: ${language}`);
     console.log('═══════════════════════════════════════════════════════');
     
-    // CRITICAL VALIDATION
-    if (totalCount === 20) {
-      console.error('🚨 DEEPSEEK: Received EXACTLY 20 apartments - upstream truncation!');
-    } else if (totalCount === 0) {
-      console.error('🚨 DEEPSEEK: No apartments provided!');
-    } else {
-      console.log(`✅ DEEPSEEK: Processing full dataset (${totalCount} apartments)`);
-    }
-    
     const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
 
     if (!DEEPSEEK_API_KEY) {
