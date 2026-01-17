@@ -73,10 +73,6 @@ export default function ApartmentMap({
     console.log(`   Total apartments: ${apartments.length}`);
     console.log(`   With coordinates: ${apartments.filter(a => a.lat && a.lng).length}`);
     console.log('═══════════════════════════════════════════════════════');
-    
-    if (apartments.length === 20) {
-      throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
-    }
   }, [apartments]);
   const labels = {
     en: {
@@ -112,7 +108,7 @@ export default function ApartmentMap({
       {/* Properties Counter */}
       <div className="absolute top-4 left-4 z-[1000] bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/90 dark:to-cyan-900/90 px-4 py-2 rounded-xl shadow-lg border-2 border-blue-300 dark:border-blue-600">
         <p className="text-sm font-bold text-blue-900 dark:text-blue-100">
-          📍 {apartments.length} properties from Google Sheets
+          📍 {apartments.length} properties
         </p>
       </div>
 
@@ -142,10 +138,6 @@ export default function ApartmentMap({
           console.log(`   Valid coordinates: ${markersToRender.length}`);
           console.log(`   Will render ${markersToRender.length} markers`);
           console.log('═══════════════════════════════════════════════════════');
-          
-          if (markersToRender.length === 20 && apartments.length > 20) {
-            throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
-          }
 
           return markersToRender.map((apt) => {
             return (
