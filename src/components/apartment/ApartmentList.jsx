@@ -83,10 +83,6 @@ export default function ApartmentList({
     console.log(`   Output: ${result.length} apartments`);
     console.log('═══════════════════════════════════════════════════════');
 
-    if (result.length === 20 && apartments.length > 20) {
-      console.error('🚨 APARTMENT LIST: Output truncated to 20!');
-    }
-
     return result;
   }, [apartments, sortBy]);
 
@@ -128,16 +124,7 @@ export default function ApartmentList({
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {(() => {
-            console.log('═══════════════════════════════════════════════════════');
-            console.log(`📋 [APARTMENT CARDS] Rendering ${sortedApartments.length} cards`);
-            console.log('═══════════════════════════════════════════════════════');
-
-            if (sortedApartments.length === 20) {
-              console.error('🚨 APARTMENT CARDS: Rendering exactly 20 - possible truncation!');
-            }
-
-            return sortedApartments.map((apt, index) => (
+          {sortedApartments.map((apt, index) => (
             <motion.div
               key={apt.id}
               initial={{ opacity: 0, y: 20 }}
@@ -152,8 +139,7 @@ export default function ApartmentList({
                 onUpgradeClick={onUpgradeClick}
               />
             </motion.div>
-          ));
-          })()}
+          ))}
         </div>
       )}
     </div>
