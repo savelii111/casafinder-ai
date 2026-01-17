@@ -112,118 +112,60 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // BACKEND FUNCTION - Google Sheets as ONLY source
+  // DIRECT DATABASE FETCH - Load all apartments
   const { data: dbApartments = [] } = useQuery({
-      queryKey: ['apartmentsFromSheets'],
+      queryKey: ['apartmentsFromDB'],
       queryFn: async () => {
         console.log('═══════════════════════════════════════════════════════');
-        console.log('🟦 [SHEETS FETCH] Reading Google Sheet (ONLY SOURCE)');
+        console.log('🟦 [DB FETCH] Reading ALL apartments from database');
         console.log('═══════════════════════════════════════════════════════');
 
         const startTime = Date.now();
 
         try {
-          let spreadsheetId = localStorage.getItem('rentai_spreadsheet_id');
-
-          // AUTO-CREATE Google Sheet if not exists
-          if (!spreadsheetId) {
-            console.log('🔧 [AUTO-SETUP] Google Sheet не найден, создаём...');
-            try {
-              const createResult = await base44.functions.invoke('syncListingsToGoogleSheets', {
-                sheetName: 'Listings',
-                city: 'Madrid'
-              });
-
-              if (createResult.data.spreadsheetId) {
-                spreadsheetId = createResult.data.spreadsheetId;
-                localStorage.setItem('rentai_spreadsheet_id', spreadsheetId);
-                console.log(`✅ [AUTO-SETUP] Google Sheet создан: ${spreadsheetId}`);
-                toast.success('Google Sheet создан и синхронизирован!');
-              }
-            } catch (createError) {
-              console.error('❌ [AUTO-SETUP] Ошибка создания:', createError);
-              setPaginationStats({
-                method: 'Google Sheets Source',
-                totalFetched: 0,
-                rawCount: 0,
-                duration: Date.now() - startTime,
-                error: 'FAILED_TO_CREATE_SHEET'
-              });
-              return [];
-            }
+          // Fetch ALL apartments with pagination
+          const allApartments = [];
+          let cursor = 0;
+          const batchSize = 1000;
+          
+          while (true) {
+            const batch = await base44.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
+            if (batch.length === 0) break;
+            allApartments.push(...batch);
+            if (batch.length < batchSize) break;
+            cursor += batch.length;
+            if (cursor > 100000) break; // Safety limit
           }
-          
-          console.log(`📊 [SHEETS FETCH] Using spreadsheetId: ${spreadsheetId}`);
-          
-          const result = await base44.functions.invoke('getListingsFromGoogleSheets', { 
-            spreadsheetId, 
-            sheetName: 'Listings' 
-          });
 
-          const rawCount = result.data.rawCount || 0;
-          const totalFetched = result.data.count || (result.data.listings?.length || 0);
-          const withCoords = result.data.withCoords || (result.data.listings || []).filter(a => a.lat && a.lng).length;
-          const documentTitle = result.data.documentTitle || 'Unknown';
-          const sheetName = result.data.sheetName || 'Unknown';
-          const availableSheets = result.data.availableSheets || [];
-          
           const stats = {
-            method: 'Google Sheets Source',
-            rawCount,
-            totalFetched,
-            withCoords,
-            documentTitle,
-            sheetName,
-            availableSheets,
+            method: 'Direct Database',
+            totalFetched: allApartments.length,
+            withCoords: allApartments.filter(a => a.lat && a.lng).length,
             duration: Date.now() - startTime
           };
 
-        console.log('═══════════════════════════════════════════════════════');
-        console.log(`✅ [STAGE 1: SHEETS FETCH] Complete`);
-        console.log(`   Method: Google Sheets`);
-        console.log(`   Document: "${documentTitle}"`);
-        console.log(`   Sheet: "${sheetName}"`);
-        console.log(`   Available Sheets: ${availableSheets.join(', ')}`);
-        console.log(`   RAW rows from Sheets: ${rawCount}`);
-        console.log(`   After normalization: ${totalFetched}`);
-        console.log(`   With valid coordinates: ${withCoords}`);
-        console.log(`   Frontend duration: ${stats.duration}ms`);
-        console.log('═══════════════════════════════════════════════════════');
+          console.log('═══════════════════════════════════════════════════════');
+          console.log(`✅ [STAGE 1: DB FETCH] Complete`);
+          console.log(`   Method: Direct Database`);
+          console.log(`   Total fetched: ${stats.totalFetched}`);
+          console.log(`   With valid coordinates: ${stats.withCoords}`);
+          console.log(`   Duration: ${stats.duration}ms`);
+          console.log('═══════════════════════════════════════════════════════');
 
-        // CRITICAL DIAGNOSTICS
-        if (rawCount === 0) {
-          console.error('🚨 CRITICAL: Google Sheets returned ZERO rows');
-          console.error('   Check:');
-          console.error('   1. Sheet name is "Listings" (exact match)');
-          console.error('   2. Spreadsheet ID is correct');
-          console.error('   3. Sheet has data rows (not just header)');
-        } else if (rawCount > 0 && totalFetched === 0) {
-          console.error('🚨 CRITICAL: Raw rows exist but ALL filtered out');
-          console.error(`   Raw: ${rawCount}, Normalized: ${totalFetched}`);
-          console.error('   Check normalization logic');
-        } else if (totalFetched === 20) {
-          throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
-        } else if (totalFetched > 20) {
-          console.log(`✅✅✅ SUCCESS: Loaded ${totalFetched} from Sheets (no limit) ✅✅✅`);
-        } else if (totalFetched > 0) {
-          console.warn(`⚠️ WARNING: Only ${totalFetched} rows in sheet`);
+          setPaginationStats(stats);
+          return allApartments;
+
+        } catch (error) {
+          console.error('[DB FETCH] Error:', error);
+          setPaginationStats({
+            method: 'Direct Database',
+            totalFetched: 0,
+            duration: Date.now() - startTime,
+            error: error.message
+          });
+          return [];
         }
-
-        setPaginationStats(stats);
-        return result.data.listings || [];
-
-      } catch (error) {
-        console.error('[BACKEND FETCH] Error:', error);
-        setPaginationStats({
-          method: 'Google Sheets Source',
-          totalFetched: 0,
-          rawCount: 0,
-          duration: Date.now() - startTime,
-          error: error.message
-        });
-        return [];
-      }
-    },
+      },
   });
 
   const { data: user } = useQuery({
