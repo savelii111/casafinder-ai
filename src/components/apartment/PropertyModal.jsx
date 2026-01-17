@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import POINearby from '../map/POINearby';
 import ShareModal from '../share/ShareModal';
+import EnrichedDataPanel from './EnrichedDataPanel';
 
 export default function PropertyModal({ 
   apartment, 
@@ -369,12 +370,22 @@ export default function PropertyModal({
             </motion.div>
           )}
 
-          {/* POI Nearby */}
+          {/* Enriched Data Panel */}
           <motion.div 
             className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+          >
+            <EnrichedDataPanel apartment={apartment} language={language} />
+          </motion.div>
+
+          {/* POI Nearby */}
+          <motion.div 
+            className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
           >
             <POINearby apartment={apartment} language={language} />
           </motion.div>
@@ -384,7 +395,7 @@ export default function PropertyModal({
             className="glass-card rounded-2xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
+            transition={{ delay: 0.3 }}
           >
             <h3 className="font-semibold text-gray-900 mb-3">{t.quickActions}</h3>
             <div className="grid grid-cols-1 gap-2">
