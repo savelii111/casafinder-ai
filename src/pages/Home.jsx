@@ -627,20 +627,14 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Parsing Idealista listings...');
-                    const rentResult = await base44.functions.invoke('fetchListingsBatch', { 
+                    toast.info('Parsing with FireCrawl...');
+                    const result = await base44.functions.invoke('fetchListingsFirecrawl', { 
                       city: 'Madrid', 
                       listing_type: 'rent',
-                      startPage: 1
+                      maxPages: 5
                     });
-                    const saleResult = await base44.functions.invoke('fetchListingsBatch', { 
-                      city: 'Madrid', 
-                      listing_type: 'sale',
-                      startPage: 1
-                    });
-                    const total = (rentResult.data.count || 0) + (saleResult.data.count || 0);
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
-                    toast.success(`✅ Parsed: ${total} listings from Idealista`);
+                    toast.success(`✅ Parsed: ${result.data.count} listings`);
                   } catch (error) {
                     console.error('Parse error:', error);
                     toast.error('❌ Parse failed');
@@ -649,7 +643,7 @@ export default function Home() {
                 className="gap-2 hidden lg:flex"
               >
                 <Play className="h-4 w-4" />
-                Parse Idealista
+                Parse FireCrawl
               </Button>
 
               {/* Parse Listings Button - Mobile */}
@@ -659,19 +653,13 @@ export default function Home() {
                 onClick={async () => {
                   try {
                     toast.info('Parsing...');
-                    const rentResult = await base44.functions.invoke('fetchListingsBatch', { 
+                    const result = await base44.functions.invoke('fetchListingsFirecrawl', { 
                       city: 'Madrid', 
                       listing_type: 'rent',
-                      startPage: 1
+                      maxPages: 5
                     });
-                    const saleResult = await base44.functions.invoke('fetchListingsBatch', { 
-                      city: 'Madrid', 
-                      listing_type: 'sale',
-                      startPage: 1
-                    });
-                    const total = (rentResult.data.count || 0) + (saleResult.data.count || 0);
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
-                    toast.success(`✅ ${total} listings`);
+                    toast.success(`✅ ${result.data.count} listings`);
                   } catch (error) {
                     console.error('Parse error:', error);
                     toast.error('❌ Error');
