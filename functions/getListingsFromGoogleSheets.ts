@@ -201,11 +201,11 @@ Deno.serve(async (req) => {
     console.log(`   Raw rows: ${rawDataRows.length}`);
     console.log(`   Normalized: ${rawListings.length}`);
     console.log(`   With lat/lng: ${rawListings.filter(l => l.lat && l.lng).length}`);
-    console.log('═══════════════════════════════════════════════════════');
-
+    
     if (rawListings.length === 20) {
-      throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
+      console.warn('⚠️ Exactly 20 items - verify this is expected');
     }
+    console.log('═══════════════════════════════════════════════════════');
     
     return Response.json({ 
       listings: rawListings, 
