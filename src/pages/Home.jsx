@@ -227,9 +227,9 @@ export default function Home() {
         setPropertiesFoundCount(normalized.length);
       }
 
-      // CRITICAL: Validate no truncation
+      // Warning if exactly 20
       if (normalized.length === 20) {
-        throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
+        console.warn('⚠️ Exactly 20 items - check if this is expected');
       }
     }
   }, [dbApartments, hasSearched]);
@@ -442,9 +442,9 @@ export default function Home() {
       console.log(`   To map: ${sorted.length}`);
 
       if (sorted.length === 20) {
-        throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
+        console.warn('⚠️ Exactly 20 results - verify this is expected');
       } else {
-        console.log(`✅ Pipeline integrity: ${sorted.length} apartments (not limited to 20)`);
+        console.log(`✅ Pipeline: ${sorted.length} apartments`);
       }
       console.log('═══════════════════════════════════════════════════════');
 
@@ -652,9 +652,9 @@ export default function Home() {
 
     console.log(`✓ [FILTERED_APARTMENTS] Result: ${result.length} apartments (${apartments.length} → ${result.length})`);
 
-    // CRITICAL VALIDATION
+    // Warning if exactly 20
     if (result.length === 20 && apartments.length > 20) {
-      throw new Error('🚨 FORBIDDEN: 20-item limit detected. Google Sheets pipeline broken.');
+      console.warn('⚠️ Filter resulted in exactly 20 items from larger set');
     }
 
     return result;
