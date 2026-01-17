@@ -627,10 +627,10 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Parsing with FireCrawl...');
+                    toast.info('Parsing Fotocasa (all Spain)...');
                     const result = await base44.functions.invoke('fetchListingsFirecrawl', { 
-                      city: 'Madrid', 
-                      listing_type: 'rent',
+                      region: 'espana',
+                      listing_type: 'comprar',
                       maxPages: 5
                     });
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
@@ -643,7 +643,7 @@ export default function Home() {
                 className="gap-2 hidden lg:flex"
               >
                 <Play className="h-4 w-4" />
-                Parse FireCrawl
+                Parse Fotocasa
               </Button>
 
               {/* Parse Listings Button - Mobile */}
@@ -654,8 +654,8 @@ export default function Home() {
                   try {
                     toast.info('Parsing...');
                     const result = await base44.functions.invoke('fetchListingsFirecrawl', { 
-                      city: 'Madrid', 
-                      listing_type: 'rent',
+                      region: 'espana',
+                      listing_type: 'comprar',
                       maxPages: 5
                     });
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
