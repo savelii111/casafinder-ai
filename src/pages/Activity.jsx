@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Activity as ActivityIcon, ArrowLeft, Sparkles, Eye, Heart, MessageSquare,
-  Home, Clock, TrendingUp
+  Home, Clock, TrendingUp, Play, Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -73,6 +73,23 @@ const mockActivityData = {
 
 export default function Activity() {
   const { language } = useLanguage();
+  const [parsing, setParsing] = useState(false);
+  const [parseResult, setParseResult] = useState(null);
+
+  const startParsing = async () => {
+    setParsing(true);
+    setParseResult(null);
+    try {
+      const result = await base44.functions.invoke('fetchListingsZenrows', {
+        city: 'Madrid',
+        listing_type: 'both'
+      });
+      setParseResult(result.data);
+    } catch (error) {
+      setParseResult({ error: error.message });
+    }
+    setParsing(false);
+  };
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -162,15 +179,55 @@ export default function Activity() {
                 {t.title}
               </h1>
             </div>
-            <div className="glass-card dark:glass-dark rounded-xl px-4 py-2">
-              <div className="text-sm text-gray-600 dark:text-gray-400">{t.today}</div>
-              <div className="font-bold text-lg text-gray-900 dark:text-white">
-                {plan === 'free' ? `${aiRequestsToday}/3` : t.unlimited}
+            <div className="flex items-center gap-4">
+              <Button 
+                onClick={startParsing}
+                disabled={parsing}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {parsing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Parsing...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Start Parsing
+                  </>
+                )}
+              </Button>
+              <div className="glass-card dark:glass-dark rounded-xl px-4 py-2">
+                <div className="text-sm text-gray-600 dark:text-gray-400">{t.today}</div>
+                <div className="font-bold text-lg text-gray-900 dark:text-white">
+                  {plan === 'free' ? `${aiRequestsToday}/3` : t.unlimited}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{plan === 'free' ? t.requestsUsed : 'AI requests'}</div>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{plan === 'free' ? t.requestsUsed : 'AI requests'}</div>
             </div>
           </div>
         </div>
+
+        {/* Parse Result */}
+        {parseResult && (
+          <Card className="glass-card dark:glass-dark border-white/30 dark:border-gray-700/30 mb-6">
+            <CardContent className="p-6">
+              {parseResult.error ? (
+                <div className="text-red-600">❌ Error: {parseResult.error}</div>
+              ) : (
+                <div>
+                  <div className="text-lg font-bold text-green-600 mb-2">✅ Parsing Complete!</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    • Total: {parseResult.count || 0} apartments<br/>
+                    • Rent: {parseResult.stats?.rent || 0}<br/>
+                    • Sale: {parseResult.stats?.sale || 0}<br/>
+                    • With Coordinates: {parseResult.stats?.withCoords || 0}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="ai" className="w-full">
