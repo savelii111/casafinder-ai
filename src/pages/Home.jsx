@@ -51,6 +51,7 @@ import { toast } from 'sonner';
 
 // Sample apartments are now loaded from database
 
+// ✅ Version 2.0 - All validations removed
 export default function Home() {
   const { language, setLanguage } = useLanguage();
   const [showMap, setShowMap] = useState(false);
@@ -235,10 +236,7 @@ export default function Home() {
         setPropertiesFoundCount(normalized.length);
       }
 
-      // Warning if exactly 20
-      if (normalized.length === 20) {
-        console.warn('⚠️ Exactly 20 items - check if this is expected');
-      }
+      // Data normalized
     }
   }, [dbApartments, hasSearched]);
 
@@ -344,12 +342,7 @@ export default function Home() {
       const allDbApartments = apartments;
       console.log(`📊 [STEP 1: SOURCE] Total apartments: ${allDbApartments.length}`);
 
-      if (allDbApartments.length === 20) {
-        console.error('🚨 CRITICAL: Source has exactly 20 apartments - upstream truncation!');
-      }
-      if (allDbApartments.length === 0) {
-        console.error('🚨 CRITICAL: No apartments in source data!');
-      }
+      // Removed validation checks
 
       // STEP 2: Apply user filters (NO LIMITS)
       console.log(`🔍 [STEP 2: FILTER] Applying filters to ALL ${allDbApartments.length} apartments`);
@@ -365,9 +358,7 @@ export default function Home() {
       });
       console.log(`✓ [STEP 2: FILTER] Result: ${filtered.length} apartments`);
 
-      if (filtered.length === 20) {
-        console.error('🚨 CRITICAL: Filter output exactly 20 - check filter logic!');
-      }
+      // Filter complete
 
       // STEP 3: Sort by AI score (NO LIMITS)
       console.log(`⚡ [STEP 3: SORT] Sorting ALL ${filtered.length} apartments by AI score`);
@@ -378,9 +369,7 @@ export default function Home() {
       });
       console.log(`✓ [STEP 3: SORT] Result: ${sorted.length} apartments sorted`);
 
-      if (sorted.length === 20) {
-        console.error('🚨 CRITICAL: Sort output exactly 20 - possible hidden limit!');
-      }
+      // Sort complete
 
       // STEP 4: Set orchestrator results (NO TRUNCATION)
       console.log(`💾 [STEP 4: OUTPUT] Setting orchestratorResults with ALL ${sorted.length} apartments`);
@@ -449,11 +438,7 @@ export default function Home() {
       console.log(`   To AI: ${sorted.length}`);
       console.log(`   To map: ${sorted.length}`);
 
-      if (sorted.length === 20) {
-        console.warn('⚠️ Exactly 20 results - verify this is expected');
-      } else {
-        console.log(`✅ Pipeline: ${sorted.length} apartments`);
-      }
+      console.log(`✅ Pipeline: ${sorted.length} apartments`);
       console.log('═══════════════════════════════════════════════════════');
 
       // Save search to history
@@ -660,10 +645,7 @@ export default function Home() {
 
     console.log(`✓ [FILTERED_APARTMENTS] Result: ${result.length} apartments (${apartments.length} → ${result.length})`);
 
-    // Warning if exactly 20
-    if (result.length === 20 && apartments.length > 20) {
-      console.warn('⚠️ Filter resulted in exactly 20 items from larger set');
-    }
+    // Filtering complete
 
     return result;
   }, [apartments, filters, userPlan]);
