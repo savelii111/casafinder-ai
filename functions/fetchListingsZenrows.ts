@@ -58,8 +58,8 @@ Deno.serve(async (req) => {
     const locationUri = cityMap[(city || 'madrid').toLowerCase()] || 'madrid-madrid';
 
     for (const operation of operations) {
-      // Fetch first 500 pages (up to 100,000 listings per operation)
-      for (let page = 1; page <= 500; page++) {
+      // Fetch first 100 pages (up to 20,000 listings per operation)
+      for (let page = 1; page <= 100; page++) {
         urls.push(
           `https://www.idealista.com/ajax/listingcontroller/getlisting.ajax?locationUri=${locationUri}&typology=flat&operation=${operation}&numPage=${page}&maxItems=200&order=publicationDate&language=en`
         );
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         allListings.push(...listings.map(item => ({ ...item, listing_type: currentType })));
         
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 100));
       } catch (err) {
         console.error(`[ZenRows] Error fetching ${currentType} page ${pageNum}:`, err.message);
       }
