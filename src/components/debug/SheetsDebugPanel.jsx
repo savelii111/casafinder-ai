@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { AlertCircle, CheckCircle, Loader2, FileSpreadsheet } from 'lucide-react';
 
 export default function SheetsDebugPanel({ language = 'ru' }) {
+  return null; // Disabled
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState([]);

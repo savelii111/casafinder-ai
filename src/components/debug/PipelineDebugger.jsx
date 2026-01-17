@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 
 export default function PipelineDebugger() {
+  return null; // Disabled
   const [stats, setStats] = React.useState({
     backend: null,
     orchestrator: null,
