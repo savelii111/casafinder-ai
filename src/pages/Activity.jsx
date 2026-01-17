@@ -80,11 +80,28 @@ export default function Activity() {
     setParsing(true);
     setParseResult(null);
     try {
-      const result = await base44.functions.invoke('fetchListingsZenrows', {
+      // Parse 20 pages of rent + 20 pages of sale
+      const rentResult = await base44.functions.invoke('fetchListingsBatch', {
         city: 'Madrid',
-        listing_type: 'both'
+        listing_type: 'rent',
+        startPage: 1
       });
-      setParseResult(result.data);
+      
+      const saleResult = await base44.functions.invoke('fetchListingsBatch', {
+        city: 'Madrid',
+        listing_type: 'sale',
+        startPage: 1
+      });
+      
+      setParseResult({
+        success: true,
+        count: (rentResult.data.count || 0) + (saleResult.data.count || 0),
+        stats: {
+          rent: rentResult.data.count || 0,
+          sale: saleResult.data.count || 0,
+          withCoords: (rentResult.data.count || 0) + (saleResult.data.count || 0)
+        }
+      });
     } catch (error) {
       setParseResult({ error: error.message });
     }
