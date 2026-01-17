@@ -158,40 +158,43 @@ Deno.serve(async (req) => {
       console.error('[GSheets] Clear error:', t);
     }
 
-    // 5) Write values
-    const rowsCount = rows.length;
-    const dataSize = JSON.stringify(rows).length;
-    console.log(`   Writing ${rowsCount} rows (${(dataSize / 1024).toFixed(2)} KB)`);
+    // 5) Write values in batches (1000 rows per batch)
+    const BATCH_SIZE = 1000;
+    const totalRows = rows.length;
+    console.log(`   Writing ${totalRows} rows in batches of ${BATCH_SIZE}...`);
     
-    if (dataSize > 10_000_000) {
-      console.error('   ❌ Data too large (>10MB)');
-      return Response.json({ error: 'Data too large' }, { status: 500 });
-    }
-    
-    const range = `${sheetName}!A1`;
-    const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ values: rows })
-    });
-    
-    if (!updateRes.ok) {
-      const t = await updateRes.text();
-      console.error('[GSheets] Update error:', updateRes.status, t);
-      console.error('[GSheets] Rows count:', rowsCount);
-      console.error('[GSheets] Data size:', dataSize, 'bytes');
-      return Response.json({ 
-        error: 'Failed to write values to sheet',
-        details: `Status ${updateRes.status}: ${t.substring(0, 500)}`,
-        rowsCount,
-        dataSize
-      }, { status: 500 });
+    let currentRow = 1; // Start from A1 (header)
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(rows.length / BATCH_SIZE);
+      
+      console.log(`   📦 Batch ${batchNum}/${totalBatches}: ${batch.length} rows`);
+      
+      const range = `${sheetName}!A${currentRow}`;
+      const updateRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${targetSpreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ values: batch })
+      });
+      
+      if (!updateRes.ok) {
+        const t = await updateRes.text();
+        console.error(`[GSheets] Batch ${batchNum} error:`, updateRes.status, t);
+        return Response.json({ 
+          error: `Failed to write batch ${batchNum}/${totalBatches}`,
+          details: t.substring(0, 500)
+        }, { status: 500 });
+      }
+      
+      currentRow += batch.length;
+      console.log(`   ✓ Batch ${batchNum}/${totalBatches} written`);
     }
 
-    console.log('   ✓ Wrote rows:', rows.length);
+    console.log(`   ✅ All ${totalRows} rows written successfully`);
     console.log(`   Written to Sheet: ${rows.length - 1}`);
 
     // Check total rows in sheet
