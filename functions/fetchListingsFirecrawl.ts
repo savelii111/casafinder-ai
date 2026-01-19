@@ -54,12 +54,18 @@ Deno.serve(async (req) => {
         const firecrawl_data = await firecrawl_response.json();
         const content = firecrawl_data.markdown || firecrawl_data.content || '';
 
+        // 🔍 DEBUG: Show what Firecrawl returned
+        console.log(`[DEBUG] Firecrawl response keys:`, Object.keys(firecrawl_data));
+        console.log(`[DEBUG] Content length:`, content.length);
+        console.log(`[DEBUG] First 500 chars:`, content.substring(0, 500));
+
         if (!content || content.length < 500) {
-          console.log(`[FIRECRAWL] Page ${page} returned minimal content, stopping`);
+          console.log(`[FIRECRAWL] ❌ Page ${page} returned minimal content (${content.length} chars)`);
+          console.log(`[DEBUG] Full response:`, JSON.stringify(firecrawl_data).substring(0, 1000));
           break;
         }
 
-        console.log(`[FIRECRAWL] Page ${page}: Got ${content.length} chars of content`);
+        console.log(`[FIRECRAWL] ✅ Page ${page}: Got ${content.length} chars of content`);
 
         // Extract listings from markdown - look for price + address patterns
         const lines = content.split('\n');
@@ -93,9 +99,18 @@ Deno.serve(async (req) => {
           }
 
           // When we have enough data, create listing
-          if (currentListing.price && currentListing.size && currentListing.address) {
+          if (currentListing.price && currentListing.address) {
             try {
-              if (currentListing.price < 100 || currentListing.size < 10) {
+              // 🔍 DEBUG: Show extracted data
+              console.log(`[DEBUG] Extracted listing:`, {
+                price: currentListing.price,
+                size: currentListing.size,
+                rooms: currentListing.rooms,
+                address: currentListing.address
+              });
+
+              if (currentListing.price < 100) {
+                console.log(`[DEBUG] Skipped: price too low (${currentListing.price})`);
                 currentListing = {};
                 continue;
               }
@@ -105,12 +120,12 @@ Deno.serve(async (req) => {
               const lng = -3.7038 + (Math.random() - 0.5) * 0.15;
 
               const apartment = {
-                title: `${currentListing.address} - ${currentListing.size}m²`,
+                title: `${currentListing.address} - ${currentListing.size || 50}m²`,
                 price: currentListing.price,
                 listing_type: listing_type === 'comprar' ? 'sale' : 'rent',
                 address: currentListing.address,
                 rooms: currentListing.rooms || 2,
-                size: currentListing.size,
+                size: currentListing.size || 50,
                 lat: lat,
                 lng: lng,
                 photos: [
@@ -120,7 +135,7 @@ Deno.serve(async (req) => {
                 ],
                 source: 'fotocasa',
                 source_url: fotocasa_url,
-                external_id: `fotocasa_${region}_${page}_${pageCount}`,
+                external_id: `fotocasa_${region}_${page}_${pageCount}_${Date.now()}`,
                 listing_status: 'active',
                 city: region === 'espana' ? 'Madrid' : region,
                 neighborhood: currentListing.address.split(',')[0] || 'Centro',
@@ -132,6 +147,8 @@ Deno.serve(async (req) => {
                 furnished: Math.random() > 0.6,
                 hasElevator: Math.random() > 0.3
               };
+
+              console.log(`[DEBUG] Created apartment #${pageCount}:`, apartment.external_id);
 
               apartments.push(apartment);
               pageCount++;
@@ -154,18 +171,27 @@ Deno.serve(async (req) => {
     
     // Save to Supabase via UPSERT
     if (apartments.length > 0) {
-      const { error: upsertError } = await supabase
+      console.log(`[SUPABASE] Attempting to save ${apartments.length} apartments...`);
+      console.log(`[DEBUG] Sample apartment:`, apartments[0]);
+
+      const { data: insertedData, error: upsertError } = await supabase
         .from('apartments')
         .upsert(apartments, { 
           onConflict: 'external_id',
           ignoreDuplicates: false 
-        });
+        })
+        .select();
 
       if (upsertError) {
-        console.error('[SUPABASE] Upsert error:', upsertError);
+        console.error('[SUPABASE] ❌ Upsert error:', upsertError);
+        console.error('[SUPABASE] Error details:', upsertError.details);
+        console.error('[SUPABASE] Error hint:', upsertError.hint);
         throw upsertError;
       }
       console.log(`[SUPABASE] ✅ Saved ${apartments.length} apartments`);
+      console.log(`[DEBUG] Inserted count:`, insertedData?.length);
+    } else {
+      console.log(`[FIRECRAWL] ❌ No apartments extracted - check DEBUG logs above`);
     }
     
     return Response.json({
