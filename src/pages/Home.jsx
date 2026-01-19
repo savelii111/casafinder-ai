@@ -111,48 +111,42 @@ export default function Home() {
     subscription
   } = useFeatureAccess();
 
-  // DIRECT DATABASE FETCH from Idealista/Fotocasa/Booking
+  // FETCH FROM SUPABASE
   const { data: dbApartments = [] } = useQuery({
-      queryKey: ['apartmentsFromDB'],
+      queryKey: ['apartmentsFromSupabase'],
       queryFn: async () => {
         console.log('═══════════════════════════════════════════════════════');
-        console.log('🟦 [DB FETCH] Reading apartments from all sources');
+        console.log('🟦 [SUPABASE FETCH] Reading apartments');
         console.log('═══════════════════════════════════════════════════════');
 
         const startTime = Date.now();
 
         try {
-          const allApartments = [];
-          let cursor = 0;
-          const batchSize = 1000;
+          const result = await base44.functions.invoke('supabaseSync', {
+            action: 'fetch',
+            limit: 10000
+          });
 
-          while (true) {
-            const batch = await base44.entities.Apartment.filter({}, '-updated_date', batchSize, cursor);
-            if (batch.length === 0) break;
-            allApartments.push(...batch);
-            if (batch.length < batchSize) break;
-            cursor += batch.length;
-            if (cursor > 100000) break;
-          }
+          const apartments = result.data?.data || [];
 
-          console.log(`📊 Database has ${allApartments.length} apartments`);
+          console.log(`📊 Supabase has ${apartments.length} apartments`);
 
           // Count by source
           const bySource = {};
-          allApartments.forEach(a => {
+          apartments.forEach(a => {
             bySource[a.source] = (bySource[a.source] || 0) + 1;
           });
           console.log('📊 By source:', bySource);
 
           setPaginationStats({
-            method: allApartments.length > 0 ? 'Database' : 'Empty',
-            totalFetched: allApartments.length,
-            withCoords: allApartments.filter(a => a.lat && a.lng).length,
+            method: 'Supabase',
+            totalFetched: apartments.length,
+            withCoords: apartments.filter(a => a.lat && a.lng).length,
             duration: Date.now() - startTime,
             bySource: bySource
           });
 
-          return allApartments;
+          return apartments;
 
         } catch (error) {
           console.error('[FETCH] Error:', error);
@@ -627,14 +621,14 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Parsing Fotocasa (all Spain)...');
+                    toast.info('Parsing Fotocasa → Supabase...');
                     const result = await base44.functions.invoke('fetchListingsFirecrawl', { 
                       region: 'espana',
                       listing_type: 'comprar',
                       maxPages: 5
                     });
-                    queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
-                    toast.success(`✅ Parsed: ${result.data.count} listings`);
+                    queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] });
+                    toast.success(`✅ Saved to Supabase: ${result.data.count} listings`);
                   } catch (error) {
                     console.error('Parse error:', error);
                     toast.error('❌ Parse failed');
@@ -658,7 +652,7 @@ export default function Home() {
                       listing_type: 'comprar',
                       maxPages: 5
                     });
-                    queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] });
+                    queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] });
                     toast.success(`✅ ${result.data.count} listings`);
                   } catch (error) {
                     console.error('Parse error:', error);
@@ -674,7 +668,7 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] })}
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] })}
                 className="gap-2 hidden lg:flex"
               >
                 🔄 Refresh
@@ -684,7 +678,7 @@ export default function Home() {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['apartmentsFromDB'] })}
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] })}
                 className="lg:hidden gap-1"
               >
                 🔄
