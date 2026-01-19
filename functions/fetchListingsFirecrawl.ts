@@ -1,4 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL'),
+  Deno.env.get('SUPABASE_SERVICE_KEY')
+);
 
 Deno.serve(async (req) => {
   try {
@@ -127,17 +133,6 @@ Deno.serve(async (req) => {
                 hasElevator: Math.random() > 0.3
               };
 
-              // Check if already exists
-              const existing = await base44.asServiceRole.entities.Apartment.filter({ 
-                external_id: apartment.external_id 
-              });
-              
-              if (existing.length > 0) {
-                await base44.asServiceRole.entities.Apartment.update(existing[0].id, apartment);
-              } else {
-                await base44.asServiceRole.entities.Apartment.create(apartment);
-              }
-
               apartments.push(apartment);
               pageCount++;
               currentListing = {};
@@ -157,10 +152,27 @@ Deno.serve(async (req) => {
 
     console.log(`[FIRECRAWL] Complete: ${apartments.length} apartments processed`);
     
+    // Save to Supabase via UPSERT
+    if (apartments.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('apartments')
+        .upsert(apartments, { 
+          onConflict: 'external_id',
+          ignoreDuplicates: false 
+        });
+
+      if (upsertError) {
+        console.error('[SUPABASE] Upsert error:', upsertError);
+        throw upsertError;
+      }
+      console.log(`[SUPABASE] ✅ Saved ${apartments.length} apartments`);
+    }
+    
     return Response.json({
       success: true,
       count: apartments.length,
-      apartments: apartments,
+      stored_in: 'Supabase',
+      apartments: apartments.slice(0, 5), // Return sample
       synced_at: now
     });
   } catch (error) {
