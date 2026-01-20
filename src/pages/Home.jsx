@@ -621,17 +621,37 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Parsing Fotocasa via Apify...');
-                    const result = await base44.functions.invoke('fetchListingsApify', { 
+                    toast.info('Starting Apify actor...');
+
+                    // Step 1: Run actor
+                    const runResult = await base44.functions.invoke('apifyRunActor', { 
                       city: 'madrid',
                       listing_type: 'sale',
                       maxResults: 100
                     });
+
+                    toast.info('Waiting for results...');
+
+                    // Step 2: Wait and get items
+                    const itemsResult = await base44.functions.invoke('apifyWaitAndGetItems', { 
+                      runId: runResult.data.runId,
+                      datasetId: runResult.data.datasetId
+                    });
+
+                    toast.info('Saving to Supabase...');
+
+                    // Step 3: Save to Supabase
+                    const saveResult = await base44.functions.invoke('supabaseUpsertListings', { 
+                      items: itemsResult.data.items,
+                      city: 'madrid',
+                      listing_type: 'sale'
+                    });
+
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] });
-                    toast.success(`✅ Saved: ${result.data.count} listings`);
+                    toast.success(`✅ Saved: ${saveResult.data.count} listings`);
                   } catch (error) {
                     console.error('Parse error:', error);
-                    toast.error('❌ Parse failed');
+                    toast.error(`❌ ${error.message || 'Parse failed'}`);
                   }
                 }}
                 className="gap-2 hidden lg:flex"
@@ -646,14 +666,26 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Parsing...');
-                    const result = await base44.functions.invoke('fetchListingsApify', { 
+                    toast.info('Running...');
+                    const runResult = await base44.functions.invoke('apifyRunActor', { 
                       city: 'madrid',
                       listing_type: 'sale',
                       maxResults: 100
                     });
+
+                    const itemsResult = await base44.functions.invoke('apifyWaitAndGetItems', { 
+                      runId: runResult.data.runId,
+                      datasetId: runResult.data.datasetId
+                    });
+
+                    const saveResult = await base44.functions.invoke('supabaseUpsertListings', { 
+                      items: itemsResult.data.items,
+                      city: 'madrid',
+                      listing_type: 'sale'
+                    });
+
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] });
-                    toast.success(`✅ ${result.data.count}`);
+                    toast.success(`✅ ${saveResult.data.count}`);
                   } catch (error) {
                     console.error('Parse error:', error);
                     toast.error('❌ Error');
