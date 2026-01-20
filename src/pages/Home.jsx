@@ -621,14 +621,14 @@ export default function Home() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    toast.info('Parsing Fotocasa → Supabase...');
-                    const result = await base44.functions.invoke('fetchListingsFirecrawl', { 
-                      region: 'espana',
-                      listing_type: 'comprar',
-                      maxPages: 5
+                    toast.info('Parsing Fotocasa via Apify...');
+                    const result = await base44.functions.invoke('fetchListingsApify', { 
+                      city: 'madrid',
+                      listing_type: 'sale',
+                      maxResults: 100
                     });
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] });
-                    toast.success(`✅ Saved to Supabase: ${result.data.count} listings`);
+                    toast.success(`✅ Saved: ${result.data.count} listings`);
                   } catch (error) {
                     console.error('Parse error:', error);
                     toast.error('❌ Parse failed');
@@ -647,13 +647,13 @@ export default function Home() {
                 onClick={async () => {
                   try {
                     toast.info('Parsing...');
-                    const result = await base44.functions.invoke('fetchListingsFirecrawl', { 
-                      region: 'espana',
-                      listing_type: 'comprar',
-                      maxPages: 5
+                    const result = await base44.functions.invoke('fetchListingsApify', { 
+                      city: 'madrid',
+                      listing_type: 'sale',
+                      maxResults: 100
                     });
                     queryClient.invalidateQueries({ queryKey: ['apartmentsFromSupabase'] });
-                    toast.success(`✅ ${result.data.count} listings`);
+                    toast.success(`✅ ${result.data.count}`);
                   } catch (error) {
                     console.error('Parse error:', error);
                     toast.error('❌ Error');
