@@ -16,6 +16,11 @@ export default function Listings() {
   const { data: listings = [], isLoading, error } = useQuery({
     queryKey: ['listings'],
     queryFn: async () => {
+      if (!supabase) {
+        toast.error('Supabase не настроен');
+        throw new Error('Supabase client not initialized');
+      }
+      
       console.log('[LISTINGS] Fetching from Supabase...');
       
       const { data, error } = await supabase
