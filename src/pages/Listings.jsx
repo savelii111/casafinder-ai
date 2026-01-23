@@ -12,31 +12,20 @@ export default function Listings() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
-  // Fetch listings from Supabase with auto-refresh every 60s
+  // Fetch listings from Supabase via backend function with auto-refresh every 60s
   const { data: listings = [], isLoading, error } = useQuery({
     queryKey: ['listings'],
     queryFn: async () => {
-      if (!supabase) {
-        toast.error('Supabase не настроен');
-        throw new Error('Supabase client not initialized');
-      }
+      console.log('[LISTINGS] Fetching from Supabase via backend...');
       
-      console.log('[LISTINGS] Fetching from Supabase...');
-      
-      const { data, error } = await supabase
-        .from('listings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
+      const result = await base44.functions.invoke('supabaseSync', {
+        action: 'fetch',
+        limit: 20
+      });
 
-      if (error) {
-        console.error('[LISTINGS] Error:', error.message);
-        toast.error('Ошибка загрузки');
-        throw error;
-      }
-
-      console.log(`[LISTINGS] Loaded ${data?.length || 0} rows`);
-      return data || [];
+      const data = result.data?.data || [];
+      console.log(`[LISTINGS] Loaded ${data.length} rows`);
+      return data;
     },
     refetchInterval: 60000, // Auto-refresh every 60 seconds
     refetchOnWindowFocus: false
