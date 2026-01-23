@@ -6,6 +6,7 @@ import Neighborhoods from './pages/Neighborhoods';
 import Portfolio from './pages/Portfolio';
 import Settings from './pages/Settings';
 import Subscription from './pages/Subscription';
+import Listings from './pages/Listings';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +19,7 @@ export const PAGES = {
     "Portfolio": Portfolio,
     "Settings": Settings,
     "Subscription": Subscription,
+    "Listings": Listings,
 }
 
 export const pagesConfig = {
