@@ -1,0 +1,48 @@
+{
+  "name": "Portfolio",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "name": {
+      "type": "string",
+      "description": "Portfolio name"
+    },
+    "apartment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of apartment IDs in this portfolio"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Portfolio notes"
+    },
+    "color": {
+      "type": "string",
+      "default": "#3b82f6",
+      "description": "Portfolio color tag"
+    }
+  },
+  "required": [
+    "user_email",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "user_email": "{{user.email}}"
+    },
+    "read": {
+      "user_email": "{{user.email}}"
+    },
+    "update": {
+      "user_email": "{{user.email}}"
+    },
+    "delete": {
+      "user_email": "{{user.email}}"
+    }
+  }
+}

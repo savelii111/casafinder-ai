@@ -1,0 +1,260 @@
+{
+  "name": "Apartment",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Property title"
+    },
+    "price": {
+      "type": "number",
+      "description": "Monthly rent or sale price in EUR"
+    },
+    "listing_type": {
+      "type": "string",
+      "enum": [
+        "rent",
+        "sale"
+      ],
+      "default": "rent",
+      "description": "Listing type - rent or sale"
+    },
+    "address": {
+      "type": "string",
+      "description": "Full address"
+    },
+    "rooms": {
+      "type": "number",
+      "description": "Number of rooms"
+    },
+    "size": {
+      "type": "number",
+      "description": "Size in square meters"
+    },
+    "lat": {
+      "type": "number",
+      "description": "Latitude coordinate"
+    },
+    "lng": {
+      "type": "number",
+      "description": "Longitude coordinate"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of photo URLs"
+    },
+    "riskScore": {
+      "type": "number",
+      "description": "AI-generated risk score 1-10"
+    },
+    "trueCost": {
+      "type": "object",
+      "properties": {
+        "rent": {
+          "type": "number"
+        },
+        "utilities": {
+          "type": "number"
+        },
+        "internet": {
+          "type": "number"
+        },
+        "food": {
+          "type": "number"
+        }
+      }
+    },
+    "marketPriceDiff": {
+      "type": "number",
+      "description": "Percentage difference from market average (positive = overpriced, negative = bargain)"
+    },
+    "aiInsight": {
+      "type": "string",
+      "description": "AI analysis of the property"
+    },
+    "city": {
+      "type": "string",
+      "description": "City name"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "idealista",
+        "manual",
+        "other"
+      ],
+      "default": "idealista",
+      "description": "Data source - idealista, manual entry, or other"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Original listing URL from source platform"
+    },
+    "external_id": {
+      "type": "string",
+      "description": "Source platform unique id"
+    },
+    "listing_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "removed",
+        "sold",
+        "rented"
+      ],
+      "default": "active",
+      "description": "Current listing status"
+    },
+    "neighborhood": {
+      "type": "string",
+      "description": "Neighborhood name"
+    },
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "apartment",
+        "house",
+        "studio",
+        "penthouse",
+        "office",
+        "commercial"
+      ],
+      "default": "apartment",
+      "description": "Type of property"
+    },
+    "floor": {
+      "type": "number",
+      "description": "Floor number"
+    },
+    "hasElevator": {
+      "type": "boolean",
+      "description": "Building has elevator"
+    },
+    "furnished": {
+      "type": "boolean",
+      "description": "Is furnished"
+    },
+    "pets_allowed": {
+      "type": "boolean",
+      "description": "Pets allowed"
+    },
+    "available_from": {
+      "type": "string",
+      "format": "date",
+      "description": "Available from date"
+    },
+    "last_sync_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this listing was synced from source"
+    },
+    "propertyTax": {
+      "type": "number",
+      "description": "Annual property tax (IBI) in EUR"
+    },
+    "zoning": {
+      "type": "string",
+      "description": "Zoning classification"
+    },
+    "zoningStatus": {
+      "type": "string",
+      "enum": [
+        "residential",
+        "commercial",
+        "mixed",
+        "industrial",
+        "unknown"
+      ],
+      "description": "Zoning status"
+    },
+    "comparableSales": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "price": {
+            "type": "number"
+          },
+          "pricePerM2": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string"
+          },
+          "distance": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Recent comparable sales data"
+    },
+    "rentMarketAnalysis": {
+      "type": "object",
+      "properties": {
+        "avgRentM2": {
+          "type": "number"
+        },
+        "marketTrend": {
+          "type": "string"
+        },
+        "demandLevel": {
+          "type": "string"
+        },
+        "supplyLevel": {
+          "type": "string"
+        }
+      },
+      "description": "Rental market analysis for the area"
+    },
+    "neighborhoodData": {
+      "type": "object",
+      "properties": {
+        "populationDensity": {
+          "type": "number"
+        },
+        "avgAge": {
+          "type": "number"
+        },
+        "educationLevel": {
+          "type": "string"
+        },
+        "incomeLevel": {
+          "type": "string"
+        },
+        "safetyScore": {
+          "type": "number"
+        },
+        "walkabilityScore": {
+          "type": "number"
+        },
+        "transitScore": {
+          "type": "number"
+        },
+        "nearbySchools": {
+          "type": "number"
+        },
+        "nearbyParks": {
+          "type": "number"
+        },
+        "nearbyRestaurants": {
+          "type": "number"
+        },
+        "mainAttractions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Demographic and lifestyle data for neighborhood"
+    }
+  },
+  "required": [
+    "title",
+    "price",
+    "address"
+  ]
+}

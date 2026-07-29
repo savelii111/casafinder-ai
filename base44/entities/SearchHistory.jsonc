@@ -1,0 +1,31 @@
+{
+  "name": "SearchHistory",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "query": {
+      "type": "string",
+      "description": "Search query text"
+    },
+    "filters": {
+      "type": "object",
+      "description": "Applied filters"
+    },
+    "results_count": {
+      "type": "number",
+      "description": "Number of results found"
+    },
+    "auto_notify": {
+      "type": "boolean",
+      "default": false,
+      "description": "Send notifications for new matches"
+    }
+  },
+  "required": [
+    "user_email",
+    "query"
+  ]
+}

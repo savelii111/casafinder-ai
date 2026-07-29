@@ -1,0 +1,43 @@
+{
+  "name": "EmailAlert",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "new_properties",
+        "price_changes",
+        "saved_search",
+        "favorites_update"
+      ],
+      "description": "Type of alert"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "instant",
+        "daily",
+        "weekly"
+      ],
+      "default": "daily",
+      "description": "Alert frequency"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Alert enabled status"
+    },
+    "search_criteria": {
+      "type": "object",
+      "description": "Search criteria for alerts"
+    }
+  },
+  "required": [
+    "user_email",
+    "alert_type"
+  ]
+}

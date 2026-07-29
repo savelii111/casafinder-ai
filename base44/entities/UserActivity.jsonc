@@ -1,0 +1,37 @@
+{
+  "name": "UserActivity",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "view_property",
+        "favorite",
+        "unfavorite",
+        "search",
+        "compare",
+        "ai_query",
+        "export",
+        "share",
+        "schedule_visit"
+      ],
+      "description": "Action type"
+    },
+    "apartment_id": {
+      "type": "string",
+      "description": "Related apartment ID"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional action metadata"
+    }
+  },
+  "required": [
+    "user_email",
+    "action"
+  ]
+}

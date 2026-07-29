@@ -1,0 +1,43 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "new_property",
+        "price_change",
+        "ai_limit",
+        "system"
+      ],
+      "description": "Notification type"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Read status"
+    },
+    "apartment_id": {
+      "type": "string",
+      "description": "Related apartment ID"
+    }
+  },
+  "required": [
+    "user_email",
+    "title",
+    "message",
+    "type"
+  ]
+}

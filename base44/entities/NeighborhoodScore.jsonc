@@ -1,0 +1,54 @@
+{
+  "name": "NeighborhoodScore",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Neighborhood name"
+    },
+    "city": {
+      "type": "string",
+      "description": "City name"
+    },
+    "safety_score": {
+      "type": "number",
+      "description": "Safety score 1-10"
+    },
+    "transport_score": {
+      "type": "number",
+      "description": "Public transport score 1-10"
+    },
+    "amenities_score": {
+      "type": "number",
+      "description": "Nearby amenities score 1-10"
+    },
+    "restaurants_score": {
+      "type": "number",
+      "description": "Restaurants & cafes score 1-10"
+    },
+    "schools_score": {
+      "type": "number",
+      "description": "Schools quality score 1-10"
+    },
+    "nightlife_score": {
+      "type": "number",
+      "description": "Nightlife score 1-10"
+    },
+    "average_price": {
+      "type": "number",
+      "description": "Average rent price in EUR"
+    },
+    "lat": {
+      "type": "number",
+      "description": "Latitude"
+    },
+    "lng": {
+      "type": "number",
+      "description": "Longitude"
+    }
+  },
+  "required": [
+    "name",
+    "city"
+  ]
+}
